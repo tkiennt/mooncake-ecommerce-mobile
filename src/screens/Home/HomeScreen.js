@@ -31,7 +31,7 @@ export default function HomeScreen({ navigation }) {
         title="NGUYỆT PHỐ B2B"
         subtitle={user?.companyName || 'Sàn Quà Tặng Trung Thu Hoàng Gia'}
         rightIcon="notifications-outline"
-        onRightPress={() => {}}
+        onRightPress={() => navigation.navigate('Notification')}
       />
 
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
@@ -141,7 +141,7 @@ export default function HomeScreen({ navigation }) {
           </View>
           <TouchableOpacity
             style={styles.rfqButton}
-            onPress={() => navigation.navigate('Search')}
+            onPress={() => navigation.navigate('CreateRfq')}
           >
             <Text style={styles.rfqBtnText}>Tạo RFQ</Text>
           </TouchableOpacity>

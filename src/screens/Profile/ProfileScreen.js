@@ -33,13 +33,13 @@ export default function ProfileScreen({ navigation }) {
       icon: 'document-text-outline',
       title: 'Hợp Đồng Điện Tử (e-Contract)',
       subtitle: 'Quản lý hợp đồng & Ký số bằng OTP',
-      onPress: () => Alert.alert('Hợp Đồng', 'Phân hệ ký hợp đồng e-Contract sẽ kết nối trực tiếp trong Giai đoạn 2.'),
+      onPress: () => navigation.navigate('Contracts'),
     },
     {
       icon: 'briefcase-outline',
       title: 'Yêu Cầu Báo Giá (RFQ) Đang Mở',
-      subtitle: 'Theo dõi các gói đấu thầu quà tặng',
-      onPress: () => Alert.alert('RFQ', 'Xem danh sách các gói thầu và các xưởng nộp Bid.'),
+      subtitle: 'Theo dõi các gói đấu thầu & Báo giá từ xưởng',
+      onPress: () => navigation.navigate('RfqList'),
     },
     {
       icon: 'shield-checkmark-outline',
@@ -88,15 +88,21 @@ export default function ProfileScreen({ navigation }) {
 
         {/* Stats Row */}
         <View style={styles.statsCard}>
-          <View style={styles.statCol}>
+          <TouchableOpacity
+            style={styles.statCol}
+            onPress={() => navigation.navigate('OrdersTab')}
+          >
             <Text style={styles.statVal}>3</Text>
             <Text style={styles.statLabel}>Đơn hàng</Text>
-          </View>
+          </TouchableOpacity>
           <View style={styles.statDivider} />
-          <View style={styles.statCol}>
-            <Text style={styles.statVal}>1</Text>
+          <TouchableOpacity
+            style={styles.statCol}
+            onPress={() => navigation.navigate('RfqList')}
+          >
+            <Text style={styles.statVal}>2</Text>
             <Text style={styles.statLabel}>Gói thầu RFQ</Text>
-          </View>
+          </TouchableOpacity>
           <View style={styles.statDivider} />
           <View style={styles.statCol}>
             <Text style={styles.statVal}>180</Text>

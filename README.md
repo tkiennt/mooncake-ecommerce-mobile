@@ -5,42 +5,32 @@
 
 ---
 
-## 📱 Tính Năng Đã Triển Khai (Giai Đoạn 1 - MVP Core)
+## 📱 Tính Năng Đã Triển Khai
 
-1. **Xác thực & Quản lý Phiên (Authentication & Session)**:
-   - Đăng nhập Số điện thoại / Mật khẩu cho khách hàng B2B.
-   - Hỗ trợ đăng nhập Google Doanh Nghiệp.
-   - Quản lý JWT Token tự động qua `AsyncStorage` và Axios Interceptor.
-   - Cơ chế fallback demo mode mượt mà khi môi trường backend offline.
+### Giai Đoạn 1 (MVP Core)
+1. **Xác thực & Quản lý Phiên (Authentication & Session)**: Đăng nhập SĐT/Email, Google OAuth, JWT Token Interceptor.
+2. **Trang Chủ & Khám Phá (Home & Discovery)**: Banner Mùa Trăng 2026, Trust Badges, Danh mục, Sản phẩm nổi bật.
+3. **Tìm Kiếm & Bộ Lọc (Search & Multi-filter)**: FTS, lọc vỏ nướng/dẻo, in logo, chiết khấu sỉ.
+4. **Chi Tiết Sản Phẩm & Biến Thể (Product Detail & Variant)**: Bắt buộc chọn Variant, Bảng giá bậc thang (Tiered Pricing).
+5. **Giỏ Hàng & Tính Chiết Khấu Sỉ (Cart & Tiered Discount)**: Tự động tính chiết khấu theo số lượng.
+6. **Đặt Hàng & Thanh Toán (Checkout & Orders)**: Form giao nhận công ty, hóa đơn VAT, thanh toán VNPay / SafeTrade Escrow / COD.
+7. **Lịch Sử Đơn Hàng & Hồ Sơ (Orders & Profile)**: Theo dõi trạng thái đơn hàng và hồ sơ MST.
 
-2. **Trang Chủ & Khám Phá (Home & Discovery)**:
-   - Banner lễ hội Trung Thu phong cách hoàng gia Crimson & Gold.
-   - Trust Badges B2B: Ký quỹ an toàn SafeTrade, e-Contract OTP, Giao xe lạnh PoD.
-   - Phân loại danh mục: Hộp Quà Cao Cấp, Set Doanh Nghiệp, Bánh Dẻo Nghệ Nhân.
-   - Bộ sưu tập bánh nổi bật kèm tag giảm giá sỉ theo số lượng.
-
-3. **Tìm Kiếm & Bộ Lọc Nâng Cao (Search & Multi-filter)**:
-   - Tìm kiếm thời gian thực theo tên bánh, xưởng nghệ nhân, hương vị.
-   - Lọc nhanh: Hỗ trợ in logo công ty, Chiết khấu ≥ 15%, Bánh nướng, Bánh dẻo.
-
-4. **Chi Tiết Sản Phẩm & Chọn Biến Thể (Product Detail & Variant Selection)**:
-   - **Bắt buộc chọn Biến thể (Variant)** theo đúng quy định nghiệp vụ Module 3 của Backend (loại vỏ, nhân, trọng lượng).
-   - **Bảng giá bậc thang (Tiered Pricing)**: Tự động hiển thị mức giảm giá tương ứng với số lượng đặt.
-   - Tính toán tạm tính giá trị đơn hàng tức thì.
-
-5. **Giỏ Hàng & Tự Động Tính Chiết Khấu Sỉ (Cart & Tiered Discount)**:
-   - Quản lý giỏ hàng theo từng biến thể sản phẩm.
-   - Tự động áp dụng mức chiết khấu bậc thang theo số lượng (5%, 10%, 15%, 18%).
-   - Tóm tắt hóa đơn: Tổng tiền thô, tiền chiết khấu được giảm, tổng thanh toán.
-
-6. **Đặt Hàng & Thanh Toán (Checkout & Orders)**:
-   - Biểu mẫu thông tin giao hàng doanh nghiệp, xuất hóa đơn VAT, ghi chú bảo quản xe lạnh.
-   - Lựa chọn phương thức thanh toán: VNPay / Mobile Banking VietQR, SafeTrade Escrow, COD.
-   - Gửi đơn hàng về Backend (`/api/v1/orders`).
-
-7. **Lịch Sử Đơn Hàng & Hồ Sơ Doanh Nghiệp (Orders & Profile)**:
-   - Theo dõi danh sách đơn hàng (`/api/v1/orders/mine`) theo các trạng thái: Chờ xác nhận, Đang sản xuất, Đã bàn giao PoD.
-   - Quản lý thông tin doanh nghiệp, Mã số thuế (MST), hotline hỗ trợ thu mua 24/7.
+### Giai Đoạn 2 (Phân Hệ B2B Đặc Thù)
+8. **Đấu Thầu RFQ (Request for Quote)**:
+   - Tạo gói thầu B2B (`CreateRfqScreen`): số lượng, ngân sách, ngày nhận hàng, yêu cầu in ấn logo.
+   - Quản lý danh sách gói thầu cá nhân (`RfqListScreen`).
+9. **So Sánh Báo Giá Side-by-Side (Bidding Comparison)**:
+   - Hiển thị danh sách các Bid do các xưởng nộp lên (`RfqDetailBiddingScreen`).
+   - So sánh đơn giá, tổng tiền, thời gian giao hàng, điểm uy tín của xưởng.
+   - Thao tác **Chấp nhận Báo giá (Accept Bid)**: Chốt xưởng trúng thầu và tự động sinh Dự thảo hợp đồng điện tử.
+10. **Hợp Đồng Điện Tử & Ký Số OTP (e-Contract & Milestones)**:
+    - Quản lý danh sách hợp đồng điện tử (`ContractsScreen`).
+    - Ký số di động bằng mã OTP SMS (`ContractSignScreen`).
+    - Quản lý và kích hoạt mốc **Đặt cọc M1 (30%)** để xưởng chuyển sang trạng thái sản xuất.
+11. **Trung Tâm Thông Báo Thời Gian Thực (SignalR Real-time Notifications)**:
+    - Tích hợp `@microsoft/signalr` kết nối tới `/api/v1/hubs/notifications`.
+    - Nhận thông báo tức thì khi có xưởng nộp Bid mới hoặc trạng thái hợp đồng thay đổi (`NotificationScreen`).
 
 ---
 

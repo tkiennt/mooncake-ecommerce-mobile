@@ -8,7 +8,7 @@ import { COLORS } from '../theme/colors';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
 
-// Screens
+// Core Screens
 import LoginScreen from '../screens/Auth/LoginScreen';
 import HomeScreen from '../screens/Home/HomeScreen';
 import SearchScreen from '../screens/Catalog/SearchScreen';
@@ -17,6 +17,14 @@ import CartScreen from '../screens/Cart/CartScreen';
 import CheckoutScreen from '../screens/Cart/CheckoutScreen';
 import OrderHistoryScreen from '../screens/Profile/OrderHistoryScreen';
 import ProfileScreen from '../screens/Profile/ProfileScreen';
+
+// Phase 2: B2B Core Screens
+import CreateRfqScreen from '../screens/B2B/CreateRfqScreen';
+import RfqListScreen from '../screens/B2B/RfqListScreen';
+import RfqDetailBiddingScreen from '../screens/B2B/RfqDetailBiddingScreen';
+import ContractsScreen from '../screens/B2B/ContractsScreen';
+import ContractSignScreen from '../screens/B2B/ContractSignScreen';
+import NotificationScreen from '../screens/Notification/NotificationScreen';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -120,6 +128,14 @@ export default function AppNavigator() {
             <Stack.Screen name="Search" component={SearchScreen} />
             <Stack.Screen name="ProductDetail" component={ProductDetailScreen} />
             <Stack.Screen name="Checkout" component={CheckoutScreen} />
+
+            {/* B2B Screens */}
+            <Stack.Screen name="Notification" component={NotificationScreen} />
+            <Stack.Screen name="CreateRfq" component={CreateRfqScreen} />
+            <Stack.Screen name="RfqList" component={RfqListScreen} />
+            <Stack.Screen name="RfqDetailBidding" component={RfqDetailBiddingScreen} />
+            <Stack.Screen name="Contracts" component={ContractsScreen} />
+            <Stack.Screen name="ContractSign" component={ContractSignScreen} />
           </>
         )}
       </Stack.Navigator>
@@ -146,4 +162,3 @@ const styles = StyleSheet.create({
     fontWeight: '800',
   },
 });
-

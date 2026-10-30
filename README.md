@@ -186,7 +186,3 @@ npx expo start
 - Quét mã QR bằng ứng dụng **Expo Go** (Android) hoặc Camera (iOS).
 - Bấm phím `a` trên terminal để mở Android Emulator.
 - Bấm phím `w` để mở xem trước trên trình duyệt Web.
-
-# 4. Đẩy lên nhánh tính năng tương ứng trên GitHub
-git push origin feature/<tên-tính-năng>
-```

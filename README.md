@@ -187,20 +187,6 @@ npx expo start
 - Bấm phím `a` trên terminal để mở Android Emulator.
 - Bấm phím `w` để mở xem trước trên trình duyệt Web.
 
----
-
-## 🌿 Quy Chuẩn Nhánh Git & Đóng Góp
-
-Dự án áp dụng quy ước đặt tên nhánh tính năng:
-```bash
-# 1. Chuyển sang nhánh tính năng cần làm việc
-git checkout feature/<tên-tính-năng>
-
-# 2. Thực hiện cập nhật mã nguồn & kiểm thử
-# 3. Commit theo chuẩn Conventional Commits
-git add .
-git commit -m "feat(<feature>): mô tả tóm tắt thay đổi"
-
 # 4. Đẩy lên nhánh tính năng tương ứng trên GitHub
 git push origin feature/<tên-tính-năng>
 ```

@@ -158,20 +158,36 @@ export default function OrderHistoryScreen({ navigation }) {
                   <Text style={styles.footSub}>Tổng giá trị đơn ({ord.totalItems} hộp):</Text>
                   <Text style={styles.footAmount}>{formatVND(ord.totalAmount)}</Text>
                 </View>
-                <TouchableOpacity
-                  style={styles.detailBtn}
-                  onPress={() =>
-                    navigation.navigate('DeliveryPoD', {
-                      orderId: ord.id,
-                      orderNumber: ord.orderNumber,
-                    })
-                  }
-                >
-                  <Text style={styles.detailBtnText}>
-                    {ord.status === 'Delivered' ? 'Xem PoD' : 'Theo dõi'}
-                  </Text>
-                  <Ionicons name="chevron-forward" size={14} color={COLORS.primary} />
-                </TouchableOpacity>
+                <View style={styles.actionRow}>
+                  {ord.status === 'Delivered' && (
+                    <TouchableOpacity
+                      style={styles.reviewBtn}
+                      onPress={() =>
+                        navigation.navigate('ReviewForm', {
+                          orderNumber: ord.orderNumber,
+                          shopName: ord.shopName,
+                        })
+                      }
+                    >
+                      <Ionicons name="star" size={12} color="#FAAD14" />
+                      <Text style={styles.reviewBtnText}>Đánh giá</Text>
+                    </TouchableOpacity>
+                  )}
+                  <TouchableOpacity
+                    style={styles.detailBtn}
+                    onPress={() =>
+                      navigation.navigate('DeliveryPoD', {
+                        orderId: ord.id,
+                        orderNumber: ord.orderNumber,
+                      })
+                    }
+                  >
+                    <Text style={styles.detailBtnText}>
+                      {ord.status === 'Delivered' ? 'Xem PoD' : 'Theo dõi'}
+                    </Text>
+                    <Ionicons name="chevron-forward" size={14} color={COLORS.primary} />
+                  </TouchableOpacity>
+                </View>
               </View>
             </View>
           ))
@@ -295,6 +311,27 @@ const styles = StyleSheet.create({
     color: COLORS.primary,
     marginTop: 2,
   },
+  actionRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  reviewBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFBE6',
+    borderWidth: 1,
+    borderColor: '#FFE58F',
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    borderRadius: 6,
+    marginRight: 8,
+  },
+  reviewBtnText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#873800',
+    marginLeft: 4,
+  },
   detailBtn: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -325,4 +362,3 @@ const styles = StyleSheet.create({
     paddingHorizontal: 30,
   },
 });
-

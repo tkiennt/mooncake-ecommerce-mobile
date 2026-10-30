@@ -27,6 +27,10 @@ import ContractSignScreen from '../screens/B2B/ContractSignScreen';
 import DeliveryPoDScreen from '../screens/B2B/DeliveryPoDScreen';
 import NotificationScreen from '../screens/Notification/NotificationScreen';
 
+// Phase 3: AI & Reviews Screens
+import AiAssistantScreen from '../screens/AI/AiAssistantScreen';
+import ReviewFormScreen from '../screens/Reviews/ReviewFormScreen';
+
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
 
@@ -138,6 +142,10 @@ export default function AppNavigator() {
             <Stack.Screen name="Contracts" component={ContractsScreen} />
             <Stack.Screen name="ContractSign" component={ContractSignScreen} />
             <Stack.Screen name="DeliveryPoD" component={DeliveryPoDScreen} />
+
+            {/* AI & Reviews */}
+            <Stack.Screen name="AiAssistant" component={AiAssistantScreen} />
+            <Stack.Screen name="ReviewForm" component={ReviewFormScreen} />
           </>
         )}
       </Stack.Navigator>

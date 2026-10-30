@@ -46,6 +46,20 @@ export default function HomeScreen({ navigation }) {
           <Ionicons name="options-outline" size={18} color={COLORS.primary} />
         </TouchableOpacity>
 
+        {/* AI Assistant Quick Pill */}
+        <TouchableOpacity
+          style={styles.aiPill}
+          activeOpacity={0.85}
+          onPress={() => navigation.navigate('AiAssistant')}
+        >
+          <View style={styles.aiPillLeft}>
+            <Ionicons name="sparkles" size={16} color={COLORS.accent} />
+            <Text style={styles.aiPillTitle}>Trợ Lý AI:</Text>
+            <Text style={styles.aiPillSub} numberOfLines={1}>Tư vấn quà tặng theo ngân sách & văn hóa</Text>
+          </View>
+          <Ionicons name="chevron-forward" size={14} color={COLORS.primary} />
+        </TouchableOpacity>
+
         {/* Hero Banner */}
         <View style={styles.heroBanner}>
           <View style={styles.heroOverlay}>
@@ -336,6 +350,36 @@ const styles = StyleSheet.create({
     color: '#FFF',
     fontSize: 12,
     fontWeight: '700',
+  },
+  aiPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#FFFBE6',
+    borderWidth: 1,
+    borderColor: '#FFE58F',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+    marginBottom: 16,
+  },
+  aiPillLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+    marginRight: 6,
+  },
+  aiPillTitle: {
+    fontSize: 12,
+    fontWeight: '800',
+    color: COLORS.primary,
+    marginLeft: 6,
+    marginRight: 4,
+  },
+  aiPillSub: {
+    fontSize: 11,
+    color: '#873800',
+    flex: 1,
   },
 });
 

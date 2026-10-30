@@ -158,8 +158,18 @@ export default function OrderHistoryScreen({ navigation }) {
                   <Text style={styles.footSub}>Tổng giá trị đơn ({ord.totalItems} hộp):</Text>
                   <Text style={styles.footAmount}>{formatVND(ord.totalAmount)}</Text>
                 </View>
-                <TouchableOpacity style={styles.detailBtn}>
-                  <Text style={styles.detailBtnText}>Chi tiết</Text>
+                <TouchableOpacity
+                  style={styles.detailBtn}
+                  onPress={() =>
+                    navigation.navigate('DeliveryPoD', {
+                      orderId: ord.id,
+                      orderNumber: ord.orderNumber,
+                    })
+                  }
+                >
+                  <Text style={styles.detailBtnText}>
+                    {ord.status === 'Delivered' ? 'Xem PoD' : 'Theo dõi'}
+                  </Text>
                   <Ionicons name="chevron-forward" size={14} color={COLORS.primary} />
                 </TouchableOpacity>
               </View>

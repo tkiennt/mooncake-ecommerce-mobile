@@ -24,6 +24,7 @@ import RfqListScreen from '../screens/B2B/RfqListScreen';
 import RfqDetailBiddingScreen from '../screens/B2B/RfqDetailBiddingScreen';
 import ContractsScreen from '../screens/B2B/ContractsScreen';
 import ContractSignScreen from '../screens/B2B/ContractSignScreen';
+import DeliveryPoDScreen from '../screens/B2B/DeliveryPoDScreen';
 import NotificationScreen from '../screens/Notification/NotificationScreen';
 
 const Tab = createBottomTabNavigator();
@@ -136,6 +137,7 @@ export default function AppNavigator() {
             <Stack.Screen name="RfqDetailBidding" component={RfqDetailBiddingScreen} />
             <Stack.Screen name="Contracts" component={ContractsScreen} />
             <Stack.Screen name="ContractSign" component={ContractSignScreen} />
+            <Stack.Screen name="DeliveryPoD" component={DeliveryPoDScreen} />
           </>
         )}
       </Stack.Navigator>

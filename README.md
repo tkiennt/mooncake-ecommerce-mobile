@@ -10,7 +10,7 @@
 Dự án áp dụng mô hình phân nhánh theo tính năng chuẩn doanh nghiệp (**Feature-based Branching Workflow**):
 
 ```text
-main (Nhánh production ổn định)
+main (Nhánh production tích hợp)
   ├── feature/auth-profile                (Xác thực, phân quyền & hồ sơ doanh nghiệp)
   ├── feature/product-catalog             (Khám phá, danh mục & chi tiết biến thể)
   ├── feature/b2b-bulk-order-cart         (Giỏ hàng, chiết khấu bậc thang & đặt hàng VNPay)
@@ -30,16 +30,16 @@ main (Nhánh production ổn định)
 
 ## 📋 Bảng Danh Mục Tính Năng & Trạng Thái Nhánh
 
-| Mã Feature | Tên Nhánh Git | Phân Hệ Backend / API Controller | Mô Tả Nghiệp Vụ Chính | Trạng Thái |
+| Mã Feature | Tên Nhánh Git | Phân Hệ Backend / API Controller | Mô Tả Nghiệp Vụ Chính | Trạng Thái GitHub |
 | :--- | :--- | :--- | :--- | :---: |
-| **F1** | `feature/auth-profile` | Module 1 (`AuthController`, `UsersController`) | Đăng nhập SĐT/Email, Google OAuth, lưu JWT qua AsyncStorage, hồ sơ công ty & MST. | ✅ **Đã hoàn thành** |
-| **F2** | `feature/product-catalog` | Module 3 (`ProductsController`, `CatalogMetadataController`) | Banner hoàng gia, FTS Search, lọc vỏ/nhân, bắt buộc chọn Biến thể (Variant), bảng giá bậc thang. | ✅ **Đã hoàn thành** |
-| **F3** | `feature/b2b-bulk-order-cart` | Module 4 & 10 (`OrdersController`, `PaymentsController`) | Giỏ hàng tự động chiết khấu sỉ theo MOQ, checkout xuất hóa đơn VAT, thanh toán VNPay / Escrow / COD. | ✅ **Đã hoàn thành** |
-| **F4** | `feature/b2b-rfq-bidding` | Module 5 (`RfqsController`) | Mở thầu RFQ, so sánh Bids side-by-side từ nhiều xưởng, thao tác Accept Bid chuyển đổi sang hợp đồng. | ✅ **Đã hoàn thành** |
-| **F5** | `feature/econtract-milestone` | Module 6 (`ContractsController`) | Xem dự thảo e-Contract, ký số bằng mã OTP SMS 6 số, quản lý tiến độ Milestone M1 đặt cọc 30%. | ✅ **Đã hoàn thành** |
-| **F6** | `feature/realtime-notifications` | Module 11 (`NotificationHub`, SignalR) | Lắng nghe sự kiện WebSocket thời gian thực khi có Bid mới, thay đổi hợp đồng, nhắc nợ cọc M1. | ✅ **Đã hoàn thành** |
-| **F7** | `feature/logistics-delivery-pod` | Module 7 (`DeliveriesController`) | Theo dõi hành trình xe lạnh, kiểm tra ảnh chụp bàn giao thực tế (PoD), chữ ký và tọa độ GPS. | ⏳ **Đang triển khai** |
-| **F8** | `feature/ai-assistant-reviews` | Module 8 & 9 (`AiChatController`, `ReviewsController`) | Trợ lý RAG tư vấn chọn vị bánh theo ngân sách, đánh giá đơn hàng 4 tiêu chí kèm ảnh thực tế. | ⏳ **Kế hoạch tiếp theo** |
+| **F1** | `feature/auth-profile` | Module 1 (`AuthController`, `UsersController`) | Đăng nhập SĐT/Email, Google OAuth, lưu JWT qua AsyncStorage, hồ sơ công ty & MST. | ✅ **Đã hoàn thành & Đã push** |
+| **F2** | `feature/product-catalog` | Module 3 (`ProductsController`, `CatalogMetadataController`) | Banner hoàng gia, FTS Search, lọc vỏ/nhân, bắt buộc chọn Biến thể (Variant), bảng giá bậc thang. | ✅ **Đã hoàn thành & Đã push** |
+| **F3** | `feature/b2b-bulk-order-cart` | Module 4 & 10 (`OrdersController`, `PaymentsController`) | Giỏ hàng tự động chiết khấu sỉ theo MOQ, checkout xuất hóa đơn VAT, thanh toán VNPay / Escrow / COD. | ✅ **Đã hoàn thành & Đã push** |
+| **F4** | `feature/b2b-rfq-bidding` | Module 5 (`RfqsController`) | Mở thầu RFQ, so sánh Bids side-by-side từ nhiều xưởng, thao tác Accept Bid chuyển đổi sang hợp đồng. | ✅ **Đã hoàn thành & Đã push** |
+| **F5** | `feature/econtract-milestone` | Module 6 (`ContractsController`) | Xem dự thảo e-Contract, ký số bằng mã OTP SMS 6 số, quản lý tiến độ Milestone M1 đặt cọc 30%. | ✅ **Đã hoàn thành & Đã push** |
+| **F6** | `feature/realtime-notifications` | Module 11 (`NotificationHub`, SignalR) | Lắng nghe sự kiện WebSocket thời gian thực khi có Bid mới, thay đổi hợp đồng, nhắc nợ cọc M1. | ✅ **Đã hoàn thành & Đã push** |
+| **F7** | `feature/logistics-delivery-pod` | Module 7 (`DeliveriesController`) | Theo dõi hành trình xe lạnh, kiểm tra ảnh chụp bàn giao thực tế (PoD), chữ ký và tọa độ GPS. | ✅ **Đã hoàn thành & Đã push** |
+| **F8** | `feature/ai-assistant-reviews` | Module 8 & 9 (`AiChatController`, `ReviewsController`) | Trợ lý RAG tư vấn chọn vị bánh theo ngân sách, đánh giá đơn hàng 4 tiêu chí kèm ảnh thực tế. | ✅ **Đã hoàn thành & Đã push** |
 
 ---
 
@@ -69,13 +69,13 @@ mooncake-mobile/
 │   │   └── AppNavigator.js         # Bottom Tab Navigator (5 Tabs) & Root Stack Navigator
 │   └── screens/
 │       ├── Auth/                   # LoginScreen.js
-│       ├── Home/                   # HomeScreen.js
+│       ├── Home/                   # HomeScreen.js (Tích hợp AI pill shortcut)
 │       ├── Catalog/                # SearchScreen.js, ProductDetailScreen.js
 │       ├── Cart/                   # CartScreen.js, CheckoutScreen.js
 │       ├── B2B/                    # CreateRfqScreen.js, RfqListScreen.js, RfqDetailBiddingScreen.js,
 │       │                           # ContractsScreen.js, ContractSignScreen.js, DeliveryPoDScreen.js
-│       ├── AI/                     # AiAssistantScreen.js
-│       ├── Reviews/                # ReviewFormScreen.js
+│       ├── AI/                     # AiAssistantScreen.js (Tư vấn RAG theo ngân sách B2B)
+│       ├── Reviews/                # ReviewFormScreen.js (Đánh giá 4 tiêu chí chất lượng)
 │       ├── Notification/           # NotificationScreen.js
 │       └── Profile/                # ProfileScreen.js, OrderHistoryScreen.js
 ├── app.json

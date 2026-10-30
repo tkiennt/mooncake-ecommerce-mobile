@@ -43,3 +43,4 @@ export const ENDPOINTS = {
   // AI Chat
   AI_CHAT: '/ai/chat',
 };
+

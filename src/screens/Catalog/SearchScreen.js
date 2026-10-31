@@ -21,8 +21,8 @@ export default function SearchScreen({ navigation }) {
     { id: 'all', label: 'Tất cả' },
     { id: 'custom_pkg', label: 'Hỗ trợ In Logo' },
     { id: 'high_discount', label: 'Chiết khấu ≥ 15%' },
-    { id: 'nuong', label: 'Bánh nướng' },
-    { id: 'deo', label: 'Bánh dẻo' },
+    { id: 'nuong', label: 'Bánh nướng nghệ nhân' },
+    { id: 'deo', label: 'Bánh dẻo truyền thống' },
   ];
 
   const filtered = MOCK_PRODUCTS.filter((item) => {
@@ -39,10 +39,10 @@ export default function SearchScreen({ navigation }) {
       return maxD >= 15;
     }
     if (filterType === 'nuong') {
-      return item.variants.some((v) => v.crustType.includes('nướng'));
+      return item.variants.some((v) => v.crustType.toLowerCase().includes('nướng'));
     }
     if (filterType === 'deo') {
-      return item.variants.some((v) => v.crustType.includes('dẻo'));
+      return item.variants.some((v) => v.crustType.toLowerCase().includes('dẻo'));
     }
     return true;
   });
@@ -51,76 +51,113 @@ export default function SearchScreen({ navigation }) {
     <View style={styles.container}>
       <AppHeader
         title="Tìm Kiếm & Khám Phá"
-        subtitle="Catalog bánh trung thu & xưởng sản xuất"
+        subtitle="Catalog bánh trung thu & xưởng đối tác"
         showBack={true}
         onBack={() => navigation.goBack()}
       />
 
       <View style={styles.searchHeader}>
+        {/* Search Input Box with Ant Design Style */}
         <View style={styles.searchInputWrapper}>
-          <Ionicons name="search" size={18} color={COLORS.textMuted} />
+          <Ionicons name="search" size={18} color={COLORS.primary} />
           <TextInput
             style={styles.searchInput}
             placeholder="Tìm theo tên bánh, nhân vị, xưởng..."
+            placeholderTextColor={COLORS.textMuted}
             value={keyword}
             onChangeText={setKeyword}
             autoFocus={false}
           />
           {keyword ? (
-            <TouchableOpacity onPress={() => setKeyword('')}>
+            <TouchableOpacity onPress={() => setKeyword('')} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
               <Ionicons name="close-circle" size={18} color={COLORS.textMuted} />
             </TouchableOpacity>
           ) : null}
         </View>
 
+        {/* Ant Design Segmented Filter Scroll */}
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
           style={styles.filterScroll}
           contentContainerStyle={styles.filterContainer}
         >
-          {filterOptions.map((opt) => (
-            <TouchableOpacity
-              key={opt.id}
-              style={[
-                styles.filterChip,
-                filterType === opt.id && styles.filterChipActive,
-              ]}
-              onPress={() => setFilterType(opt.id)}
-            >
-              <Text
+          {filterOptions.map((opt) => {
+            const isActive = filterType === opt.id;
+            return (
+              <TouchableOpacity
+                key={opt.id}
                 style={[
-                  styles.filterChipText,
-                  filterType === opt.id && styles.filterChipTextActive,
+                  styles.filterChip,
+                  isActive && styles.filterChipActive,
                 ]}
+                onPress={() => setFilterType(opt.id)}
               >
-                {opt.label}
-              </Text>
-            </TouchableOpacity>
-          ))}
+                {isActive && (
+                  <Ionicons name="checkmark-sharp" size={13} color={COLORS.primary} />
+                )}
+                <Text
+                  style={[
+                    styles.filterChipText,
+                    isActive && styles.filterChipTextActive,
+                  ]}
+                >
+                  {opt.label}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
         </ScrollView>
       </View>
 
-      <ScrollView contentContainerStyle={styles.listArea}>
-        <Text style={styles.countText}>
-          Tìm thấy <Text style={styles.bold}>{filtered.length}</Text> bộ sưu tập phù hợp
+      {/* Results Count & Current Filter Summary */}
+      <View style={styles.resultBar}>
+        <Text style={styles.resultCount}>
+          Tìm thấy <Text style={styles.resultCountHighlight}>{filtered.length}</Text> bộ quà tặng B2B
         </Text>
+        {(keyword || filterType !== 'all') && (
+          <TouchableOpacity
+            style={styles.resetBtn}
+            onPress={() => {
+              setKeyword('');
+              setFilterType('all');
+            }}
+          >
+            <Ionicons name="refresh" size={12} color={COLORS.primary} />
+            <Text style={styles.resetText}>Xóa lọc</Text>
+          </TouchableOpacity>
+        )}
+      </View>
 
-        {filtered.length > 0 ? (
-          filtered.map((product) => (
+      {/* Product List */}
+      <ScrollView
+        contentContainerStyle={styles.listContent}
+        showsVerticalScrollIndicator={false}
+      >
+        {filtered.length === 0 ? (
+          <View style={styles.emptyContainer}>
+            <Ionicons name="search-outline" size={48} color={COLORS.borderDark} />
+            <Text style={styles.emptyTitle}>Không tìm thấy sản phẩm phù hợp</Text>
+            <Text style={styles.emptyDesc}>
+              Vui lòng thử từ khóa khác hoặc bấm nút "Tạo RFQ" để đặt bánh may đo theo yêu cầu doanh nghiệp.
+            </Text>
+            <TouchableOpacity
+              style={styles.emptyRfqBtn}
+              onPress={() => navigation.navigate('CreateRfq')}
+            >
+              <Text style={styles.emptyRfqBtnText}>Mở thầu RFQ ngay</Text>
+            </TouchableOpacity>
+          </View>
+        ) : (
+          filtered.map((item) => (
             <ProductCard
-              key={product.id}
-              product={product}
+              key={item.id}
+              product={item}
               onPress={(p) => navigation.navigate('ProductDetail', { product: p })}
             />
           ))
-        ) : (
-          <View style={styles.emptyBox}>
-            <Ionicons name="search-outline" size={48} color={COLORS.textMuted} />
-            <Text style={styles.emptyTitle}>Không tìm thấy sản phẩm</Text>
-            <Text style={styles.emptySub}>Thử tìm kiếm với từ khóa khác hoặc điều chỉnh bộ lọc.</Text>
-          </View>
         )}
+        <View style={{ height: 40 }} />
       </ScrollView>
     </View>
   );
@@ -133,7 +170,6 @@ const styles = StyleSheet.create({
   },
   searchHeader: {
     backgroundColor: COLORS.surface,
-    paddingHorizontal: 16,
     paddingTop: 12,
     paddingBottom: 8,
     borderBottomWidth: 1,
@@ -142,36 +178,44 @@ const styles = StyleSheet.create({
   searchInputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F5F3EF',
-    borderRadius: 8,
+    backgroundColor: COLORS.background,
+    marginHorizontal: 16,
     paddingHorizontal: 12,
-    height: 44,
+    paddingVertical: 9,
+    borderRadius: 8,
+    borderWidth: 1.2,
+    borderColor: '#E8D2A3',
+    gap: 8,
   },
   searchInput: {
     flex: 1,
-    marginLeft: 8,
-    fontSize: 14,
+    fontSize: 13,
     color: COLORS.textPrimary,
+    padding: 0,
   },
   filterScroll: {
     marginTop: 10,
-    marginBottom: 4,
   },
   filterContainer: {
-    paddingRight: 16,
+    paddingHorizontal: 16,
+    gap: 8,
+    paddingBottom: 4,
   },
   filterChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingHorizontal: 12,
     paddingVertical: 6,
-    borderRadius: 16,
+    borderRadius: 6,
+    backgroundColor: COLORS.background,
     borderWidth: 1,
     borderColor: COLORS.border,
-    marginRight: 8,
-    backgroundColor: '#FFF',
+    gap: 4,
   },
   filterChipActive: {
-    backgroundColor: COLORS.primary,
+    backgroundColor: '#FFF1F0',
     borderColor: COLORS.primary,
+    borderWidth: 1.5,
   },
   filterChipText: {
     fontSize: 12,
@@ -179,38 +223,68 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   filterChipTextActive: {
-    color: '#FFF',
-    fontWeight: '700',
-  },
-  listArea: {
-    padding: 16,
-    paddingBottom: 40,
-  },
-  countText: {
-    fontSize: 13,
-    color: COLORS.textSecondary,
-    marginBottom: 12,
-  },
-  bold: {
-    fontWeight: '700',
     color: COLORS.primary,
+    fontWeight: '700',
   },
-  emptyBox: {
+  resultBar: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    marginTop: 60,
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+  },
+  resultCount: {
+    fontSize: 12,
+    color: COLORS.textSecondary,
+  },
+  resultCountHighlight: {
+    fontWeight: '800',
+    color: COLORS.primaryDark,
+  },
+  resetBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+  },
+  resetText: {
+    fontSize: 12,
+    color: COLORS.primary,
+    fontWeight: '600',
+  },
+  listContent: {
+    paddingHorizontal: 16,
+    paddingTop: 4,
+  },
+  emptyContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 60,
+    paddingHorizontal: 32,
   },
   emptyTitle: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '700',
     color: COLORS.textPrimary,
-    marginTop: 12,
-  },
-  emptySub: {
-    fontSize: 13,
-    color: COLORS.textMuted,
+    marginTop: 14,
+    marginBottom: 6,
     textAlign: 'center',
-    marginTop: 6,
+  },
+  emptyDesc: {
+    fontSize: 12,
+    color: COLORS.textSecondary,
+    textAlign: 'center',
+    lineHeight: 18,
+    marginBottom: 16,
+  },
+  emptyRfqBtn: {
+    backgroundColor: COLORS.primary,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 8,
+  },
+  emptyRfqBtnText: {
+    color: COLORS.textWhite,
+    fontSize: 13,
+    fontWeight: '700',
   },
 });
-

@@ -7,6 +7,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { COLORS } from '../theme/colors';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
+import { navigationRef } from './navigationRef';
 
 // Core Screens
 import LoginScreen from '../screens/Auth/LoginScreen';
@@ -123,31 +124,29 @@ export default function AppNavigator() {
   }
 
   return (
-    <NavigationContainer>
-      <Stack.Navigator screenOptions={{ headerShown: false }}>
-        {!user ? (
-          <Stack.Screen name="Login" component={LoginScreen} />
-        ) : (
-          <>
-            <Stack.Screen name="MainTabs" component={MainTabs} />
-            <Stack.Screen name="Search" component={SearchScreen} />
-            <Stack.Screen name="ProductDetail" component={ProductDetailScreen} />
-            <Stack.Screen name="Checkout" component={CheckoutScreen} />
+    <NavigationContainer ref={navigationRef}>
+      <Stack.Navigator
+        initialRouteName={user ? 'MainTabs' : 'MainTabs'}
+        screenOptions={{ headerShown: false }}
+      >
+        <Stack.Screen name="MainTabs" component={MainTabs} />
+        <Stack.Screen name="Login" component={LoginScreen} />
+        <Stack.Screen name="Search" component={SearchScreen} />
+        <Stack.Screen name="ProductDetail" component={ProductDetailScreen} />
+        <Stack.Screen name="Checkout" component={CheckoutScreen} />
 
-            {/* B2B Screens */}
-            <Stack.Screen name="Notification" component={NotificationScreen} />
-            <Stack.Screen name="CreateRfq" component={CreateRfqScreen} />
-            <Stack.Screen name="RfqList" component={RfqListScreen} />
-            <Stack.Screen name="RfqDetailBidding" component={RfqDetailBiddingScreen} />
-            <Stack.Screen name="Contracts" component={ContractsScreen} />
-            <Stack.Screen name="ContractSign" component={ContractSignScreen} />
-            <Stack.Screen name="DeliveryPoD" component={DeliveryPoDScreen} />
+        {/* B2B Screens */}
+        <Stack.Screen name="Notification" component={NotificationScreen} />
+        <Stack.Screen name="CreateRfq" component={CreateRfqScreen} />
+        <Stack.Screen name="RfqList" component={RfqListScreen} />
+        <Stack.Screen name="RfqDetailBidding" component={RfqDetailBiddingScreen} />
+        <Stack.Screen name="Contracts" component={ContractsScreen} />
+        <Stack.Screen name="ContractSign" component={ContractSignScreen} />
+        <Stack.Screen name="DeliveryPoD" component={DeliveryPoDScreen} />
 
-            {/* AI & Reviews */}
-            <Stack.Screen name="AiAssistant" component={AiAssistantScreen} />
-            <Stack.Screen name="ReviewForm" component={ReviewFormScreen} />
-          </>
-        )}
+        {/* AI & Reviews */}
+        <Stack.Screen name="AiAssistant" component={AiAssistantScreen} />
+        <Stack.Screen name="ReviewForm" component={ReviewFormScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );

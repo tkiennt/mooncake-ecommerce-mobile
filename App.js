@@ -5,6 +5,7 @@ import { AuthProvider } from './src/context/AuthContext';
 import { CartProvider } from './src/context/CartContext';
 import { NotificationProvider } from './src/context/NotificationContext';
 import AppNavigator from './src/navigation/AppNavigator';
+import DevBar from './src/components/dev/DevBar';
 
 export default function App() {
   return (
@@ -14,6 +15,7 @@ export default function App() {
           <NotificationProvider>
             <StatusBar style="light" />
             <AppNavigator />
+            <DevBar />
           </NotificationProvider>
         </CartProvider>
       </AuthProvider>

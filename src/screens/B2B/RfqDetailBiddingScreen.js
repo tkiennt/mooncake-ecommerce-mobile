@@ -60,7 +60,13 @@ const MOCK_BIDS = [
 ];
 
 export default function RfqDetailBiddingScreen({ route, navigation }) {
-  const { rfq } = route.params;
+  const rfq = route?.params?.rfq || {
+    id: 'rfq-001',
+    rfqNumber: 'RFQ-2026-0042',
+    title: 'Đặt 350 Hộp Quà Hoàng Triều Tri Ân Đối Tác VIP',
+    targetQuantity: 350,
+    deliveryDate: '10/08/2026',
+  };
   const [bids, setBids] = useState(MOCK_BIDS);
   const [loadingBidId, setLoadingBidId] = useState(null);
 

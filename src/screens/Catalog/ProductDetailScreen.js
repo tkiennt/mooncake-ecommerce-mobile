@@ -13,9 +13,10 @@ import { COLORS } from '../../theme/colors';
 import AppHeader from '../../components/common/AppHeader';
 import CustomButton from '../../components/common/CustomButton';
 import { useCart } from '../../context/CartContext';
+import { MOCK_PRODUCTS } from '../../api/apiClient';
 
 export default function ProductDetailScreen({ route, navigation }) {
-  const { product } = route.params;
+  const product = route?.params?.product || MOCK_PRODUCTS[0];
   const { addToCart } = useCart();
 
   // Bắt buộc chọn variant (mặc định chọn cái đầu tiên)

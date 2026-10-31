@@ -1,8 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
-  TextInput,
   ScrollView,
   StyleSheet,
   TouchableOpacity,
@@ -12,35 +11,27 @@ import { Ionicons } from '@expo/vector-icons';
 import { COLORS } from '../../theme/colors';
 import AppHeader from '../../components/common/AppHeader';
 import CustomButton from '../../components/common/CustomButton';
+import AntdSteps from '../../components/antd/AntdSteps';
+import AntdOtpInput from '../../components/antd/AntdOtpInput';
 
 export default function ContractSignScreen({ route, navigation }) {
   const { bid, rfq, contractNumber } = route.params || {};
 
   const [agreed, setAgreed] = useState(false);
   const [otpCode, setOtpCode] = useState('');
-  const [countdown, setCountdown] = useState(60);
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    let timer;
-    if (countdown > 0) {
-      timer = setInterval(() => setCountdown((c) => c - 1), 1000);
-    }
-    return () => clearInterval(timer);
-  }, [countdown]);
-
-  const handleSendOtp = () => {
-    setCountdown(60);
-    Alert.alert('Mã OTP Mới', 'Mã xác thực 6 số đã được gửi tới số điện thoại đăng ký của bạn. (Mã demo: 123456)');
+  const handleOtpComplete = (code) => {
+    setOtpCode(code);
   };
 
   const handleConfirmSign = () => {
     if (!agreed) {
-      Alert.alert('Chưa đồng ý điều khoản', 'Vui lòng đọc và bấm xác nhận đồng ý với các điều khoản hợp đồng.');
+      Alert.alert('Chưa xác nhận điều khoản', 'Vui lòng đánh dấu vào ô đồng ý với các điều khoản pháp lý và bảo chứng SafeTrade.');
       return;
     }
     if (otpCode.length < 6) {
-      Alert.alert('Mã OTP không hợp lệ', 'Vui lòng nhập đủ 6 chữ số mã OTP xác thực.');
+      Alert.alert('Chưa nhập đủ OTP', 'Vui lòng nhập đủ 6 chữ số mã OTP xác thực (Mã demo: 123456).');
       return;
     }
 
@@ -48,16 +39,16 @@ export default function ContractSignScreen({ route, navigation }) {
     setTimeout(() => {
       setLoading(false);
       Alert.alert(
-        'Ký Hợp Đồng Thành Công!',
-        `Hợp đồng điện tử ${contractNumber || 'HĐ-2026-0812'} đã được ký kết và đóng dấu thời gian số hợp pháp.\n\nBước tiếp theo: Vui lòng thanh toán khoản Đặt Cọc M1 (30%) để xưởng chính thức kích hoạt dây chuyền sản xuất.`,
+        'Ký Hợp Đồng Điện Tử Thành Công!',
+        `Hợp đồng số ${contractNumber || 'HĐ-2026-0812'} đã được ký số OTP hợp pháp và lưu trên hạ tầng lưu trữ bảo mật.\n\nBước tiếp theo: Vui lòng thanh toán khoản Đặt Cọc M1 (30%) để xưởng chính thức kích hoạt dây chuyền sản xuất.`,
         [
           {
-            text: 'Quản lý Hợp Đồng & Đặt Cọc',
+            text: 'Quản lý Hợp Đồng & Đặt Cọc M1',
             onPress: () => navigation.navigate('Contracts'),
           },
         ]
       );
-    }, 1200);
+    }, 1000);
   };
 
   return (
@@ -69,7 +60,19 @@ export default function ContractSignScreen({ route, navigation }) {
         onBack={() => navigation.goBack()}
       />
 
-      <ScrollView contentContainerStyle={styles.scroll}>
+      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+        {/* Ant Design Steps: Bước 3 */}
+        <View style={styles.stepsCard}>
+          <AntdSteps
+            current={2}
+            items={[
+              { title: '1. Nhu Cầu', desc: 'Đã hoàn tất' },
+              { title: '2. Báo Giá', desc: 'Đã duyệt Bid' },
+              { title: '3. Ký HĐ', desc: 'Ký số & Cọc M1' },
+            ]}
+          />
+        </View>
+
         {/* Parties Box */}
         <View style={styles.card}>
           <Text style={styles.cardHeading}>CÁC BÊN THAM GIA HỢP ĐỒNG</Text>
@@ -80,90 +83,91 @@ export default function ContractSignScreen({ route, navigation }) {
             <Text style={styles.partyMeta}>MST: 0312456789 • Đại diện: Nguyễn Văn An</Text>
           </View>
 
-          <View style={styles.partyDivider} />
+          <View style={styles.divider} />
 
           <View style={styles.partyItem}>
-            <Text style={styles.partyRole}>BÊN B (BÊN BÁN):</Text>
+            <Text style={styles.partyRole}>BÊN B (XƯỞNG CUNG CẤP):</Text>
             <Text style={styles.partyName}>{bid?.supplierName || 'Xưởng Bánh Nghệ Nhân Kinh Đô Cổ'}</Text>
-            <Text style={styles.partyMeta}>MST: 0108923456 • Chứng nhận ATTP số: 452/2026/ATTP</Text>
+            <Text style={styles.partyMeta}>MST: 0108991234 • Chứng nhận: ISO 22000 & HACCP</Text>
           </View>
         </View>
 
-        {/* Scope and Terms Preview */}
+        {/* Terms Box */}
         <View style={styles.card}>
-          <Text style={styles.cardHeading}>TÓM TẮT ĐIỀU KHOẢN CHÍNH</Text>
+          <Text style={styles.cardHeading}>ĐIỀU KHOẢN & TIẾN ĐỘ THỰC HIỆN</Text>
 
           <View style={styles.termRow}>
-            <Text style={styles.termLabel}>Gói hàng hóa:</Text>
-            <Text style={styles.termVal}>{rfq?.title || '350 Hộp Bánh Hoàng Triều Thượng Hạng'}</Text>
+            <Ionicons name="cube-outline" size={16} color={COLORS.primary} />
+            <Text style={styles.termText}>
+              Gói sản phẩm: <Text style={styles.bold}>{rfq?.title || '350 Hộp Bánh Hoàng Triều Thượng Hạng'}</Text>
+            </Text>
           </View>
+
           <View style={styles.termRow}>
-            <Text style={styles.termLabel}>Tổng giá trị thanh toán:</Text>
-            <Text style={[styles.termVal, styles.price]}>238.000.000 ₫ (Đã gồm VAT 8%)</Text>
+            <Ionicons name="cash-outline" size={16} color={COLORS.primary} />
+            <Text style={styles.termText}>
+              Tổng giá trị HĐ: <Text style={styles.boldPrice}>238.000.000 ₫ (Đã gồm 8% VAT)</Text>
+            </Text>
           </View>
+
           <View style={styles.termRow}>
-            <Text style={styles.termLabel}>Điều khoản thanh toán:</Text>
-            <Text style={styles.termVal}>M1: Đặt cọc 30% • M2: 50% khi giao hàng • M3: 20% khi nghiệm thu</Text>
+            <Ionicons name="snow-outline" size={16} color={COLORS.accent} />
+            <Text style={styles.termText}>
+              Quy cách giao: Vận chuyển xe lạnh 20-25°C, giao đa điểm theo danh sách chi nhánh.
+            </Text>
           </View>
+
           <View style={styles.termRow}>
-            <Text style={styles.termLabel}>Chế tài phạt vi phạm:</Text>
-            <Text style={styles.termVal}>{bid?.penaltyTerms || 'Phạt 2% mỗi ngày trễ hạn, bồi thường 100% nếu hàng lỗi.'}</Text>
+            <Ionicons name="shield-checkmark-outline" size={16} color="#059669" />
+            <Text style={styles.termText}>
+              Bảo chứng SafeTrade: Tiền cọc được giữ tại tài khoản ký quỹ trung gian, chỉ giải ngân từng mốc sau khi ký biên bản PoD.
+            </Text>
           </View>
         </View>
 
         {/* Agreement Checkbox */}
         <TouchableOpacity
-          style={styles.checkContainer}
+          style={styles.checkboxRow}
+          activeOpacity={0.8}
           onPress={() => setAgreed(!agreed)}
         >
           <Ionicons
             name={agreed ? 'checkbox' : 'square-outline'}
-            size={24}
+            size={22}
             color={COLORS.primary}
           />
-          <Text style={styles.checkLabel}>
-            Tôi cam kết đại diện pháp luật doanh nghiệp đã đọc, hiểu rõ và đồng ý toàn bộ điều khoản pháp lý trong dự thảo hợp đồng điện tử này.
+          <Text style={styles.checkboxLabel}>
+            Tôi là người đại diện hợp pháp của doanh nghiệp, đã đọc kỹ và đồng ý toàn bộ điều khoản hợp đồng kinh tế điện tử nói trên.
           </Text>
         </TouchableOpacity>
 
-        {/* OTP Section */}
+        {/* Ant Design OTP 6-Digit Input Box */}
         <View style={styles.otpCard}>
-          <Text style={styles.otpHeading}>XÁC THỰC KÝ SỐ BẰNG OTP</Text>
+          <View style={styles.otpHeader}>
+            <Ionicons name="key-outline" size={18} color={COLORS.primary} />
+            <Text style={styles.otpTitle}>Xác Thực Chữ Ký Số Doanh Nghiệp</Text>
+          </View>
           <Text style={styles.otpSub}>
-            Mã OTP gồm 6 chữ số đã được gửi qua tin nhắn SMS tới số điện thoại của bạn.
+            Mã OTP 6 số bảo mật đã được gửi tới số điện thoại đại diện pháp luật (Mã mẫu demo: <Text style={styles.bold}>123456</Text>).
           </Text>
 
-          <View style={styles.otpInputRow}>
-            <TextInput
-              style={styles.otpInput}
-              placeholder="Nhập mã OTP (ví dụ: 123456)"
-              value={otpCode}
-              onChangeText={setOtpCode}
-              keyboardType="number-pad"
-              maxLength={6}
-            />
-          </View>
-
-          <TouchableOpacity
-            style={styles.resendBtn}
-            disabled={countdown > 0}
-            onPress={handleSendOtp}
-          >
-            <Text style={[styles.resendText, countdown > 0 && { color: COLORS.textMuted }]}>
-              {countdown > 0 ? `Gửi lại mã OTP sau ${countdown}s` : 'Gửi lại mã OTP'}
-            </Text>
-          </TouchableOpacity>
+          <AntdOtpInput
+            length={6}
+            onComplete={handleOtpComplete}
+            countdownSeconds={60}
+            onResend={() => Alert.alert('OTP mới', 'Mã xác thực mới đã gửi về số điện thoại của bạn.')}
+          />
         </View>
 
+        {/* Action Button */}
         <CustomButton
-          title="Xác Nhận Ký Số Điện Tử"
+          title={loading ? 'Đang tạo chữ ký số...' : 'Xác Nhận Ký Hợp Đồng Điện Tử'}
           icon="✍️"
           onPress={handleConfirmSign}
-          loading={loading}
-          disabled={!agreed}
-          size="large"
+          disabled={loading || !agreed}
           style={styles.signBtn}
         />
+        <View style={{ height: 40 }} />
       </ScrollView>
     </View>
   );
@@ -178,130 +182,112 @@ const styles = StyleSheet.create({
     padding: 16,
     paddingBottom: 40,
   },
-  card: {
-    backgroundColor: '#FFF',
+  stepsCard: {
+    backgroundColor: COLORS.surface,
     borderRadius: 12,
     borderWidth: 1,
     borderColor: COLORS.border,
-    padding: 16,
-    marginBottom: 16,
-  },
-  cardHeading: {
-    fontSize: 13,
-    fontWeight: '800',
-    color: COLORS.primary,
-    letterSpacing: 0.5,
     marginBottom: 12,
   },
+  card: {
+    backgroundColor: COLORS.surface,
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 14,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  },
+  cardHeading: {
+    fontSize: 12,
+    fontWeight: '800',
+    color: COLORS.primaryDark,
+    marginBottom: 12,
+    letterSpacing: 0.5,
+  },
   partyItem: {
-    paddingVertical: 4,
+    gap: 3,
   },
   partyRole: {
     fontSize: 11,
     fontWeight: '700',
-    color: COLORS.textMuted,
+    color: COLORS.accent,
   },
   partyName: {
     fontSize: 14,
-    fontWeight: '700',
+    fontWeight: '800',
     color: COLORS.textPrimary,
-    marginTop: 2,
   },
   partyMeta: {
-    fontSize: 12,
+    fontSize: 11,
     color: COLORS.textSecondary,
-    marginTop: 2,
   },
-  partyDivider: {
+  divider: {
     height: 1,
-    backgroundColor: COLORS.border,
-    marginVertical: 10,
+    backgroundColor: '#F5F0E6',
+    marginVertical: 12,
   },
   termRow: {
-    marginBottom: 10,
-  },
-  termLabel: {
-    fontSize: 12,
-    color: COLORS.textMuted,
-    fontWeight: '500',
-  },
-  termVal: {
-    fontSize: 13,
-    color: COLORS.textPrimary,
-    fontWeight: '600',
-    marginTop: 2,
-    lineHeight: 18,
-  },
-  price: {
-    color: COLORS.primary,
-    fontSize: 15,
-    fontWeight: '800',
-  },
-  checkContainer: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    backgroundColor: '#FAFAF8',
-    padding: 14,
-    borderRadius: 10,
+    gap: 8,
+    marginBottom: 10,
+  },
+  termText: {
+    fontSize: 12,
+    color: COLORS.textSecondary,
+    flex: 1,
+    lineHeight: 18,
+  },
+  bold: {
+    fontWeight: '700',
+    color: COLORS.textPrimary,
+  },
+  boldPrice: {
+    fontWeight: '800',
+    color: COLORS.primary,
+  },
+  checkboxRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 10,
+    backgroundColor: COLORS.surface,
+    padding: 12,
+    borderRadius: 8,
     borderWidth: 1,
     borderColor: COLORS.border,
-    marginBottom: 16,
+    marginBottom: 14,
   },
-  checkLabel: {
-    flex: 1,
+  checkboxLabel: {
     fontSize: 12,
     color: COLORS.textPrimary,
-    marginLeft: 10,
+    flex: 1,
     lineHeight: 18,
   },
   otpCard: {
-    backgroundColor: '#FFF',
+    backgroundColor: COLORS.surface,
     borderRadius: 12,
-    borderWidth: 1,
-    borderColor: COLORS.border,
     padding: 16,
-    marginBottom: 20,
-    alignItems: 'center',
+    borderWidth: 1.2,
+    borderColor: '#E8D2A3',
+    marginBottom: 16,
   },
-  otpHeading: {
+  otpHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 4,
+  },
+  otpTitle: {
     fontSize: 13,
     fontWeight: '800',
-    color: COLORS.textPrimary,
+    color: COLORS.primaryDark,
   },
   otpSub: {
-    fontSize: 12,
-    color: COLORS.textMuted,
-    textAlign: 'center',
-    marginTop: 4,
-    marginBottom: 14,
-  },
-  otpInputRow: {
-    width: '100%',
-    alignItems: 'center',
-  },
-  otpInput: {
-    borderWidth: 1.5,
-    borderColor: COLORS.primary,
-    borderRadius: 8,
-    width: '80%',
-    height: 48,
-    textAlign: 'center',
-    fontSize: 18,
-    fontWeight: '700',
-    letterSpacing: 4,
-    backgroundColor: '#FAFAF8',
-    color: COLORS.textPrimary,
-  },
-  resendBtn: {
-    marginTop: 12,
-  },
-  resendText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: COLORS.primary,
+    fontSize: 11,
+    color: COLORS.textSecondary,
+    marginBottom: 8,
   },
   signBtn: {
-    marginBottom: 20,
+    marginTop: 4,
   },
 });
-

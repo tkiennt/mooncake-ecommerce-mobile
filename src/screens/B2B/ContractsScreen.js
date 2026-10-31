@@ -22,9 +22,9 @@ const MOCK_CONTRACTS = [
     statusColor: '#D46B08',
     signedDate: '30/10/2026',
     milestones: [
-      { name: 'M1: Đặt cọc 30%', amount: 71400000, status: 'Pending', dueDate: '05/08/2026', isMandatory: true },
-      { name: 'M2: Giao hàng đợt 1 (50%)', amount: 119000000, status: 'Upcoming', dueDate: '15/08/2026' },
-      { name: 'M3: Nghiệm thu & Thanh toán 20%', amount: 47600000, status: 'Upcoming', dueDate: '25/08/2026' },
+      { name: 'M1: Đặt cọc 30%', amount: 71400000, status: 'Pending', dueDate: '05/08/2026', isMandatory: true, desc: 'Kích hoạt hợp đồng và xuất hóa đơn VAT đợt 1' },
+      { name: 'M2: Giao hàng đợt 1 (50%)', amount: 119000000, status: 'Upcoming', dueDate: '15/08/2026', desc: 'Vận chuyển xe lạnh chuyên dụng kiểm định PoD' },
+      { name: 'M3: Nghiệm thu & Thanh toán 20%', amount: 47600000, status: 'Upcoming', dueDate: '25/08/2026', desc: 'Hoàn tất giải ngân ký quỹ SafeTrade' },
     ],
   },
   {
@@ -37,9 +37,9 @@ const MOCK_CONTRACTS = [
     statusColor: '#0958D9',
     signedDate: '15/10/2026',
     milestones: [
-      { name: 'M1: Đặt cọc 30%', amount: 54000000, status: 'Completed', dueDate: '18/10/2026' },
-      { name: 'M2: Giao hàng đợt 1 (50%)', amount: 90000000, status: 'InProgress', dueDate: '02/11/2026' },
-      { name: 'M3: Nghiệm thu 20%', amount: 36000000, status: 'Upcoming', dueDate: '15/11/2026' },
+      { name: 'M1: Đặt cọc 30%', amount: 54000000, status: 'Completed', dueDate: '18/10/2026', desc: 'Đã thanh toán qua Ký quỹ Ngân hàng Escrow' },
+      { name: 'M2: Giao hàng đợt 1 (50%)', amount: 90000000, status: 'InProgress', dueDate: '02/11/2026', desc: 'Đang đóng gói và kiểm định chất lượng bao bì' },
+      { name: 'M3: Nghiệm thu 20%', amount: 36000000, status: 'Upcoming', dueDate: '15/11/2026', desc: 'Nghiệm thu thực tế tại địa điểm giao nhận' },
     ],
   },
 ];
@@ -57,13 +57,16 @@ export default function ContractsScreen({ navigation }) {
   const handlePayDeposit = (contract, milestone) => {
     Alert.alert(
       'Thanh Toán Đặt Cọc M1',
-      `Số tiền cọc: ${formatVND(milestone.amount)} (30% giá trị hợp đồng).\n\nSau khi thanh toán qua SafeTrade Escrow / VNPay, hợp đồng sẽ chính thức kích hoạt chuyển sang trạng thái Active để xưởng làm bánh.`,
+      `Hợp đồng: ${contract.contractNumber}\nSố tiền cọc: ${formatVND(milestone.amount)} (30% giá trị hợp đồng).\n\nKhoản thanh toán được bảo chứng an toàn qua SafeTrade Escrow / VNPay B2B. Sau khi hoàn tất, xưởng sẽ lập tức đưa vào dây chuyền sản xuất.`,
       [
-        { text: 'Hủy', style: 'cancel' },
+        { text: 'Để sau', style: 'cancel' },
         {
-          text: 'Thanh Toán Ngay',
+          text: 'Xác Nhận Thanh Toán Ký Quỹ',
           onPress: () => {
-            Alert.alert('Thành công', 'Đã ghi nhận giao dịch đặt cọc M1 qua cổng thanh toán!');
+            Alert.alert(
+              'Giao Dịch Đặt Cọc Thành Công!',
+              'Hệ thống đã ghi nhận tiền cọc M1 vào tài khoản SafeTrade Escrow và chuyển trạng thái hợp đồng sang "Active - Đang sản xuất".'
+            );
           },
         },
       ]
@@ -79,97 +82,105 @@ export default function ContractsScreen({ navigation }) {
         onBack={() => navigation.goBack()}
       />
 
-      <ScrollView contentContainerStyle={styles.scroll}>
-        <View style={styles.noticeCard}>
-          <Ionicons name="shield-checkmark" size={20} color={COLORS.accent} />
-          <Text style={styles.noticeText}>
-            Hợp đồng điện tử trên Nguyệt Phố B2B có giá trị pháp lý tương đương văn bản giấy theo Luật Giao dịch Điện tử, bảo vệ quyền lợi 100% người mua hàng.
-          </Text>
-        </View>
-
-        {contracts.map((item) => (
-          <View key={item.id} style={styles.contractCard}>
-            <View style={styles.headerRow}>
+      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+        {contracts.map((contract) => (
+          <View key={contract.id} style={styles.contractCard}>
+            {/* Header info */}
+            <View style={styles.cardHeader}>
               <View>
-                <Text style={styles.contractNum}>{item.contractNumber}</Text>
-                <Text style={styles.supplierText}>{item.supplierName}</Text>
+                <Text style={styles.contractNumber}>{contract.contractNumber}</Text>
+                <Text style={styles.supplierName}>{contract.supplierName}</Text>
               </View>
-              <View
-                style={[
-                  styles.statusTag,
-                  { backgroundColor: `${item.statusColor}15` },
-                ]}
-              >
-                <Text style={[styles.statusText, { color: item.statusColor }]}>
-                  {item.statusLabel}
+              <View style={[styles.statusBadge, { backgroundColor: contract.statusColor + '15' }]}>
+                <Text style={[styles.statusText, { color: contract.statusColor }]}>
+                  {contract.statusLabel}
                 </Text>
               </View>
             </View>
 
             <View style={styles.valueRow}>
               <Text style={styles.valueLabel}>Tổng giá trị hợp đồng:</Text>
-              <Text style={styles.valueNumber}>{formatVND(item.totalValue)}</Text>
+              <Text style={styles.valueText}>{formatVND(contract.totalValue)}</Text>
             </View>
 
-            <View style={styles.divider} />
-
-            <Text style={styles.milestoneTitle}>
-              <Ionicons name="flag-outline" size={14} color={COLORS.primary} /> Các Mốc Tiến Độ Thanh Toán:
-            </Text>
-
-            {item.milestones.map((m, idx) => (
-              <View key={idx} style={styles.milestoneRow}>
-                <View style={styles.mLeft}>
-                  <Ionicons
-                    name={
-                      m.status === 'Completed'
-                        ? 'checkmark-circle'
-                        : m.status === 'Pending'
-                        ? 'time'
-                        : 'radio-button-off'
-                    }
-                    size={16}
-                    color={
-                      m.status === 'Completed'
-                        ? COLORS.success
-                        : m.status === 'Pending'
-                        ? COLORS.warning
-                        : COLORS.textMuted
-                    }
-                  />
-                  <View style={styles.mInfo}>
-                    <Text style={styles.mName}>{m.name}</Text>
-                    <Text style={styles.mDue}>Hạn: {m.dueDate}</Text>
-                  </View>
-                </View>
-
-                <View style={styles.mRight}>
-                  <Text style={styles.mAmount}>{formatVND(m.amount)}</Text>
-                  {m.status === 'Pending' && (
-                    <TouchableOpacity
-                      style={styles.payBtn}
-                      onPress={() => handlePayDeposit(item, m)}
-                    >
-                      <Text style={styles.payBtnText}>Đặt cọc ngay</Text>
-                    </TouchableOpacity>
-                  )}
-                </View>
+            {/* Ant Design Timeline Milestones */}
+            <View style={styles.timelineSection}>
+              <View style={styles.timelineHeader}>
+                <Ionicons name="git-network-outline" size={16} color={COLORS.primary} />
+                <Text style={styles.timelineTitle}>Lộ Trình Giải Ngân & Milestones</Text>
               </View>
-            ))}
 
-            <View style={styles.cardActions}>
+              <View style={styles.timelineList}>
+                {contract.milestones.map((m, idx) => {
+                  const isCompleted = m.status === 'Completed';
+                  const isPending = m.status === 'Pending';
+                  const isLast = idx === contract.milestones.length - 1;
+
+                  return (
+                    <View key={idx} style={styles.timelineItem}>
+                      {/* Left: Indicator & connecting line */}
+                      <View style={styles.indicatorCol}>
+                        <View
+                          style={[
+                            styles.timelineDot,
+                            isCompleted && styles.dotCompleted,
+                            isPending && styles.dotPending,
+                          ]}
+                        >
+                          {isCompleted ? (
+                            <Ionicons name="checkmark" size={10} color="#FFFFFF" />
+                          ) : (
+                            <View style={styles.dotCenter} />
+                          )}
+                        </View>
+                        {!isLast && <View style={[styles.timelineLine, isCompleted && styles.lineCompleted]} />}
+                      </View>
+
+                      {/* Right: Content */}
+                      <View style={styles.contentCol}>
+                        <View style={styles.milestoneTop}>
+                          <Text style={[styles.milestoneName, isPending && styles.milestoneNamePending]}>
+                            {m.name}
+                          </Text>
+                          <Text style={styles.milestoneAmount}>{formatVND(m.amount)}</Text>
+                        </View>
+
+                        <Text style={styles.milestoneDesc}>{m.desc}</Text>
+                        <Text style={styles.milestoneDueDate}>Hạn giải ngân: {m.dueDate}</Text>
+
+                        {isPending && (
+                          <TouchableOpacity
+                            style={styles.payBtn}
+                            onPress={() => handlePayDeposit(contract, m)}
+                          >
+                            <Ionicons name="card-outline" size={14} color="#FFFFFF" />
+                            <Text style={styles.payBtnText}>Thanh Toán Đặt Cọc M1 (30%)</Text>
+                          </TouchableOpacity>
+                        )}
+                      </View>
+                    </View>
+                  );
+                })}
+              </View>
+            </View>
+
+            {/* Bottom Actions */}
+            <View style={styles.cardFooter}>
+              <View style={styles.signedInfo}>
+                <Ionicons name="shield-checkmark" size={14} color="#059669" />
+                <Text style={styles.signedText}>Ký số OTP ngày {contract.signedDate}</Text>
+              </View>
               <TouchableOpacity
-                style={styles.actionBtn}
-                onPress={() =>
-                  Alert.alert('PDF Hợp Đồng', 'Đang tải bản PDF hợp đồng có chữ ký số điện tử...')
-                }
+                style={styles.pdfBtn}
+                onPress={() => Alert.alert('Tải Hợp Đồng', 'Đang kết xuất bản PDF hợp đồng có đóng dấu thời gian số...')}
               >
-                <Ionicons name="document-text-outline" size={16} color={COLORS.primary} />
-                <Text style={styles.actionBtnText}>Xem File PDF Hợp Đồng</Text>
+                <Ionicons name="download-outline" size={14} color={COLORS.primary} />
+                <Text style={styles.pdfBtnText}>Tải file PDF</Text>
               </TouchableOpacity>
             </View>
           </View>
         ))}
+        <View style={{ height: 40 }} />
       </ScrollView>
     </View>
   );
@@ -184,46 +195,39 @@ const styles = StyleSheet.create({
     padding: 16,
     paddingBottom: 40,
   },
-  noticeCard: {
-    flexDirection: 'row',
-    backgroundColor: '#FFFBE6',
-    borderWidth: 1,
-    borderColor: '#FFE58F',
-    borderRadius: 10,
-    padding: 12,
-    marginBottom: 16,
-  },
-  noticeText: {
-    flex: 1,
-    marginLeft: 8,
-    fontSize: 12,
-    color: '#873800',
-    lineHeight: 18,
-  },
   contractCard: {
-    backgroundColor: '#FFF',
-    borderRadius: 12,
+    backgroundColor: COLORS.surface,
+    borderRadius: 14,
     borderWidth: 1,
     borderColor: COLORS.border,
     padding: 16,
     marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
+    elevation: 2,
   },
-  headerRow: {
+  cardHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
+    borderBottomWidth: 1,
+    borderBottomColor: '#F5F0E6',
+    paddingBottom: 10,
+    marginBottom: 10,
   },
-  contractNum: {
+  contractNumber: {
     fontSize: 15,
     fontWeight: '800',
-    color: COLORS.primary,
+    color: COLORS.primaryDark,
   },
-  supplierText: {
+  supplierName: {
     fontSize: 12,
     color: COLORS.textSecondary,
     marginTop: 2,
   },
-  statusTag: {
+  statusBadge: {
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 6,
@@ -236,94 +240,162 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: '#FAFAF8',
-    padding: 10,
-    borderRadius: 8,
-    marginTop: 12,
+    marginBottom: 14,
   },
   valueLabel: {
     fontSize: 12,
     color: COLORS.textSecondary,
   },
-  valueNumber: {
+  valueText: {
     fontSize: 16,
-    fontWeight: '800',
+    fontWeight: '900',
     color: COLORS.primary,
   },
-  divider: {
-    height: 1,
+  timelineSection: {
+    backgroundColor: COLORS.background,
+    borderRadius: 10,
+    padding: 12,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#EFE7DA',
+  },
+  timelineHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 12,
+  },
+  timelineTitle: {
+    fontSize: 12,
+    fontWeight: '800',
+    color: COLORS.primaryDark,
+    letterSpacing: 0.5,
+  },
+  timelineList: {
+    paddingLeft: 4,
+  },
+  timelineItem: {
+    flexDirection: 'row',
+    marginBottom: 12,
+  },
+  indicatorCol: {
+    alignItems: 'center',
+    width: 20,
+    marginRight: 10,
+  },
+  timelineDot: {
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    backgroundColor: COLORS.surface,
+    borderWidth: 2,
+    borderColor: COLORS.borderDark,
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 2,
+  },
+  dotCompleted: {
+    backgroundColor: COLORS.accent, // Imperial Gold
+    borderColor: '#E8D2A3',
+  },
+  dotPending: {
+    backgroundColor: COLORS.primary, // Crimson Luxury
+    borderColor: '#FFCCD0',
+  },
+  dotCenter: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: COLORS.textMuted,
+  },
+  timelineLine: {
+    width: 2,
+    flex: 1,
     backgroundColor: COLORS.border,
-    marginVertical: 12,
+    marginVertical: 2,
   },
-  milestoneTitle: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: COLORS.textPrimary,
-    marginBottom: 10,
+  lineCompleted: {
+    backgroundColor: COLORS.accent,
   },
-  milestoneRow: {
+  contentCol: {
+    flex: 1,
+  },
+  milestoneTop: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F5F3EF',
   },
-  mLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-  },
-  mInfo: {
-    marginLeft: 8,
-  },
-  mName: {
-    fontSize: 13,
-    fontWeight: '600',
+  milestoneName: {
+    fontSize: 12,
+    fontWeight: '700',
     color: COLORS.textPrimary,
   },
-  mDue: {
+  milestoneNamePending: {
+    color: COLORS.primary,
+  },
+  milestoneAmount: {
+    fontSize: 12,
+    fontWeight: '800',
+    color: COLORS.primaryDark,
+  },
+  milestoneDesc: {
     fontSize: 11,
+    color: COLORS.textSecondary,
+    marginTop: 2,
+  },
+  milestoneDueDate: {
+    fontSize: 10,
     color: COLORS.textMuted,
     marginTop: 2,
   },
-  mRight: {
-    alignItems: 'flex-end',
-  },
-  mAmount: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: COLORS.textPrimary,
-  },
   payBtn: {
-    backgroundColor: COLORS.primary,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 4,
-    marginTop: 4,
-  },
-  payBtnText: {
-    color: '#FFF',
-    fontSize: 11,
-    fontWeight: '700',
-  },
-  cardActions: {
-    marginTop: 14,
-    paddingTop: 10,
-    borderTopWidth: 1,
-    borderTopColor: COLORS.border,
-  },
-  actionBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 6,
+    backgroundColor: COLORS.primary,
+    borderRadius: 6,
+    paddingVertical: 7,
+    paddingHorizontal: 12,
+    marginTop: 8,
+    alignSelf: 'flex-start',
+    gap: 6,
   },
-  actionBtnText: {
-    fontSize: 13,
+  payBtnText: {
+    color: '#FFFFFF',
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  cardFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: '#F5F0E6',
+  },
+  signedInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  signedText: {
+    fontSize: 11,
+    color: '#059669',
+    fontWeight: '600',
+  },
+  pdfBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    borderWidth: 1,
+    borderColor: COLORS.primary,
+    borderRadius: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+  },
+  pdfBtnText: {
+    fontSize: 11,
     fontWeight: '700',
     color: COLORS.primary,
-    marginLeft: 6,
   },
 });
-

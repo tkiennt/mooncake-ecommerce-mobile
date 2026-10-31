@@ -11,6 +11,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { COLORS } from '../../theme/colors';
 import AppHeader from '../../components/common/AppHeader';
 import CustomButton from '../../components/common/CustomButton';
+import AntdSteps from '../../components/antd/AntdSteps';
 import { apiClient } from '../../api/apiClient';
 import { ENDPOINTS } from '../../api/endpoints';
 
@@ -67,7 +68,7 @@ export default function RfqDetailBiddingScreen({ route, navigation }) {
     targetQuantity: 350,
     deliveryDate: '10/08/2026',
   };
-  const [bids, setBids] = useState(MOCK_BIDS);
+  const [bids] = useState(MOCK_BIDS);
   const [loadingBidId, setLoadingBidId] = useState(null);
 
   const formatVND = (num) => {
@@ -88,7 +89,6 @@ export default function RfqDetailBiddingScreen({ route, navigation }) {
           onPress: async () => {
             setLoadingBidId(bid.id);
             try {
-              // Gọi API backend
               await apiClient.post(ENDPOINTS.ACCEPT_BID(rfq.id, bid.id));
             } catch (e) {
               // demo fallback
@@ -99,7 +99,7 @@ export default function RfqDetailBiddingScreen({ route, navigation }) {
                 `Dự thảo Hợp đồng số HĐ-2026-0812 đã được tự động khởi tạo. Vui lòng ký số bằng OTP để kích hoạt mốc đặt cọc.`,
                 [
                   {
-                    text: 'Xem & Ký Hợp Đồng Ngay',
+                    text: 'Chuyển sang Ký Hợp Đồng Ngay',
                     onPress: () =>
                       navigation.navigate('ContractSign', {
                         bid,
@@ -119,88 +119,138 @@ export default function RfqDetailBiddingScreen({ route, navigation }) {
   return (
     <View style={styles.container}>
       <AppHeader
-        title="So Sánh Báo Giá Thầu"
-        subtitle={rfq.rfqNumber}
+        title="So Sánh Báo Giá Đấu Thầu"
+        subtitle={rfq.rfqNumber || 'RFQ-2026-0042'}
         showBack={true}
         onBack={() => navigation.goBack()}
       />
 
-      <ScrollView contentContainerStyle={styles.scroll}>
-        {/* RFQ Summary Card */}
-        <View style={styles.rfqCard}>
-          <Text style={styles.rfqTitle}>{rfq.title}</Text>
-          <View style={styles.rfqMetaRow}>
-            <Text style={styles.rfqMeta}>Số lượng: <Text style={styles.bold}>{rfq.targetQuantity} hộp</Text></Text>
-            <Text style={styles.rfqMeta}>Cần giao: <Text style={styles.bold}>{rfq.deliveryDate}</Text></Text>
+      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+        {/* Ant Design Steps: Bước 2 */}
+        <View style={styles.stepsCard}>
+          <AntdSteps
+            current={1}
+            items={[
+              { title: '1. Nhu Cầu', desc: 'Đã hoàn tất' },
+              { title: '2. Báo Giá', desc: 'So sánh & Chọn' },
+              { title: '3. Ký HĐ', desc: 'Ký số & Cọc M1' },
+            ]}
+          />
+        </View>
+
+        {/* RFQ Brief Info */}
+        <View style={styles.briefCard}>
+          <Text style={styles.briefTitle}>{rfq.title}</Text>
+          <View style={styles.briefMeta}>
+            <View style={styles.metaCol}>
+              <Text style={styles.metaLabel}>Số lượng đặt:</Text>
+              <Text style={styles.metaVal}>{rfq.targetQuantity} hộp</Text>
+            </View>
+            <View style={styles.metaCol}>
+              <Text style={styles.metaLabel}>Hạn giao hàng:</Text>
+              <Text style={styles.metaVal}>{rfq.deliveryDate}</Text>
+            </View>
+            <View style={styles.metaCol}>
+              <Text style={styles.metaLabel}>Số xưởng nộp Bid:</Text>
+              <Text style={styles.metaHighlight}>{bids.length} báo giá</Text>
+            </View>
           </View>
         </View>
 
-        <Text style={styles.bidsHeading}>
-          Có <Text style={styles.highlight}>{bids.length} xưởng</Text> nộp báo giá cạnh tranh
-        </Text>
+        {/* Bids Section Heading */}
+        <View style={styles.sectionHeader}>
+          <Ionicons name="git-compare" size={18} color={COLORS.primary} />
+          <Text style={styles.sectionTitle}>Danh Sách Báo Giá Side-by-Side</Text>
+        </View>
 
+        {/* Lucian Comparison Cards */}
         {bids.map((bid) => (
           <View
             key={bid.id}
-            style={[styles.bidCard, bid.isRecommended && styles.recommendedCard]}
+            style={[
+              styles.bidCard,
+              bid.isRecommended && styles.bidCardRecommended,
+            ]}
           >
             {bid.isRecommended && (
-              <View style={styles.recBadge}>
-                <Ionicons name="sparkles" size={12} color="#FFF" />
-                <Text style={styles.recBadgeText}>ĐỀ XUẤT TỐI ƯU NHẤT</Text>
+              <View style={styles.ribbon}>
+                <Ionicons name="sparkles" size={12} color="#FFFFFF" />
+                <Text style={styles.ribbonText}>👑 ĐỀ XUẤT TỐI ƯU · ĐIỂM TÍN NHIỆM 98/100</Text>
               </View>
             )}
 
-            <View style={styles.bidHeader}>
-              <View style={styles.supplierCol}>
+            <View style={styles.cardHeader}>
+              <View style={styles.supplierWrap}>
                 <Text style={styles.supplierName}>{bid.supplierName}</Text>
-                <View style={styles.scoreRow}>
-                  <View style={styles.badgeTag}>
-                    <Text style={styles.badgeText}>{bid.badge}</Text>
-                  </View>
-                  <Text style={styles.scoreText}>Điểm uy tín: {bid.reputationScore}/100</Text>
+                <View style={styles.scoreBadge}>
+                  <Ionicons name="shield-checkmark" size={12} color={COLORS.primary} />
+                  <Text style={styles.scoreText}>{bid.badge} ({bid.reputationScore}đ)</Text>
                 </View>
               </View>
               <Text style={styles.bidNumber}>{bid.bidNumber}</Text>
             </View>
 
-            <View style={styles.pricingBox}>
+            {/* Price Box */}
+            <View style={styles.priceContainer}>
               <View>
-                <Text style={styles.priceSub}>Đơn giá chào thầu</Text>
-                <Text style={styles.unitPrice}>{formatVND(bid.unitPrice)} <Text style={styles.perBox}>/hộp</Text></Text>
+                <Text style={styles.priceSub}>Đơn giá sản xuất:</Text>
+                <Text style={styles.unitPriceText}>{formatVND(bid.unitPrice)}/hộp</Text>
               </View>
-              <View style={styles.totalBox}>
-                <Text style={styles.priceSub}>Tổng giá trị thầu</Text>
-                <Text style={styles.totalPrice}>{formatVND(bid.totalPrice)}</Text>
-              </View>
-            </View>
-
-            <View style={styles.bidDetails}>
-              <View style={styles.detailRow}>
-                <Ionicons name="time-outline" size={16} color={COLORS.textSecondary} />
-                <Text style={styles.detailText}>Thời gian giao: <Text style={styles.bold}>{bid.deliveryDays}</Text></Text>
-              </View>
-              <View style={styles.detailRow}>
-                <Ionicons name="gift-outline" size={16} color={COLORS.textSecondary} />
-                <Text style={styles.detailText}>Đóng gói & In ấn: {bid.customPackagingNotes}</Text>
-              </View>
-              <View style={styles.detailRow}>
-                <Ionicons name="shield-outline" size={16} color={COLORS.textSecondary} />
-                <Text style={styles.detailText}>Chế tài phạt: {bid.penaltyTerms}</Text>
+              <View style={{ alignItems: 'flex-end' }}>
+                <Text style={styles.priceSub}>Tổng gói thầu:</Text>
+                <Text style={styles.totalPriceText}>{formatVND(bid.totalPrice)}</Text>
               </View>
             </View>
 
-            <CustomButton
-              title="Chấp Thuận Báo Giá Này"
-              icon="✓"
+            {/* Terms Details */}
+            <View style={styles.detailsList}>
+              <View style={styles.detailItem}>
+                <Ionicons name="time-outline" size={14} color={COLORS.accent} />
+                <Text style={styles.detailText}>
+                  Thời gian sản xuất: <Text style={styles.bold}>{bid.deliveryDays}</Text>
+                </Text>
+              </View>
+              <View style={styles.detailItem}>
+                <Ionicons name="gift-outline" size={14} color={COLORS.accent} />
+                <Text style={styles.detailText}>
+                  Gia công hộp: <Text style={styles.bold}>{bid.customPackagingNotes}</Text>
+                </Text>
+              </View>
+              <View style={styles.detailItem}>
+                <Ionicons name="shield-outline" size={14} color={COLORS.accent} />
+                <Text style={styles.detailText}>
+                  Cam kết bảo lãnh: <Text style={styles.bold}>{bid.penaltyTerms}</Text>
+                </Text>
+              </View>
+            </View>
+
+            {/* Action Accept Button */}
+            <TouchableOpacity
+              style={[
+                styles.acceptBtn,
+                bid.isRecommended ? styles.acceptBtnPrimary : styles.acceptBtnOutline,
+              ]}
               onPress={() => handleAcceptBid(bid)}
-              loading={loadingBidId === bid.id}
-              variant={bid.isRecommended ? 'primary' : 'outline'}
-              size="medium"
-              style={styles.acceptBtn}
-            />
+              disabled={loadingBidId === bid.id}
+            >
+              <Ionicons
+                name="checkmark-circle"
+                size={18}
+                color={bid.isRecommended ? '#FFFFFF' : COLORS.primary}
+              />
+              <Text
+                style={[
+                  styles.acceptBtnText,
+                  bid.isRecommended ? styles.acceptBtnTextPrimary : styles.acceptBtnTextOutline,
+                ]}
+              >
+                {loadingBidId === bid.id ? 'Đang kích hoạt...' : 'Chấp Thuận & Ký Hợp Đồng e-Contract'}
+              </Text>
+            </TouchableOpacity>
           </View>
         ))}
+
+        <View style={{ height: 40 }} />
       </ScrollView>
     </View>
   );
@@ -215,166 +265,204 @@ const styles = StyleSheet.create({
     padding: 16,
     paddingBottom: 40,
   },
-  rfqCard: {
-    backgroundColor: '#FFF',
+  stepsCard: {
+    backgroundColor: COLORS.surface,
     borderRadius: 12,
     borderWidth: 1,
     borderColor: COLORS.border,
-    padding: 14,
-    marginBottom: 16,
-  },
-  rfqTitle: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: COLORS.textPrimary,
-    lineHeight: 20,
-    marginBottom: 8,
-  },
-  rfqMetaRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  rfqMeta: {
-    fontSize: 12,
-    color: COLORS.textSecondary,
-  },
-  bold: {
-    fontWeight: '700',
-    color: COLORS.textPrimary,
-  },
-  bidsHeading: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: COLORS.textPrimary,
     marginBottom: 12,
   },
-  highlight: {
+  briefCard: {
+    backgroundColor: COLORS.surface,
+    borderRadius: 12,
+    padding: 14,
+    borderLeftWidth: 4,
+    borderLeftColor: COLORS.primary,
+    marginBottom: 14,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  },
+  briefTitle: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: COLORS.primaryDark,
+    marginBottom: 10,
+  },
+  briefMeta: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    backgroundColor: COLORS.background,
+    padding: 10,
+    borderRadius: 8,
+  },
+  metaCol: {
+    alignItems: 'center',
+  },
+  metaLabel: {
+    fontSize: 10,
+    color: COLORS.textSecondary,
+    marginBottom: 2,
+  },
+  metaVal: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: COLORS.textPrimary,
+  },
+  metaHighlight: {
+    fontSize: 12,
+    fontWeight: '800',
     color: COLORS.primary,
   },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 12,
+  },
+  sectionTitle: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: COLORS.primaryDark,
+  },
   bidCard: {
-    backgroundColor: '#FFF',
+    backgroundColor: COLORS.surface,
     borderRadius: 12,
     borderWidth: 1,
     borderColor: COLORS.border,
     padding: 16,
     marginBottom: 16,
-    position: 'relative',
-    shadowColor: COLORS.shadowColor,
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 6,
+    shadowOpacity: 0.06,
+    shadowRadius: 5,
     elevation: 2,
   },
-  recommendedCard: {
+  bidCardRecommended: {
     borderColor: COLORS.accent,
     borderWidth: 1.5,
+    backgroundColor: '#FFFDF9',
   },
-  recBadge: {
-    position: 'absolute',
-    top: -10,
-    left: 14,
-    backgroundColor: COLORS.accent,
+  ribbon: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 10,
+    gap: 4,
+    backgroundColor: COLORS.accent,
+    marginHorizontal: -16,
+    marginTop: -16,
+    paddingVertical: 5,
+    paddingHorizontal: 12,
+    borderTopLeftRadius: 10,
+    borderTopRightRadius: 10,
+    marginBottom: 12,
   },
-  recBadgeText: {
+  ribbonText: {
     color: '#FFF',
     fontSize: 10,
     fontWeight: '800',
-    marginLeft: 4,
+    letterSpacing: 0.5,
   },
-  bidHeader: {
+  cardHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginTop: 4,
+    alignItems: 'flex-start',
     marginBottom: 12,
   },
-  supplierCol: {
+  supplierWrap: {
     flex: 1,
   },
   supplierName: {
     fontSize: 15,
     fontWeight: '800',
-    color: COLORS.textPrimary,
+    color: COLORS.primaryDark,
+    marginBottom: 4,
   },
-  scoreRow: {
+  scoreBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 4,
-  },
-  badgeTag: {
-    backgroundColor: 'rgba(212, 136, 6, 0.12)',
+    gap: 4,
+    backgroundColor: '#FFF1F0',
+    alignSelf: 'flex-start',
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 4,
-    marginRight: 6,
-  },
-  badgeText: {
-    color: COLORS.accent,
-    fontSize: 10,
-    fontWeight: '700',
   },
   scoreText: {
-    fontSize: 11,
-    color: COLORS.textMuted,
+    fontSize: 10,
+    fontWeight: '700',
+    color: COLORS.primary,
   },
   bidNumber: {
     fontSize: 11,
     color: COLORS.textMuted,
-    fontWeight: '600',
   },
-  pricingBox: {
+  priceContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    backgroundColor: '#FAFAF8',
+    backgroundColor: COLORS.background,
     padding: 12,
     borderRadius: 8,
     marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#EFEAE1',
   },
   priceSub: {
-    fontSize: 11,
-    color: COLORS.textMuted,
+    fontSize: 10,
+    color: COLORS.textSecondary,
+    marginBottom: 2,
   },
-  unitPrice: {
-    fontSize: 17,
+  unitPriceText: {
+    fontSize: 14,
     fontWeight: '800',
     color: COLORS.primary,
-    marginTop: 2,
   },
-  perBox: {
-    fontSize: 12,
-    fontWeight: '500',
-    color: COLORS.textMuted,
+  totalPriceText: {
+    fontSize: 16,
+    fontWeight: '900',
+    color: COLORS.primaryDark,
   },
-  totalBox: {
-    alignItems: 'flex-end',
-  },
-  totalPrice: {
-    fontSize: 17,
-    fontWeight: '800',
-    color: COLORS.textPrimary,
-    marginTop: 2,
-  },
-  bidDetails: {
+  detailsList: {
+    gap: 8,
     marginBottom: 14,
   },
-  detailRow: {
+  detailItem: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    marginBottom: 6,
+    gap: 6,
   },
   detailText: {
     fontSize: 12,
     color: COLORS.textSecondary,
-    marginLeft: 8,
     flex: 1,
-    lineHeight: 18,
+    lineHeight: 17,
+  },
+  bold: {
+    fontWeight: '700',
+    color: COLORS.textPrimary,
   },
   acceptBtn: {
-    width: '100%',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 8,
+    paddingVertical: 12,
+    gap: 6,
+  },
+  acceptBtnPrimary: {
+    backgroundColor: COLORS.primary,
+  },
+  acceptBtnOutline: {
+    borderWidth: 1.5,
+    borderColor: COLORS.primary,
+    backgroundColor: COLORS.surface,
+  },
+  acceptBtnText: {
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  acceptBtnTextPrimary: {
+    color: '#FFFFFF',
+  },
+  acceptBtnTextOutline: {
+    color: COLORS.primary,
   },
 });
-

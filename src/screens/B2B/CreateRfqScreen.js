@@ -12,6 +12,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { COLORS } from '../../theme/colors';
 import AppHeader from '../../components/common/AppHeader';
 import CustomButton from '../../components/common/CustomButton';
+import AntdSteps from '../../components/antd/AntdSteps';
 import { apiClient } from '../../api/apiClient';
 import { ENDPOINTS } from '../../api/endpoints';
 
@@ -61,7 +62,6 @@ export default function CreateRfqScreen({ navigation }) {
         ]
       );
     } catch (e) {
-      // Demo fallback
       Alert.alert(
         'Mở Thầu Thành Công (Mẫu Demo)',
         'Đã tạo gói thầu số RFQ-2026-0099. Hệ thống đang mời các xưởng nghệ nhân nộp báo giá.',
@@ -86,11 +86,23 @@ export default function CreateRfqScreen({ navigation }) {
         onBack={() => navigation.goBack()}
       />
 
-      <ScrollView contentContainerStyle={styles.scroll}>
+      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+        {/* Ant Design Steps: Bước 1 */}
+        <View style={styles.stepsCard}>
+          <AntdSteps
+            current={0}
+            items={[
+              { title: '1. Nhu Cầu', desc: 'Thiết lập yêu cầu' },
+              { title: '2. Báo Giá', desc: 'Xưởng nộp Bid' },
+              { title: '3. Ký HĐ', desc: 'Ký số & Cọc M1' },
+            ]}
+          />
+        </View>
+
         <View style={styles.infoBanner}>
           <Ionicons name="information-circle-outline" size={20} color={COLORS.primary} />
           <Text style={styles.infoBannerText}>
-            Yêu cầu báo giá (RFQ) giúp doanh nghiệp tiếp cận trực tiếp 50+ xưởng bánh sản xuất lớn, bảo đảm có hóa đơn VAT và hợp đồng pháp lý đầy đủ.
+            Yêu cầu báo giá (RFQ) giúp doanh nghiệp tiếp cận trực tiếp 50+ xưởng bánh lớn, bảo đảm 100% có hóa đơn VAT và hợp đồng điện tử pháp lý.
           </Text>
         </View>
 
@@ -98,97 +110,89 @@ export default function CreateRfqScreen({ navigation }) {
         <View style={styles.formCard}>
           <Text style={styles.cardHeading}>1. Thông Tin Nhu Cầu Quà Tặng</Text>
 
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Tiêu đề gói thầu RFQ</Text>
-            <TextInput
-              style={styles.input}
-              value={title}
-              onChangeText={setTitle}
-              placeholder="Ví dụ: Đặt 200 hộp quà cho cán bộ nhân viên"
-            />
-          </View>
+          <Text style={styles.inputLabel}>Tiêu đề gói thầu *</Text>
+          <TextInput
+            style={styles.input}
+            value={title}
+            onChangeText={setTitle}
+            placeholder="Ví dụ: Đặt 300 hộp quà tri ân nhân viên..."
+          />
 
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Quy cách loại hộp dự kiến</Text>
-            <TextInput
-              style={styles.input}
-              value={category}
-              onChangeText={setCategory}
-            />
-          </View>
+          <Text style={styles.inputLabel}>Danh mục phân loại</Text>
+          <TextInput
+            style={styles.input}
+            value={category}
+            onChangeText={setCategory}
+            placeholder="Loại set quà..."
+          />
 
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Số lượng đặt mua dự kiến (Hộp)</Text>
-            <TextInput
-              style={styles.input}
-              value={targetQuantity}
-              onChangeText={setTargetQuantity}
-              keyboardType="number-pad"
-            />
+          <View style={styles.row}>
+            <View style={styles.halfCol}>
+              <Text style={styles.inputLabel}>Số lượng cần đặt *</Text>
+              <TextInput
+                style={styles.input}
+                value={targetQuantity}
+                onChangeText={setTargetQuantity}
+                keyboardType="numeric"
+                placeholder="350"
+              />
+            </View>
+            <View style={styles.halfCol}>
+              <Text style={styles.inputLabel}>Hạn chót mở thầu (ngày)</Text>
+              <TextInput
+                style={styles.input}
+                value={deadlineDays}
+                onChangeText={setDeadlineDays}
+                keyboardType="numeric"
+                placeholder="5"
+              />
+            </View>
           </View>
         </View>
 
         {/* Budget & Timeline */}
         <View style={styles.formCard}>
-          <Text style={styles.cardHeading}>2. Ngân Sách & Thời Gian</Text>
+          <Text style={styles.cardHeading}>2. Ngân Sách Dự Kiến & Giao Vận</Text>
 
           <View style={styles.row}>
-            <View style={[styles.inputGroup, { flex: 1, marginRight: 8 }]}>
-              <Text style={styles.label}>Ngân sách tối thiểu (VNĐ)</Text>
+            <View style={styles.halfCol}>
+              <Text style={styles.inputLabel}>Giá tối thiểu (VNĐ/hộp)</Text>
               <TextInput
                 style={styles.input}
                 value={minBudget}
                 onChangeText={setMinBudget}
                 keyboardType="numeric"
+                placeholder="600000"
               />
             </View>
-            <View style={[styles.inputGroup, { flex: 1, marginLeft: 8 }]}>
-              <Text style={styles.label}>Ngân sách tối đa (VNĐ)</Text>
+            <View style={styles.halfCol}>
+              <Text style={styles.inputLabel}>Giá tối đa (VNĐ/hộp) *</Text>
               <TextInput
                 style={styles.input}
                 value={maxBudget}
                 onChangeText={setMaxBudget}
                 keyboardType="numeric"
+                placeholder="850000"
               />
             </View>
           </View>
 
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Ngày cần nhận hàng tại kho</Text>
-            <TextInput
-              style={styles.input}
-              value={deliveryDate}
-              onChangeText={setDeliveryDate}
-            />
-          </View>
-
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Thời hạn nhận báo giá (Ngày)</Text>
-            <TextInput
-              style={styles.input}
-              value={deadlineDays}
-              onChangeText={setDeadlineDays}
-              keyboardType="number-pad"
-            />
-          </View>
+          <Text style={styles.inputLabel}>Ngày cần nhận hàng tại kho doanh nghiệp</Text>
+          <TextInput
+            style={styles.input}
+            value={deliveryDate}
+            onChangeText={setDeliveryDate}
+            placeholder="Ví dụ: 10/08/2026..."
+          />
         </View>
 
-        {/* Custom Requirements */}
+        {/* Specifications */}
         <View style={styles.formCard}>
-          <Text style={styles.cardHeading}>3. Yêu Cầu Kỹ Thuật & Đóng Gói</Text>
-
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Mô tả chi tiết yêu cầu kỹ thuật</Text>
-            <TextInput
-              style={[styles.input, styles.multiline]}
-              value={requirements}
-              onChangeText={setRequirements}
-              multiline
-            />
-          </View>
+          <Text style={styles.cardHeading}>3. Yêu Cầu Kỹ Thuật & Gia Công</Text>
 
           <TouchableOpacity
-            style={styles.checkRow}
+            style={styles.checkboxRow}
+            activeOpacity={0.8}
             onPress={() => setCustomPackaging(!customPackaging)}
           >
             <Ionicons
@@ -196,20 +200,30 @@ export default function CreateRfqScreen({ navigation }) {
               size={22}
               color={COLORS.primary}
             />
-            <Text style={styles.checkText}>
-              Yêu cầu xưởng hỗ trợ in ép kim Logo & thiệp chúc mừng doanh nghiệp
+            <Text style={styles.checkboxLabel}>
+              Yêu cầu ép kim / in logo thương hiệu riêng lên nắp hộp
             </Text>
           </TouchableOpacity>
+
+          <Text style={styles.inputLabel}>Chi tiết thông số & tiêu chuẩn chất lượng</Text>
+          <TextInput
+            style={[styles.input, styles.textArea]}
+            value={requirements}
+            onChangeText={setRequirements}
+            multiline
+            numberOfLines={4}
+            placeholder="Yêu cầu vị bánh, hạn sử dụng, đóng gói..."
+          />
         </View>
 
         <CustomButton
-          title="Phát Hành Gói Thầu RFQ"
+          title={loading ? 'Đang tạo gói thầu...' : 'Phát Hành Gói Thầu RFQ'}
           icon="📢"
           onPress={handleCreateRfq}
-          loading={loading}
-          size="large"
+          disabled={loading}
           style={styles.submitBtn}
         />
+        <View style={{ height: 40 }} />
       </ScrollView>
     </View>
   );
@@ -224,77 +238,84 @@ const styles = StyleSheet.create({
     padding: 16,
     paddingBottom: 40,
   },
-  infoBanner: {
-    flexDirection: 'row',
-    backgroundColor: '#FFFBE6',
-    borderWidth: 1,
-    borderColor: '#FFE58F',
-    borderRadius: 10,
-    padding: 12,
-    marginBottom: 16,
-  },
-  infoBannerText: {
-    flex: 1,
-    marginLeft: 8,
-    fontSize: 12,
-    color: '#873800',
-    lineHeight: 18,
-  },
-  formCard: {
-    backgroundColor: '#FFF',
+  stepsCard: {
+    backgroundColor: COLORS.surface,
     borderRadius: 12,
     borderWidth: 1,
     borderColor: COLORS.border,
-    padding: 16,
-    marginBottom: 16,
-  },
-  cardHeading: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: COLORS.textPrimary,
-    marginBottom: 14,
-  },
-  inputGroup: {
     marginBottom: 12,
   },
-  label: {
+  infoBanner: {
+    flexDirection: 'row',
+    backgroundColor: '#FFF1F0',
+    padding: 12,
+    borderRadius: 8,
+    borderLeftWidth: 3,
+    borderLeftColor: COLORS.primary,
+    marginBottom: 14,
+    gap: 8,
+    alignItems: 'center',
+  },
+  infoBannerText: {
+    flex: 1,
+    fontSize: 12,
+    color: COLORS.primaryDark,
+    lineHeight: 18,
+  },
+  formCard: {
+    backgroundColor: COLORS.surface,
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 14,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  },
+  cardHeading: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: COLORS.primaryDark,
+    marginBottom: 12,
+  },
+  inputLabel: {
     fontSize: 12,
     fontWeight: '600',
-    color: COLORS.textSecondary,
-    marginBottom: 4,
+    color: COLORS.textPrimary,
+    marginBottom: 6,
+    marginTop: 8,
   },
   input: {
+    backgroundColor: COLORS.background,
     borderWidth: 1,
     borderColor: COLORS.border,
     borderRadius: 8,
     paddingHorizontal: 12,
     paddingVertical: 10,
-    fontSize: 14,
+    fontSize: 13,
     color: COLORS.textPrimary,
-    backgroundColor: '#FAFAF8',
   },
-  multiline: {
-    minHeight: 70,
+  textArea: {
+    height: 90,
     textAlignVertical: 'top',
   },
   row: {
     flexDirection: 'row',
+    gap: 12,
   },
-  checkRow: {
+  halfCol: {
+    flex: 1,
+  },
+  checkboxRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 6,
+    gap: 8,
+    marginVertical: 10,
   },
-  checkText: {
+  checkboxLabel: {
     fontSize: 13,
     color: COLORS.textPrimary,
-    marginLeft: 8,
     flex: 1,
-    lineHeight: 18,
   },
   submitBtn: {
     marginTop: 8,
-    marginBottom: 20,
   },
 });
-

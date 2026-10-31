@@ -22,15 +22,17 @@ export default function DeliveryPoDScreen({ route, navigation }) {
     driverName: 'Trần Văn Mạnh',
     driverPhone: '0988 123 456',
     vehiclePlate: '29C-892.44',
-    storageTemp: '20.5 °C (Tiêu chuẩn bảo quản bánh cao cấp)',
+    storageTemp: 20.5,
+    safeMin: 18.0,
+    safeMax: 22.0,
     estimatedArrival: '18/10/2026 - 16:30',
-    status: 'Delivered', // InTransit | Delivered
+    status: 'Delivered',
     destination: 'Tòa nhà Landmark 81, 720A Điện Biên Phủ, P.22, Bình Thạnh, TP.HCM',
     timeline: [
       { step: 'Đã đóng gói hoàn tất tại xưởng', time: '18/10/2026 08:30', done: true },
       { step: 'Bàn giao xe lạnh chuyên dụng kiểm soát nhiệt', time: '18/10/2026 10:15', done: true },
-      { step: 'Đang vận chuyển liên tỉnh', time: '18/10/2026 13:45', done: true },
-      { step: 'Đã giao tới điểm nhận & Nghiệm thu PoD', time: '18/10/2026 16:30', done: true },
+      { step: 'Đang vận chuyển liên tỉnh kiểm soát IoT', time: '18/10/2026 13:45', done: true },
+      { step: 'Đã giao tới điểm nhận & Ký nghiệm thu PoD', time: '18/10/2026 16:30', done: true },
     ],
     podData: {
       packagePhoto: 'https://images.unsplash.com/photo-1549465220-1a8b9238cd48?w=800&auto=format&fit=crop&q=80',
@@ -44,7 +46,17 @@ export default function DeliveryPoDScreen({ route, navigation }) {
   const handleConfirmInspection = () => {
     Alert.alert(
       'Nghiệm Thu Thành Công',
-      'Bạn đã xác nhận biên bản bàn giao PoD hợp lệ. Đơn hàng chính thức hoàn tất và lưu trữ hồ sơ kế toán.'
+      'Bạn đã xác nhận biên bản bàn giao PoD hợp lệ. Đơn hàng chính thức hoàn tất và sẵn sàng đánh giá 4 tiêu chí chất lượng.',
+      [
+        {
+          text: 'Đánh Giá Chất Lượng 4 Tiêu Chí',
+          onPress: () =>
+            navigation.navigate('ReviewForm', {
+              orderNumber,
+              shopName: 'Xưởng Bánh Nghệ Nhân Kinh Đô Cổ',
+            }),
+        },
+      ]
     );
   };
 
@@ -57,7 +69,7 @@ export default function DeliveryPoDScreen({ route, navigation }) {
         onBack={() => navigation.goBack()}
       />
 
-      <ScrollView contentContainerStyle={styles.scroll}>
+      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         {/* Status Card */}
         <View style={styles.statusCard}>
           <View style={styles.statusHeader}>
@@ -66,22 +78,54 @@ export default function DeliveryPoDScreen({ route, navigation }) {
               <Text style={styles.carrierText}>{deliveryInfo.carrierName}</Text>
             </View>
             <View style={styles.statusTag}>
-              <Ionicons name="checkmark-circle" size={14} color="#389E0D" />
+              <Ionicons name="checkmark-circle" size={14} color="#059669" />
               <Text style={styles.statusLabel}>Đã Bàn Giao</Text>
             </View>
           </View>
 
-          <View style={styles.tempBanner}>
-            <Ionicons name="snow" size={16} color={COLORS.primary} />
-            <Text style={styles.tempText}>Nhiệt độ thùng xe: <Text style={styles.tempVal}>{deliveryInfo.storageTemp}</Text></Text>
+          {/* Temperature Gauge Bar (IoT Sensor) */}
+          <View style={styles.gaugeContainer}>
+            <View style={styles.gaugeHeader}>
+              <View style={styles.gaugeTitleWrap}>
+                <Ionicons name="snow" size={18} color="#0284C7" />
+                <Text style={styles.gaugeTitle}>CẢM BIẾN NHIỆT ĐỘ THÙNG LẠNH IOT</Text>
+              </View>
+              <View style={styles.tempBadge}>
+                <Text style={styles.tempBadgeText}>{deliveryInfo.storageTemp} °C</Text>
+              </View>
+            </View>
+
+            {/* Gauge Graphic Bar */}
+            <View style={styles.barWrap}>
+              <View style={styles.barScale}>
+                <Text style={styles.scaleLabel}>15°C</Text>
+                <Text style={styles.scaleSafeLabel}>Dải an toàn (18°C - 22°C)</Text>
+                <Text style={styles.scaleLabel}>25°C</Text>
+              </View>
+              <View style={styles.gaugeTrack}>
+                <View style={styles.safeZone} />
+                <View style={[styles.needle, { left: '55%' }]}>
+                  <View style={styles.needleDot} />
+                  <Ionicons name="caret-up" size={14} color={COLORS.primary} />
+                </View>
+              </View>
+            </View>
+
+            <View style={styles.gaugeFooter}>
+              <Ionicons name="shield-checkmark" size={14} color="#059669" />
+              <Text style={styles.gaugeFooterText}>
+                Nhiệt độ đạt chuẩn bảo quản bánh cao cấp · Không biến dạng kết cấu
+              </Text>
+            </View>
           </View>
 
+          {/* Driver Row */}
           <View style={styles.driverRow}>
             <View style={styles.driverInfo}>
-              <Ionicons name="person-circle-outline" size={24} color={COLORS.accent} />
+              <Ionicons name="person-circle-outline" size={32} color={COLORS.accent} />
               <View style={styles.driverTextCol}>
-                <Text style={styles.driverName}>{deliveryInfo.driverName} • {deliveryInfo.vehiclePlate}</Text>
-                <Text style={styles.driverPhone}>SĐT: {deliveryInfo.driverPhone}</Text>
+                <Text style={styles.driverName}>{deliveryInfo.driverName} • Biển số: {deliveryInfo.vehiclePlate}</Text>
+                <Text style={styles.driverPhone}>SĐT tài xế: {deliveryInfo.driverPhone}</Text>
               </View>
             </View>
             <TouchableOpacity
@@ -98,15 +142,12 @@ export default function DeliveryPoDScreen({ route, navigation }) {
           <Text style={styles.cardHeading}>Hành Trình Giao Hàng B2B</Text>
           {deliveryInfo.timeline.map((step, idx) => (
             <View key={idx} style={styles.timelineItem}>
-              <View style={styles.timelineDotBox}>
-                <View style={[styles.timelineDot, step.done && styles.timelineDotDone]} />
-                {idx !== deliveryInfo.timeline.length - 1 && <View style={styles.timelineLine} />}
+              <View style={styles.stepDot}>
+                <Ionicons name="checkmark" size={10} color="#FFF" />
               </View>
-              <View style={styles.timelineContent}>
-                <Text style={[styles.timelineStep, step.done && styles.timelineStepDone]}>
-                  {step.step}
-                </Text>
-                <Text style={styles.timelineTime}>{step.time}</Text>
+              <View style={styles.stepContent}>
+                <Text style={styles.stepName}>{step.step}</Text>
+                <Text style={styles.stepTime}>{step.time}</Text>
               </View>
             </View>
           ))}
@@ -115,47 +156,42 @@ export default function DeliveryPoDScreen({ route, navigation }) {
         {/* Proof of Delivery (PoD) Section */}
         <View style={styles.podCard}>
           <View style={styles.podHeader}>
-            <Ionicons name="camera" size={20} color={COLORS.accent} />
-            <Text style={styles.podHeading}>Bằng Chứng Giao Nhận (Proof of Delivery)</Text>
+            <Ionicons name="document-attach-outline" size={20} color={COLORS.primary} />
+            <Text style={styles.podTitle}>Biên Bản Nghiệm Thu & Chữ Ký PoD</Text>
           </View>
-          <Text style={styles.podDesc}>
-            Hình ảnh kiện hàng thực tế và chữ ký xác nhận tại điểm giao hàng của quý doanh nghiệp.
-          </Text>
 
-          <View style={styles.photoGrid}>
-            <View style={styles.photoCol}>
+          <View style={styles.podGrid}>
+            <View style={styles.podCol}>
+              <Text style={styles.podLabel}>Ảnh kiện hàng bàn giao:</Text>
               <Image source={{ uri: deliveryInfo.podData.packagePhoto }} style={styles.podImage} />
-              <Text style={styles.photoCaption}>Kiện hàng nguyên niêm phong</Text>
             </View>
-            <View style={styles.photoCol}>
+            <View style={styles.podCol}>
+              <Text style={styles.podLabel}>Chữ ký điện tử người nhận:</Text>
               <Image source={{ uri: deliveryInfo.podData.signaturePhoto }} style={styles.podImage} />
-              <Text style={styles.photoCaption}>Biên bản ký nhận bàn giao</Text>
             </View>
           </View>
 
-          <View style={styles.metadataBox}>
-            <View style={styles.metaRow}>
-              <Ionicons name="time-outline" size={14} color={COLORS.textMuted} />
-              <Text style={styles.metaText}>Thời gian: <Text style={styles.bold}>{deliveryInfo.podData.deliveredAt}</Text></Text>
-            </View>
-            <View style={styles.metaRow}>
-              <Ionicons name="location-outline" size={14} color={COLORS.textMuted} />
-              <Text style={styles.metaText}>Tọa độ GPS: <Text style={styles.bold}>{deliveryInfo.podData.gpsLocation}</Text></Text>
-            </View>
-            <View style={styles.metaRow}>
-              <Ionicons name="person-outline" size={14} color={COLORS.textMuted} />
-              <Text style={styles.metaText}>Người nhận: <Text style={styles.bold}>{deliveryInfo.podData.receiverName}</Text></Text>
-            </View>
+          <View style={styles.podDetailsBox}>
+            <Text style={styles.podDetailText}>
+              <Text style={styles.bold}>Thời gian bàn giao:</Text> {deliveryInfo.podData.deliveredAt}
+            </Text>
+            <Text style={styles.podDetailText}>
+              <Text style={styles.bold}>Tọa độ GPS:</Text> {deliveryInfo.podData.gpsLocation}
+            </Text>
+            <Text style={styles.podDetailText}>
+              <Text style={styles.bold}>Đại diện ký nhận:</Text> {deliveryInfo.podData.receiverName}
+            </Text>
           </View>
 
           <CustomButton
-            title="Xác Nhận Nghiệm Thu Hàng Đạt Chuẩn"
-            icon="✓"
+            title="Xác Nhận Nghiệm Thu & Đánh Giá"
+            icon="✅"
             onPress={handleConfirmInspection}
-            size="medium"
             style={styles.confirmBtn}
           />
         </View>
+
+        <View style={{ height: 40 }} />
       </ScrollView>
     </View>
   );
@@ -171,23 +207,23 @@ const styles = StyleSheet.create({
     paddingBottom: 40,
   },
   statusCard: {
-    backgroundColor: '#FFF',
-    borderRadius: 12,
+    backgroundColor: COLORS.surface,
+    borderRadius: 14,
     borderWidth: 1,
     borderColor: COLORS.border,
     padding: 16,
-    marginBottom: 16,
+    marginBottom: 14,
   },
   statusHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginBottom: 12,
+    marginBottom: 14,
   },
   codeText: {
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: '800',
-    color: COLORS.primary,
+    color: COLORS.primaryDark,
   },
   carrierText: {
     fontSize: 12,
@@ -197,51 +233,130 @@ const styles = StyleSheet.create({
   statusTag: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: 4,
     backgroundColor: '#F6FFED',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
     borderWidth: 1,
     borderColor: '#B7EB8F',
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 6,
   },
   statusLabel: {
     fontSize: 11,
     fontWeight: '700',
-    color: '#389E0D',
-    marginLeft: 4,
+    color: '#059669',
   },
-  tempBanner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(140, 21, 36, 0.05)',
-    padding: 10,
-    borderRadius: 8,
+
+  // Gauge styles
+  gaugeContainer: {
+    backgroundColor: '#F0F9FF',
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#BAE6FD',
+    padding: 12,
     marginBottom: 14,
   },
-  tempText: {
-    fontSize: 12,
-    color: COLORS.textPrimary,
-    marginLeft: 8,
-  },
-  tempVal: {
-    fontWeight: '700',
-    color: COLORS.primary,
-  },
-  driverRow: {
+  gaugeHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: '#FAFAF8',
-    padding: 10,
-    borderRadius: 8,
+    marginBottom: 8,
+  },
+  gaugeTitleWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  gaugeTitle: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: '#0369A1',
+    letterSpacing: 0.5,
+  },
+  tempBadge: {
+    backgroundColor: '#0284C7',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  tempBadgeText: {
+    color: '#FFFFFF',
+    fontSize: 13,
+    fontWeight: '900',
+  },
+  barWrap: {
+    marginVertical: 4,
+  },
+  barScale: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 3,
+  },
+  scaleLabel: {
+    fontSize: 9,
+    color: COLORS.textMuted,
+  },
+  scaleSafeLabel: {
+    fontSize: 9,
+    color: '#0284C7',
+    fontWeight: '700',
+  },
+  gaugeTrack: {
+    height: 10,
+    backgroundColor: '#E0F2FE',
+    borderRadius: 5,
+    position: 'relative',
+    overflow: 'visible',
+  },
+  safeZone: {
+    position: 'absolute',
+    left: '30%',
+    width: '40%',
+    height: '100%',
+    backgroundColor: '#38BDF8',
+    borderRadius: 5,
+  },
+  needle: {
+    position: 'absolute',
+    top: -4,
+    alignItems: 'center',
+    width: 14,
+    marginLeft: -7,
+  },
+  needleDot: {
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: COLORS.primary,
+  },
+  gaugeFooter: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginTop: 8,
+  },
+  gaugeFooterText: {
+    fontSize: 10,
+    color: '#0369A1',
+    fontWeight: '600',
+  },
+
+  // Driver Row
+  driverRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingTop: 10,
+    borderTopWidth: 1,
+    borderTopColor: '#F5F0E6',
   },
   driverInfo: {
     flexDirection: 'row',
     alignItems: 'center',
-    flex: 1,
+    gap: 10,
   },
   driverTextCol: {
-    marginLeft: 8,
+    gap: 2,
   },
   driverName: {
     fontSize: 13,
@@ -250,140 +365,119 @@ const styles = StyleSheet.create({
   },
   driverPhone: {
     fontSize: 11,
-    color: COLORS.textMuted,
-    marginTop: 2,
+    color: COLORS.textSecondary,
   },
   callBtn: {
-    backgroundColor: COLORS.success,
-    width: 34,
-    height: 34,
-    borderRadius: 17,
+    backgroundColor: COLORS.primary,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     alignItems: 'center',
     justifyContent: 'center',
   },
+
+  // Timeline
   timelineCard: {
-    backgroundColor: '#FFF',
+    backgroundColor: COLORS.surface,
     borderRadius: 12,
+    padding: 16,
+    marginBottom: 14,
     borderWidth: 1,
     borderColor: COLORS.border,
-    padding: 16,
-    marginBottom: 16,
   },
   cardHeading: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '800',
-    color: COLORS.textPrimary,
-    marginBottom: 14,
+    color: COLORS.primaryDark,
+    marginBottom: 12,
+    letterSpacing: 0.5,
   },
   timelineItem: {
     flexDirection: 'row',
-    marginBottom: 14,
+    alignItems: 'flex-start',
+    marginBottom: 12,
+    gap: 10,
   },
-  timelineDotBox: {
+  stepDot: {
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    backgroundColor: COLORS.accent,
     alignItems: 'center',
-    width: 20,
-    marginRight: 10,
-  },
-  timelineDot: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    backgroundColor: COLORS.border,
-  },
-  timelineDotDone: {
-    backgroundColor: COLORS.primary,
-  },
-  timelineLine: {
-    width: 2,
-    flex: 1,
-    backgroundColor: COLORS.border,
+    justifyContent: 'center',
     marginTop: 2,
   },
-  timelineContent: {
+  stepContent: {
     flex: 1,
-    paddingBottom: 4,
   },
-  timelineStep: {
-    fontSize: 13,
-    color: COLORS.textSecondary,
-  },
-  timelineStepDone: {
+  stepName: {
+    fontSize: 12,
     fontWeight: '700',
     color: COLORS.textPrimary,
   },
-  timelineTime: {
-    fontSize: 11,
+  stepTime: {
+    fontSize: 10,
     color: COLORS.textMuted,
-    marginTop: 2,
+    marginTop: 1,
   },
+
+  // PoD Card
   podCard: {
-    backgroundColor: '#FFF',
+    backgroundColor: COLORS.surface,
     borderRadius: 12,
-    borderWidth: 1,
-    borderColor: COLORS.border,
     padding: 16,
-    marginBottom: 20,
+    borderWidth: 1.2,
+    borderColor: '#E8D2A3',
+    marginBottom: 14,
   },
   podHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 4,
+    gap: 8,
+    marginBottom: 12,
   },
-  podHeading: {
-    fontSize: 14,
+  podTitle: {
+    fontSize: 13,
     fontWeight: '800',
-    color: COLORS.textPrimary,
-    marginLeft: 8,
+    color: COLORS.primaryDark,
   },
-  podDesc: {
-    fontSize: 12,
-    color: COLORS.textMuted,
-    marginBottom: 14,
-    lineHeight: 18,
-  },
-  photoGrid: {
+  podGrid: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 14,
+    gap: 10,
+    marginBottom: 12,
   },
-  photoCol: {
-    width: '48%',
+  podCol: {
+    flex: 1,
+  },
+  podLabel: {
+    fontSize: 10,
+    fontWeight: '600',
+    color: COLORS.textSecondary,
+    marginBottom: 6,
   },
   podImage: {
     width: '100%',
-    height: 120,
+    height: 100,
     borderRadius: 8,
-    backgroundColor: '#F0ECE4',
+    backgroundColor: '#EAE5DB',
   },
-  photoCaption: {
-    fontSize: 11,
-    color: COLORS.textSecondary,
-    textAlign: 'center',
-    marginTop: 6,
-    fontWeight: '600',
-  },
-  metadataBox: {
-    backgroundColor: '#FAFAF8',
-    padding: 12,
+  podDetailsBox: {
+    backgroundColor: COLORS.background,
+    padding: 10,
     borderRadius: 8,
+    gap: 4,
     marginBottom: 14,
   },
-  metaRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 6,
-  },
-  metaText: {
+  podDetailText: {
     fontSize: 11,
     color: COLORS.textSecondary,
-    marginLeft: 6,
+    lineHeight: 16,
   },
   bold: {
     fontWeight: '700',
     color: COLORS.textPrimary,
   },
   confirmBtn: {
-    width: '100%',
+    marginTop: 2,
   },
 });
-

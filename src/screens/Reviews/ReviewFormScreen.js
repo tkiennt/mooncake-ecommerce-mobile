@@ -13,15 +13,17 @@ import { Ionicons } from '@expo/vector-icons';
 import { COLORS } from '../../theme/colors';
 import AppHeader from '../../components/common/AppHeader';
 import CustomButton from '../../components/common/CustomButton';
+import ReviewFilterStars from '../../components/lucian/ReviewFilterStars';
 
 export default function ReviewFormScreen({ route, navigation }) {
   const { orderNumber = 'ORD-2026-8711', shopName = 'Bảo Ngọc Đường' } = route.params || {};
 
-  // 4 Tiêu chí đánh giá chuẩn nghiệp vụ Module 8
-  const [qualityScore, setQualityScore] = useState(5);
-  const [punctualityScore, setPunctualityScore] = useState(5);
-  const [serviceScore, setServiceScore] = useState(5);
-  const [packagingScore, setPackagingScore] = useState(5);
+  const [scores, setScores] = useState({
+    taste: 5,
+    packaging: 5,
+    delivery: 5,
+    contract: 5,
+  });
 
   const [comment, setComment] = useState(
     'Bánh dẻo nếp cái hoa vàng rất thơm ngon, vị ngọt thanh tự nhiên. Đội xe lạnh giao hàng đúng hẹn, logo công ty in ép kim trên hộp sắc nét và sang trọng.'
@@ -31,23 +33,6 @@ export default function ReviewFormScreen({ route, navigation }) {
     'https://images.unsplash.com/photo-1549465220-1a8b9238cd48?w=800&auto=format&fit=crop&q=80',
   ]);
   const [loading, setLoading] = useState(false);
-
-  const renderStars = (score, setScore) => {
-    return (
-      <View style={styles.starRow}>
-        {[1, 2, 3, 4, 5].map((star) => (
-          <TouchableOpacity key={star} onPress={() => setScore(star)} style={styles.starTouch}>
-            <Ionicons
-              name={star <= score ? 'star' : 'star-outline'}
-              size={24}
-              color={star <= score ? '#FAAD14' : COLORS.border}
-            />
-          </TouchableOpacity>
-        ))}
-        <Text style={styles.scoreText}>{score}/5 sao</Text>
-      </View>
-    );
-  };
 
   const handleSubmitReview = () => {
     if (!comment.trim()) {
@@ -59,8 +44,8 @@ export default function ReviewFormScreen({ route, navigation }) {
     setTimeout(() => {
       setLoading(false);
       Alert.alert(
-        'Đánh Giá Thành Công!',
-        'Cảm ơn đánh giá quý báu của quý doanh nghiệp. Đánh giá 5★ đã được cộng +3 điểm uy tín cho xưởng sản xuất.',
+        'Đánh Giá Doanh Nghiệp Thành Công!',
+        'Cảm ơn đánh giá quý báu của quý công ty. Đánh giá 5★ đã được lưu trữ và cộng +3 điểm tín nhiệm bảo chứng cho xưởng sản xuất.',
         [
           {
             text: 'Về lịch sử đơn',
@@ -74,68 +59,50 @@ export default function ReviewFormScreen({ route, navigation }) {
   return (
     <View style={styles.container}>
       <AppHeader
-        title="Đánh Giá Đơn Hàng"
+        title="Đánh Giá Đơn Hàng B2B"
         subtitle={orderNumber}
         showBack={true}
         onBack={() => navigation.goBack()}
       />
 
-      <ScrollView contentContainerStyle={styles.scroll}>
+      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+        {/* Shop Info Card */}
         <View style={styles.shopCard}>
-          <Ionicons name="storefront" size={20} color={COLORS.accent} />
+          <View style={styles.shopIconCircle}>
+            <Ionicons name="storefront" size={22} color={COLORS.accent} />
+          </View>
           <View style={styles.shopInfo}>
             <Text style={styles.shopName}>{shopName}</Text>
-            <Text style={styles.shopSub}>Đơn hàng đã bàn giao xe lạnh thành công</Text>
+            <Text style={styles.shopSub}>Đơn hàng đã bàn giao xe lạnh & ký PoD thành công</Text>
           </View>
         </View>
 
-        {/* 4 Criteria Card */}
+        {/* 1. Lucian Review Filter Stars: 4 B2B Criteria */}
+        <ReviewFilterStars
+          initialScores={scores}
+          onChange={setScores}
+        />
+
+        {/* Comment Section */}
         <View style={styles.card}>
-          <Text style={styles.cardHeading}>4 TIÊU CHÍ CHẤT LƯỢNG B2B</Text>
-
-          <View style={styles.criterionBox}>
-            <Text style={styles.critLabel}>1. Hương vị & Chất lượng bánh</Text>
-            {renderStars(qualityScore, setQualityScore)}
-          </View>
-
-          <View style={styles.criterionBox}>
-            <Text style={styles.critLabel}>2. Đúng hạn bàn giao (Xe lạnh)</Text>
-            {renderStars(punctualityScore, setPunctualityScore)}
-          </View>
-
-          <View style={styles.criterionBox}>
-            <Text style={styles.critLabel}>3. Dịch vụ hỗ trợ & Thái độ phục vụ</Text>
-            {renderStars(serviceScore, setServiceScore)}
-          </View>
-
-          <View style={styles.criterionBox}>
-            <Text style={styles.critLabel}>4. Quy cách đóng gói & Ép kim Logo</Text>
-            {renderStars(packagingScore, setPackagingScore)}
-          </View>
-        </View>
-
-        {/* Comment Card */}
-        <View style={styles.card}>
-          <Text style={styles.cardHeading}>NHẬN XÉT CHI TIẾT</Text>
+          <Text style={styles.cardHeading}>NHẬN XÉT CHI TIẾT ĐỢT GIAO NHẬN</Text>
           <TextInput
             style={styles.commentInput}
             value={comment}
             onChangeText={setComment}
             multiline
-            placeholder="Chia sẻ nhận xét về bánh, độ ngọt, chất lượng vỏ bánh và quy cách đóng gói..."
+            numberOfLines={4}
+            placeholder="Chia sẻ trải nghiệm về chất lượng bánh, quy cách hộp quà, tiến độ giao vận..."
           />
-        </View>
 
-        {/* Photo attachments */}
-        <View style={styles.card}>
-          <Text style={styles.cardHeading}>ẢNH CHỤP KIỆN BÁNH THỰC TẾ ({attachedPhotos.length})</Text>
+          <Text style={styles.subHeading}>Ảnh chụp kiện hàng thực tế tại địa điểm giao:</Text>
           <View style={styles.photoRow}>
-            {attachedPhotos.map((url, idx) => (
-              <Image key={idx} source={{ uri: url }} style={styles.attachedImg} />
+            {attachedPhotos.map((uri, idx) => (
+              <Image key={idx} source={{ uri }} style={styles.photoThumb} />
             ))}
             <TouchableOpacity
               style={styles.addPhotoBtn}
-              onPress={() => Alert.alert('Tải ảnh', 'Chụp ảnh hoặc chọn ảnh thực tế từ thư viện.')}
+              onPress={() => Alert.alert('Thêm ảnh', 'Chọn thêm ảnh chụp kiện hàng hoặc hộp quà từ thư viện.')}
             >
               <Ionicons name="camera-outline" size={24} color={COLORS.primary} />
               <Text style={styles.addPhotoText}>Thêm ảnh</Text>
@@ -143,14 +110,15 @@ export default function ReviewFormScreen({ route, navigation }) {
           </View>
         </View>
 
+        {/* Action Button */}
         <CustomButton
-          title="Gửi Đánh Giá Doanh Nghiệp"
+          title={loading ? 'Đang gửi đánh giá...' : 'Gửi Đánh Giá Nghiệm Thu'}
           icon="⭐"
           onPress={handleSubmitReview}
-          loading={loading}
-          size="large"
+          disabled={loading}
           style={styles.submitBtn}
         />
+        <View style={{ height: 40 }} />
       </ScrollView>
     </View>
   );
@@ -168,107 +136,96 @@ const styles = StyleSheet.create({
   shopCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFF',
+    backgroundColor: COLORS.surface,
+    padding: 14,
     borderRadius: 12,
+    marginBottom: 12,
     borderWidth: 1,
     borderColor: COLORS.border,
-    padding: 14,
-    marginBottom: 16,
+  },
+  shopIconCircle: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: COLORS.accentGoldBg,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
   },
   shopInfo: {
-    marginLeft: 10,
+    flex: 1,
   },
   shopName: {
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: '800',
-    color: COLORS.textPrimary,
+    color: COLORS.primaryDark,
+    marginBottom: 2,
   },
   shopSub: {
-    fontSize: 12,
-    color: COLORS.textMuted,
-    marginTop: 2,
+    fontSize: 11,
+    color: COLORS.textSecondary,
   },
   card: {
-    backgroundColor: '#FFF',
+    backgroundColor: COLORS.surface,
     borderRadius: 12,
+    padding: 16,
+    marginVertical: 10,
     borderWidth: 1,
     borderColor: COLORS.border,
-    padding: 16,
-    marginBottom: 16,
   },
   cardHeading: {
     fontSize: 12,
     fontWeight: '800',
-    color: COLORS.primary,
+    color: COLORS.primaryDark,
+    marginBottom: 10,
     letterSpacing: 0.5,
-    marginBottom: 12,
-  },
-  criterionBox: {
-    marginBottom: 12,
-    paddingBottom: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F5F3EF',
-  },
-  critLabel: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: COLORS.textPrimary,
-    marginBottom: 6,
-  },
-  starRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  starTouch: {
-    marginRight: 6,
-  },
-  scoreText: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: COLORS.accent,
-    marginLeft: 10,
   },
   commentInput: {
+    backgroundColor: COLORS.background,
     borderWidth: 1,
     borderColor: COLORS.border,
     borderRadius: 8,
     padding: 12,
     fontSize: 13,
     color: COLORS.textPrimary,
-    backgroundColor: '#FAFAF8',
     minHeight: 80,
     textAlignVertical: 'top',
+    marginBottom: 14,
+  },
+  subHeading: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: COLORS.textSecondary,
+    marginBottom: 8,
   },
   photoRow: {
     flexDirection: 'row',
-    alignItems: 'center',
+    gap: 10,
   },
-  attachedImg: {
-    width: 72,
-    height: 72,
+  photoThumb: {
+    width: 70,
+    height: 70,
     borderRadius: 8,
-    marginRight: 10,
+    backgroundColor: '#EAE5DB',
   },
   addPhotoBtn: {
-    width: 72,
-    height: 72,
+    width: 70,
+    height: 70,
     borderRadius: 8,
     borderWidth: 1,
-    borderStyle: 'dashed',
     borderColor: COLORS.primary,
+    borderStyle: 'dashed',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(140, 21, 36, 0.03)',
+    backgroundColor: '#FFF1F0',
   },
   addPhotoText: {
     fontSize: 10,
     color: COLORS.primary,
-    fontWeight: '600',
+    fontWeight: '700',
     marginTop: 2,
   },
   submitBtn: {
-    marginTop: 8,
-    marginBottom: 20,
+    marginTop: 10,
   },
 });
-

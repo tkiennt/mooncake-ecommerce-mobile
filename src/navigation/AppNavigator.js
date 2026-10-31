@@ -32,8 +32,9 @@ import NotificationScreen from '../screens/Notification/NotificationScreen';
 import AiAssistantScreen from '../screens/AI/AiAssistantScreen';
 import ReviewFormScreen from '../screens/Reviews/ReviewFormScreen';
 
-// UI Showcase Screen
+// UI Showcase Screen & Lucian Notched Tab Bar (#041)
 import UiCatalogScreen from '../screens/Dev/UiCatalogScreen';
+import NotchedTabBar from '../components/lucian/NotchedTabBar';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -44,51 +45,10 @@ function MainTabs() {
 
   return (
     <Tab.Navigator
-      screenOptions={({ route }) => ({
+      tabBar={(props) => <NotchedTabBar {...props} cartBadgeCount={totalItems} />}
+      screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: COLORS.primary,
-        tabBarInactiveTintColor: COLORS.textMuted,
-        tabBarStyle: {
-          backgroundColor: '#FFFFFF',
-          borderTopColor: COLORS.border,
-          borderTopWidth: 1,
-          height: 60,
-          paddingBottom: 8,
-          paddingTop: 6,
-        },
-        tabBarLabelStyle: {
-          fontSize: 11,
-          fontWeight: '600',
-        },
-        tabBarIcon: ({ focused, color, size }) => {
-          let iconName;
-
-          if (route.name === 'HomeTab') {
-            iconName = focused ? 'home' : 'home-outline';
-          } else if (route.name === 'SearchTab') {
-            iconName = focused ? 'search' : 'search-outline';
-          } else if (route.name === 'CartTab') {
-            iconName = focused ? 'cart' : 'cart-outline';
-          } else if (route.name === 'OrdersTab') {
-            iconName = focused ? 'receipt' : 'receipt-outline';
-          } else if (route.name === 'ProfileTab') {
-            iconName = focused ? 'person' : 'person-outline';
-          }
-
-          return (
-            <View style={{ width: 26, height: 26, position: 'relative' }}>
-              <Ionicons name={iconName} size={size || 22} color={color} />
-              {route.name === 'CartTab' && totalItems > 0 && (
-                <View style={styles.cartBadge}>
-                  <Text style={styles.badgeText}>
-                    {totalItems > 99 ? '99+' : totalItems}
-                  </Text>
-                </View>
-              )}
-            </View>
-          );
-        },
-      })}
+      }}
     >
       <Tab.Screen
         name="HomeTab"
@@ -98,7 +58,7 @@ function MainTabs() {
       <Tab.Screen
         name="SearchTab"
         component={SearchScreen}
-        options={{ tabBarLabel: 'Sản phẩm' }}
+        options={{ tabBarLabel: 'Khám phá' }}
       />
       <Tab.Screen
         name="CartTab"
@@ -108,12 +68,12 @@ function MainTabs() {
       <Tab.Screen
         name="OrdersTab"
         component={OrderHistoryScreen}
-        options={{ tabBarLabel: 'Đơn hàng' }}
+        options={{ tabBarLabel: 'Hợp đồng' }}
       />
       <Tab.Screen
         name="ProfileTab"
         component={ProfileScreen}
-        options={{ tabBarLabel: 'Hồ sơ' }}
+        options={{ tabBarLabel: 'Doanh nghiệp' }}
       />
     </Tab.Navigator>
   );
@@ -129,7 +89,7 @@ export default function AppNavigator() {
   return (
     <NavigationContainer ref={navigationRef}>
       <Stack.Navigator
-        initialRouteName={user ? 'MainTabs' : 'MainTabs'}
+        initialRouteName="MainTabs"
         screenOptions={{ headerShown: false }}
       >
         <Stack.Screen name="MainTabs" component={MainTabs} />
@@ -157,23 +117,3 @@ export default function AppNavigator() {
     </NavigationContainer>
   );
 }
-
-const styles = StyleSheet.create({
-  cartBadge: {
-    position: 'absolute',
-    top: -4,
-    right: -8,
-    backgroundColor: COLORS.primary,
-    borderRadius: 8,
-    minWidth: 16,
-    height: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 3,
-  },
-  badgeText: {
-    color: '#FFF',
-    fontSize: 9,
-    fontWeight: '800',
-  },
-});

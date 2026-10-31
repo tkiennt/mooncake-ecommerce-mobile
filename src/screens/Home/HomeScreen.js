@@ -14,7 +14,6 @@ import { MOCK_PRODUCTS } from '../../api/apiClient';
 import { useAuth } from '../../context/AuthContext';
 import AnnouncementPill from '../../components/lucian/AnnouncementPill';
 import TrustSecurityBadges from '../../components/lucian/TrustSecurityBadges';
-import RecentOrderToast from '../../components/lucian/RecentOrderToast';
 
 export default function HomeScreen({ navigation }) {
   const { user } = useAuth();
@@ -172,9 +171,6 @@ export default function HomeScreen({ navigation }) {
           </TouchableOpacity>
         </View>
       </ScrollView>
-
-      {/* 4. Lucian Recent Order Toast floating */}
-      <RecentOrderToast />
     </View>
   );
 }

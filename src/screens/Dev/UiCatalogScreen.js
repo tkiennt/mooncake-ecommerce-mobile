@@ -14,13 +14,14 @@ import TrustSecurityBadges from '../../components/lucian/TrustSecurityBadges';
 import TearOffCoupon from '../../components/lucian/TearOffCoupon';
 import B2BPriceCalculator from '../../components/lucian/B2BPriceCalculator';
 import ReviewFilterStars from '../../components/lucian/ReviewFilterStars';
-import RecentOrderToast from '../../components/lucian/RecentOrderToast';
+import NotchedTabBar from '../../components/lucian/NotchedTabBar';
 import AntdSteps from '../../components/antd/AntdSteps';
 import AntdOtpInput from '../../components/antd/AntdOtpInput';
 
 export default function UiCatalogScreen({ navigation }) {
   const [currentStep, setCurrentStep] = useState(1);
   const [submittedOtp, setSubmittedOtp] = useState('');
+  const [demoTabIdx, setDemoTabIdx] = useState(0);
 
   return (
     <View style={styles.screen}>
@@ -125,11 +126,23 @@ export default function UiCatalogScreen({ navigation }) {
           ) : null}
         </View>
 
-        <View style={{ height: 100 }} />
-      </ScrollView>
+        {/* 8. Lucian Notched Bottom Tab Bar #041 Demo */}
+        <View style={styles.section}>
+          <Text style={styles.sectionHeader}>8. Lucian Notched Tab Bar (#041)</Text>
+          <Text style={styles.sectionSubDesc}>
+            Bấm thử các tab bên dưới để trải nghiệm chuyển động trượt bóng notch tròn và nhấc bổng icon.
+          </Text>
+          <View style={styles.tabDemoContainer}>
+            <NotchedTabBar
+              activeIdx={demoTabIdx}
+              onSelectTab={setDemoTabIdx}
+              cartBadgeCount={3}
+            />
+          </View>
+        </View>
 
-      {/* 8. Lucian Recent Order Toast floating */}
-      <RecentOrderToast />
+        <View style={{ height: 60 }} />
+      </ScrollView>
     </View>
   );
 }
@@ -190,6 +203,22 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
+  sectionSubDesc: {
+    fontSize: 11,
+    color: COLORS.textSecondary,
+    marginHorizontal: 16,
+    marginBottom: 10,
+  },
+  tabDemoContainer: {
+    height: 90,
+    backgroundColor: COLORS.background,
+    marginHorizontal: 16,
+    borderRadius: 16,
+    overflow: 'hidden',
+    position: 'relative',
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  },
   stepControls: {
     flexDirection: 'row',
     justifyContent: 'center',
@@ -224,4 +253,3 @@ const styles = StyleSheet.create({
     marginTop: 6,
   },
 });
-

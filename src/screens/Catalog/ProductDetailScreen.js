@@ -7,6 +7,7 @@ import {
   StyleSheet,
   TouchableOpacity,
   Alert,
+  Modal,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS } from '../../theme/colors';
@@ -28,6 +29,7 @@ export default function ProductDetailScreen({ route, navigation }) {
 
   const [quantity, setQuantity] = useState(product.minOrderQty || 20);
   const [appliedCoupon, setAppliedCoupon] = useState(null);
+  const [isAddedDrawerOpen, setIsAddedDrawerOpen] = useState(false);
 
   const formatVND = (num) => {
     return new Intl.NumberFormat('vi-VN', {
@@ -64,14 +66,8 @@ export default function ProductDetailScreen({ route, navigation }) {
     }
 
     addToCart(product, selectedVariant, quantity);
-    Alert.alert(
-      'Đã thêm vào giỏ hàng B2B',
-      `Đã thêm ${quantity} hộp [${selectedVariant.name}] vào giỏ hàng.\nChiết khấu: -${activeDiscountPercent}%\n${appliedCoupon ? 'Áp dụng coupon: -500.000₫' : ''}`,
-      [
-        { text: 'Tiếp tục xem', style: 'cancel' },
-        { text: 'Xem giỏ hàng', onPress: () => navigation.navigate('CartTab') },
-      ]
-    );
+    // RF-02: Mở Drawer trượt thay vì Alert.alert thô sơ
+    setIsAddedDrawerOpen(true);
   };
 
   const handleApplyTier = (calc) => {
@@ -229,6 +225,76 @@ export default function ProductDetailScreen({ route, navigation }) {
           style={styles.addBtn}
         />
       </View>
+
+      {/* RF-02: Animated Mini-Cart Added Drawer (Checklist Design Standard) */}
+      <Modal
+        visible={isAddedDrawerOpen}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setIsAddedDrawerOpen(false)}
+      >
+        <View style={styles.drawerOverlay}>
+          <View style={styles.drawerCard}>
+            <View style={styles.drawerHandle} />
+
+            <View style={styles.successRow}>
+              <View style={styles.successIconCircle}>
+                <Ionicons name="checkmark-circle" size={28} color="#059669" />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.successTitle}>ĐÃ THÊM VÀO GIỎ HÀNG B2B</Text>
+                <Text style={styles.successSub}>Sẵn sàng tạo đơn hoặc xuất hợp đồng điện tử</Text>
+              </View>
+            </View>
+
+            {/* Added Summary Box */}
+            <View style={styles.summaryCard}>
+              <Text style={styles.summaryProdName}>{product.name}</Text>
+              <Text style={styles.summaryVariant}>
+                Biến thể: <Text style={styles.bold}>{selectedVariant?.name}</Text>
+              </Text>
+              <View style={styles.summaryRow}>
+                <Text style={styles.summaryLabel}>Số lượng đóng gói:</Text>
+                <Text style={styles.summaryVal}>{quantity} hộp</Text>
+              </View>
+              <View style={styles.summaryRow}>
+                <Text style={styles.summaryLabel}>Chiết khấu bậc thang:</Text>
+                <Text style={styles.summaryDiscountText}>-{activeDiscountPercent}%</Text>
+              </View>
+              {appliedCoupon ? (
+                <View style={styles.summaryRow}>
+                  <Text style={styles.summaryLabel}>Voucher mùa vụ:</Text>
+                  <Text style={styles.summaryDiscountText}>-500.000 ₫</Text>
+                </View>
+              ) : null}
+              <View style={styles.summaryDivider} />
+              <View style={styles.summaryRow}>
+                <Text style={styles.summaryTotalLabel}>Tổng tạm tính:</Text>
+                <Text style={styles.summaryTotalVal}>{formatVND(finalTotal)}</Text>
+              </View>
+            </View>
+
+            {/* Action Buttons */}
+            <View style={styles.drawerActions}>
+              <TouchableOpacity
+                style={styles.continueBtn}
+                onPress={() => setIsAddedDrawerOpen(false)}
+              >
+                <Text style={styles.continueBtnText}>Tiếp tục xem bánh</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.goToCartBtn}
+                onPress={() => {
+                  setIsAddedDrawerOpen(false);
+                  navigation.navigate('CartTab');
+                }}
+              >
+                <Text style={styles.goToCartText}>Xem Giỏ Hàng →</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -509,5 +575,141 @@ const styles = StyleSheet.create({
   addBtn: {
     marginLeft: 12,
     minWidth: 140,
+  },
+
+  // RF-02 Drawer styles
+  drawerOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'flex-end',
+  },
+  drawerCard: {
+    backgroundColor: COLORS.surface,
+    borderTopLeftRadius: 22,
+    borderTopRightRadius: 22,
+    padding: 20,
+    borderTopWidth: 1.5,
+    borderTopColor: COLORS.accent,
+  },
+  drawerHandle: {
+    width: 40,
+    height: 4,
+    backgroundColor: '#D1C8B8',
+    borderRadius: 2,
+    alignSelf: 'center',
+    marginBottom: 16,
+  },
+  successRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginBottom: 16,
+  },
+  successIconCircle: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#F6FFED',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  successTitle: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: '#059669',
+    letterSpacing: 0.5,
+  },
+  successSub: {
+    fontSize: 11,
+    color: COLORS.textSecondary,
+    marginTop: 2,
+  },
+  summaryCard: {
+    backgroundColor: COLORS.background,
+    borderRadius: 10,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: '#EFEAE1',
+    marginBottom: 16,
+  },
+  summaryProdName: {
+    fontSize: 13,
+    fontWeight: '800',
+    color: COLORS.primaryDark,
+    marginBottom: 4,
+  },
+  summaryVariant: {
+    fontSize: 11,
+    color: COLORS.textSecondary,
+    marginBottom: 8,
+  },
+  summaryRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 4,
+  },
+  summaryLabel: {
+    fontSize: 11,
+    color: COLORS.textSecondary,
+  },
+  summaryVal: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: COLORS.textPrimary,
+  },
+  summaryDiscountText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#874D00',
+  },
+  summaryDivider: {
+    height: 1,
+    backgroundColor: '#EAE3D5',
+    marginVertical: 6,
+  },
+  summaryTotalLabel: {
+    fontSize: 12,
+    fontWeight: '800',
+    color: COLORS.primaryDark,
+  },
+  summaryTotalVal: {
+    fontSize: 15,
+    fontWeight: '900',
+    color: COLORS.primary,
+  },
+  drawerActions: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  continueBtn: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 8,
+    borderWidth: 1.2,
+    borderColor: COLORS.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  continueBtnText: {
+    color: COLORS.primary,
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  goToCartBtn: {
+    flex: 1,
+    backgroundColor: COLORS.primary,
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  goToCartText: {
+    color: '#FFFFFF',
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  bold: {
+    fontWeight: '700',
+    color: COLORS.textPrimary,
   },
 });

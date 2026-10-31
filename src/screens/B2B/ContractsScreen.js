@@ -6,6 +6,7 @@ import {
   StyleSheet,
   TouchableOpacity,
   Alert,
+  Modal,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS } from '../../theme/colors';
@@ -46,6 +47,8 @@ const MOCK_CONTRACTS = [
 
 export default function ContractsScreen({ navigation }) {
   const [contracts] = useState(MOCK_CONTRACTS);
+  const [selectedPayTarget, setSelectedPayTarget] = useState(null);
+  const [paymentMethod, setPaymentMethod] = useState('vietqr');
 
   const formatVND = (num) => {
     return new Intl.NumberFormat('vi-VN', {
@@ -54,22 +57,16 @@ export default function ContractsScreen({ navigation }) {
     }).format(num);
   };
 
-  const handlePayDeposit = (contract, milestone) => {
+  const handleOpenPayment = (contract, milestone) => {
+    setSelectedPayTarget({ contract, milestone });
+  };
+
+  const handleConfirmEscrowPayment = () => {
+    const { contract, milestone } = selectedPayTarget || {};
+    setSelectedPayTarget(null);
     Alert.alert(
-      'Thanh Toán Đặt Cọc M1',
-      `Hợp đồng: ${contract.contractNumber}\nSố tiền cọc: ${formatVND(milestone.amount)} (30% giá trị hợp đồng).\n\nKhoản thanh toán được bảo chứng an toàn qua SafeTrade Escrow / VNPay B2B. Sau khi hoàn tất, xưởng sẽ lập tức đưa vào dây chuyền sản xuất.`,
-      [
-        { text: 'Để sau', style: 'cancel' },
-        {
-          text: 'Xác Nhận Thanh Toán Ký Quỹ',
-          onPress: () => {
-            Alert.alert(
-              'Giao Dịch Đặt Cọc Thành Công!',
-              'Hệ thống đã ghi nhận tiền cọc M1 vào tài khoản SafeTrade Escrow và chuyển trạng thái hợp đồng sang "Active - Đang sản xuất".'
-            );
-          },
-        },
-      ]
+      'Giao Dịch Đặt Cọc Thành Công!',
+      `Hệ thống SafeTrade Escrow đã nhận khoản ký quỹ ${formatVND(milestone?.amount)} cho hợp đồng ${contract?.contractNumber}.\nTrạng thái đơn hàng đã chuyển sang: "Active - Đang sản xuất".`
     );
   };
 
@@ -151,7 +148,7 @@ export default function ContractsScreen({ navigation }) {
                         {isPending && (
                           <TouchableOpacity
                             style={styles.payBtn}
-                            onPress={() => handlePayDeposit(contract, m)}
+                            onPress={() => handleOpenPayment(contract, m)}
                           >
                             <Ionicons name="card-outline" size={14} color="#FFFFFF" />
                             <Text style={styles.payBtnText}>Thanh Toán Đặt Cọc M1 (30%)</Text>
@@ -182,6 +179,90 @@ export default function ContractsScreen({ navigation }) {
         ))}
         <View style={{ height: 40 }} />
       </ScrollView>
+
+      {/* RF-04: SafeTrade Escrow Payment Modal (Checklist Design Standard) */}
+      <Modal
+        visible={Boolean(selectedPayTarget)}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setSelectedPayTarget(null)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.paymentModal}>
+            <View style={styles.sheetHandle} />
+
+            {/* Seal & Heading */}
+            <View style={styles.escrowHeader}>
+              <View style={styles.escrowSeal}>
+                <Ionicons name="shield-checkmark" size={26} color={COLORS.accent} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.escrowTitle}>BẢO CHỨNG KÝ QUỸ SAFETRADE</Text>
+                <Text style={styles.escrowSub}>Tiền cọc được giữ an toàn tại tài khoản trung gian ngân hàng</Text>
+              </View>
+            </View>
+
+            {/* Payment Summary */}
+            <View style={styles.paymentSummaryBox}>
+              <View style={styles.paySummaryRow}>
+                <Text style={styles.paySummaryLabel}>Hợp đồng kinh tế:</Text>
+                <Text style={styles.paySummaryContract}>{selectedPayTarget?.contract?.contractNumber}</Text>
+              </View>
+              <View style={styles.paySummaryRow}>
+                <Text style={styles.paySummaryLabel}>Mục tiêu thanh toán:</Text>
+                <Text style={styles.paySummaryVal}>{selectedPayTarget?.milestone?.name}</Text>
+              </View>
+              <View style={styles.summaryDivider} />
+              <View style={styles.paySummaryRow}>
+                <Text style={styles.payTotalLabel}>Số tiền ký quỹ (30%):</Text>
+                <Text style={styles.payTotalVal}>
+                  {formatVND(selectedPayTarget?.milestone?.amount || 0)}
+                </Text>
+              </View>
+            </View>
+
+            {/* Gateway Badges Selection */}
+            <Text style={styles.methodTitle}>Phương thức thanh toán bảo chứng:</Text>
+            <View style={styles.methodsRow}>
+              {[
+                { id: 'vietqr', label: 'VietQR Doanh Nghiệp', icon: 'qr-code-outline' },
+                { id: 'vnpay', label: 'VNPay B2B Gateway', icon: 'card-outline' },
+                { id: 'napas', label: 'Napas 24/7 Escrow', icon: 'swap-horizontal-outline' },
+              ].map((m) => {
+                const isActive = paymentMethod === m.id;
+                return (
+                  <TouchableOpacity
+                    key={m.id}
+                    style={[styles.methodCard, isActive && styles.methodCardActive]}
+                    onPress={() => setPaymentMethod(m.id)}
+                  >
+                    <Ionicons name={m.icon} size={18} color={isActive ? COLORS.primary : COLORS.textMuted} />
+                    <Text style={[styles.methodCardText, isActive && styles.methodCardTextActive]}>
+                      {m.label}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+
+            {/* Actions */}
+            <View style={styles.modalActions}>
+              <TouchableOpacity
+                style={styles.cancelBtn}
+                onPress={() => setSelectedPayTarget(null)}
+              >
+                <Text style={styles.cancelBtnText}>Để sau</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.confirmPayBtn}
+                onPress={handleConfirmEscrowPayment}
+              >
+                <Text style={styles.confirmPayText}>Xác Nhận Ký Quỹ</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -397,5 +478,163 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '700',
     color: COLORS.primary,
+  },
+
+  // RF-04 Modal Styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.55)',
+    justifyContent: 'flex-end',
+  },
+  paymentModal: {
+    backgroundColor: COLORS.surface,
+    borderTopLeftRadius: 22,
+    borderTopRightRadius: 22,
+    padding: 20,
+    borderTopWidth: 2,
+    borderTopColor: COLORS.accent,
+  },
+  sheetHandle: {
+    width: 36,
+    height: 4,
+    backgroundColor: '#D1C8B8',
+    borderRadius: 2,
+    alignSelf: 'center',
+    marginBottom: 14,
+  },
+  escrowHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginBottom: 16,
+  },
+  escrowSeal: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: COLORS.accentGoldBg,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1.5,
+    borderColor: '#E8D2A3',
+  },
+  escrowTitle: {
+    fontSize: 13,
+    fontWeight: '900',
+    color: COLORS.primaryDark,
+    letterSpacing: 0.5,
+  },
+  escrowSub: {
+    fontSize: 11,
+    color: COLORS.textSecondary,
+    lineHeight: 16,
+    marginTop: 2,
+  },
+  paymentSummaryBox: {
+    backgroundColor: COLORS.background,
+    borderRadius: 10,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: '#EFE7DA',
+    marginBottom: 14,
+  },
+  paySummaryRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 4,
+  },
+  paySummaryLabel: {
+    fontSize: 11,
+    color: COLORS.textSecondary,
+  },
+  paySummaryContract: {
+    fontSize: 11,
+    fontWeight: '800',
+    color: COLORS.primary,
+  },
+  paySummaryVal: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: COLORS.textPrimary,
+  },
+  summaryDivider: {
+    height: 1,
+    backgroundColor: '#E5DAC8',
+    marginVertical: 6,
+  },
+  payTotalLabel: {
+    fontSize: 12,
+    fontWeight: '800',
+    color: COLORS.primaryDark,
+  },
+  payTotalVal: {
+    fontSize: 16,
+    fontWeight: '900',
+    color: COLORS.primary,
+  },
+  methodTitle: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: COLORS.textPrimary,
+    marginBottom: 8,
+  },
+  methodsRow: {
+    gap: 6,
+    marginBottom: 16,
+  },
+  methodCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 10,
+    borderRadius: 8,
+    backgroundColor: COLORS.background,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    gap: 10,
+  },
+  methodCardActive: {
+    backgroundColor: '#FFF1F0',
+    borderColor: COLORS.primary,
+    borderWidth: 1.5,
+  },
+  methodCardText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: COLORS.textSecondary,
+  },
+  methodCardTextActive: {
+    color: COLORS.primary,
+    fontWeight: '800',
+  },
+  modalActions: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  cancelBtn: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  cancelBtnText: {
+    color: COLORS.textSecondary,
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  confirmPayBtn: {
+    flex: 2,
+    backgroundColor: COLORS.primary,
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  confirmPayText: {
+    color: '#FFFFFF',
+    fontSize: 13,
+    fontWeight: '800',
   },
 });

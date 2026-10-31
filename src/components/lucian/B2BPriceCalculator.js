@@ -16,6 +16,8 @@ const TIERS = [
   { name: 'Tập Đoàn VIP', min: 200, max: 500, discount: 35, label: '200+ hộp' },
 ];
 
+const SLIDER_STOPS = [20, 50, 100, 200, 350, 500];
+
 export default function B2BPriceCalculator({
   baseRetailPrice = 450000,
   initialQuantity = 80,
@@ -46,6 +48,9 @@ export default function B2BPriceCalculator({
   const handleSelectTier = (minQty) => {
     setQuantity(minQty);
   };
+
+  // Tính phần trăm slider fill
+  const sliderPercentage = Math.min(100, Math.max(0, ((quantity - 20) / (500 - 20)) * 100));
 
   return (
     <View style={styles.container}>
@@ -81,9 +86,44 @@ export default function B2BPriceCalculator({
         })}
       </View>
 
+      {/* RF-03: Interactive Slider Visual Track & Stops (Checklist Design Standard) */}
+      <View style={styles.sliderSection}>
+        <View style={styles.sliderHeaderRow}>
+          <Text style={styles.sliderSubText}>Kéo chọn mốc số lượng hộp:</Text>
+          <Text style={styles.sliderCurrentBadge}>{quantity} hộp</Text>
+        </View>
+
+        {/* Progress Track */}
+        <View style={styles.sliderTrackContainer}>
+          <View style={styles.sliderTrackBg} />
+          <View style={[styles.sliderTrackFill, { width: `${sliderPercentage}%` }]} />
+          <View style={[styles.sliderThumb, { left: `${sliderPercentage}%` }]}>
+            <View style={styles.sliderThumbInner} />
+          </View>
+        </View>
+
+        {/* Stops Buttons */}
+        <View style={styles.sliderStopsRow}>
+          {SLIDER_STOPS.map((stop) => {
+            const isMatch = quantity === stop;
+            return (
+              <TouchableOpacity
+                key={stop}
+                style={[styles.stopPill, isMatch && styles.stopPillActive]}
+                onPress={() => setQuantity(stop)}
+              >
+                <Text style={[styles.stopText, isMatch && styles.stopTextActive]}>
+                  {stop}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+      </View>
+
       {/* Interactive Stepper / Counter */}
       <View style={styles.stepperContainer}>
-        <Text style={styles.stepperLabel}>Số lượng đặt may/đóng gói:</Text>
+        <Text style={styles.stepperLabel}>Tinh chỉnh số lượng đặt mua:</Text>
         <View style={styles.stepperRow}>
           <TouchableOpacity
             style={styles.stepBtn}
@@ -266,6 +306,102 @@ const styles = StyleSheet.create({
   tierChipDiscountActive: {
     color: COLORS.primary,
   },
+
+  // RF-03 Slider Section
+  sliderSection: {
+    backgroundColor: COLORS.background,
+    borderRadius: 10,
+    padding: 12,
+    marginBottom: 12,
+  },
+  sliderHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  sliderSubText: {
+    fontSize: 11,
+    color: COLORS.textSecondary,
+    fontWeight: '600',
+  },
+  sliderCurrentBadge: {
+    fontSize: 12,
+    fontWeight: '800',
+    color: COLORS.primary,
+    backgroundColor: '#FFF1F0',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  sliderTrackContainer: {
+    height: 24,
+    justifyContent: 'center',
+    position: 'relative',
+    marginHorizontal: 8,
+  },
+  sliderTrackBg: {
+    height: 8,
+    backgroundColor: '#EAE3D5',
+    borderRadius: 4,
+    width: '100%',
+  },
+  sliderTrackFill: {
+    position: 'absolute',
+    left: 0,
+    height: 8,
+    backgroundColor: COLORS.accent,
+    borderRadius: 4,
+  },
+  sliderThumb: {
+    position: 'absolute',
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: COLORS.primary,
+    borderWidth: 2,
+    borderColor: '#FFFFFF',
+    marginLeft: -11,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3,
+    elevation: 3,
+  },
+  sliderThumbInner: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#FFFFFF',
+  },
+  sliderStopsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 8,
+  },
+  stopPill: {
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 4,
+    backgroundColor: COLORS.surface,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  },
+  stopPillActive: {
+    backgroundColor: COLORS.primary,
+    borderColor: COLORS.primary,
+  },
+  stopText: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: COLORS.textSecondary,
+  },
+  stopTextActive: {
+    color: '#FFFFFF',
+  },
+
   stepperContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -419,4 +555,3 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
 });
-

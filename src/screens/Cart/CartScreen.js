@@ -40,22 +40,43 @@ export default function CartScreen({ navigation }) {
     ]);
   };
 
+  // RF-05: Polish Empty State theo phong cách Hoàng Gia B2B
   if (cartItems.length === 0) {
     return (
       <View style={styles.container}>
         <AppHeader title="Giỏ Hàng Doanh Nghiệp" />
         <View style={styles.emptyContainer}>
-          <Ionicons name="cart-outline" size={64} color={COLORS.textMuted} />
-          <Text style={styles.emptyTitle}>Giỏ hàng đang trống</Text>
+          <View style={styles.emptyMoonCircle}>
+            <Ionicons name="cart-outline" size={42} color={COLORS.primary} />
+            <View style={styles.emptySparkle} />
+          </View>
+
+          <Text style={styles.emptyTitle}>Giỏ Hàng Doanh Nghiệp Đang Trống</Text>
           <Text style={styles.emptySub}>
-            Khám phá các bộ sưu tập quà tặng Trung Thu hoàng gia và chọn sản phẩm yêu thích.
+            Quý khách chưa chọn hộp bánh nào. Khám phá các bộ sưu tập quà tặng Trung Thu hoàng gia hoặc tạo gói thầu để nhận chiết khấu lên đến 35%.
           </Text>
-          <CustomButton
-            title="Khám Phá Ngay"
-            onPress={() => navigation.navigate('HomeTab')}
-            size="medium"
-            style={styles.browseBtn}
-          />
+
+          <View style={styles.emptyTrustBadge}>
+            <Ionicons name="shield-checkmark" size={14} color="#059669" />
+            <Text style={styles.emptyTrustText}>100% Xuất Hóa Đơn VAT & Ký e-Contract Pháp Lý</Text>
+          </View>
+
+          <View style={styles.emptyBtnGroup}>
+            <CustomButton
+              title="Khám Phá Bộ Sưu Tập"
+              icon="🏮"
+              onPress={() => navigation.navigate('HomeTab')}
+              size="medium"
+              style={styles.browseBtn}
+            />
+            <TouchableOpacity
+              style={styles.rfqSecondaryBtn}
+              onPress={() => navigation.navigate('CreateRfq')}
+            >
+              <Ionicons name="briefcase-outline" size={16} color={COLORS.primary} />
+              <Text style={styles.rfqSecondaryText}>Mở Thầu RFQ May Đo</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       </View>
     );
@@ -74,114 +95,110 @@ export default function CartScreen({ navigation }) {
         {cartItems.map((item, idx) => {
           const calc = calculateItemDiscount(item);
           return (
-            <View key={`${item.product.id}-${item.variant.id}`} style={styles.cartCard}>
-              <Image
-                source={{ uri: item.product.coverImage }}
-                style={styles.itemImg}
-                resizeMode="cover"
-              />
-              <View style={styles.itemContent}>
+            <View key={item.cartId || idx} style={styles.cartCard}>
+              <Image source={{ uri: item.product.coverImage }} style={styles.itemImage} />
+
+              <View style={styles.itemDetails}>
                 <View style={styles.itemHeader}>
-                  <Text style={styles.shopName} numberOfLines={1}>
-                    {item.product.shopName}
+                  <Text style={styles.itemName} numberOfLines={1}>
+                    {item.product.name}
                   </Text>
                   <TouchableOpacity
-                    onPress={() => removeFromCart(item.product.id, item.variant.id)}
+                    onPress={() => removeFromCart(item.cartId)}
+                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                   >
                     <Ionicons name="close" size={18} color={COLORS.textMuted} />
                   </TouchableOpacity>
                 </View>
 
-                <Text style={styles.prodName} numberOfLines={1}>
-                  {item.product.name}
+                <Text style={styles.shopName}>{item.product.shopName}</Text>
+                <Text style={styles.variantName}>
+                  Biến thể: <Text style={styles.bold}>{item.variant.name}</Text>
                 </Text>
 
-                <View style={styles.variantBadge}>
-                  <Text style={styles.variantText} numberOfLines={1}>
-                    Vị: {item.variant.name}
-                  </Text>
+                {/* Price and discount badge */}
+                <View style={styles.priceRow}>
+                  <Text style={styles.unitPrice}>{formatVND(calc.discountedUnitPrice)}/hộp</Text>
+                  {calc.discountPercent > 0 && (
+                    <View style={styles.discountBadge}>
+                      <Text style={styles.discountBadgeText}>-{calc.discountPercent}% B2B</Text>
+                    </View>
+                  )}
                 </View>
 
-                {calc.discountPercent > 0 && (
-                  <View style={styles.discountRow}>
-                    <Text style={styles.discountBadge}>
-                      Chiết khấu sỉ: -{calc.discountPercent}%
-                    </Text>
-                  </View>
-                )}
-
-                <View style={styles.itemFooter}>
-                  <View style={styles.qtyControls}>
+                {/* Quantity Controls */}
+                <View style={styles.qtyRow}>
+                  <View style={styles.stepper}>
                     <TouchableOpacity
-                      style={styles.qtyBtn}
-                      onPress={() =>
-                        updateQuantity(item.product.id, item.variant.id, item.quantity - 1)
-                      }
+                      style={styles.stepperBtn}
+                      onPress={() => updateQuantity(item.cartId, item.quantity - 5)}
                     >
-                      <Ionicons name="remove" size={14} color={COLORS.primary} />
+                      <Ionicons name="remove" size={16} color={COLORS.primary} />
                     </TouchableOpacity>
-                    <Text style={styles.qtyText}>{item.quantity}</Text>
+                    <Text style={styles.stepperVal}>{item.quantity}</Text>
                     <TouchableOpacity
-                      style={styles.qtyBtn}
-                      onPress={() =>
-                        updateQuantity(item.product.id, item.variant.id, item.quantity + 1)
-                      }
+                      style={styles.stepperBtn}
+                      onPress={() => updateQuantity(item.cartId, item.quantity + 5)}
                     >
-                      <Ionicons name="add" size={14} color={COLORS.primary} />
+                      <Ionicons name="add" size={16} color={COLORS.primary} />
                     </TouchableOpacity>
                   </View>
 
-                  <View style={styles.priceCol}>
-                    <Text style={styles.itemTotal}>{formatVND(calc.total)}</Text>
-                    {calc.discountAmount > 0 && (
-                      <Text style={styles.itemRawPrice}>{formatVND(calc.subtotal)}</Text>
-                    )}
-                  </View>
+                  <Text style={styles.itemTotal}>{formatVND(calc.itemTotal)}</Text>
                 </View>
               </View>
             </View>
           );
         })}
 
-        {/* Order Summary Card */}
+        {/* VAT & B2B Summary Card */}
         <View style={styles.summaryCard}>
-          <Text style={styles.summaryTitle}>Tóm Tắt Đơn Hàng B2B</Text>
+          <Text style={styles.summaryHeading}>DỰ TOÁN THANH TOÁN B2B</Text>
 
           <View style={styles.summaryRow}>
-            <Text style={styles.summaryLabel}>Tổng số lượng</Text>
-            <Text style={styles.summaryVal}>{totalItems} hộp</Text>
-          </View>
-
-          <View style={styles.summaryRow}>
-            <Text style={styles.summaryLabel}>Tổng tiền cơ bản</Text>
-            <Text style={styles.summaryVal}>{formatVND(rawSubtotal)}</Text>
+            <Text style={styles.summaryLabel}>Tổng tiền hàng gốc:</Text>
+            <Text style={styles.summaryValue}>{formatVND(rawSubtotal)}</Text>
           </View>
 
           {totalDiscount > 0 && (
             <View style={styles.summaryRow}>
-              <Text style={[styles.summaryLabel, styles.greenText]}>Chiết khấu theo số lượng</Text>
-              <Text style={[styles.summaryVal, styles.greenText]}>-{formatVND(totalDiscount)}</Text>
+              <Text style={styles.summaryLabel}>Tổng chiết khấu bậc thang:</Text>
+              <Text style={styles.summaryDiscount}>-{formatVND(totalDiscount)}</Text>
             </View>
           )}
+
+          <View style={styles.summaryRow}>
+            <Text style={styles.summaryLabel}>Thuế GTGT (VAT 8% B2B):</Text>
+            <Text style={styles.summaryValue}>Đã bao gồm trong giá</Text>
+          </View>
 
           <View style={styles.summaryDivider} />
 
           <View style={styles.summaryRow}>
-            <Text style={styles.finalTotalLabel}>Tổng thanh toán</Text>
-            <Text style={styles.finalTotalVal}>{formatVND(finalTotal)}</Text>
+            <Text style={styles.totalLabel}>TỔNG THANH TOÁN:</Text>
+            <Text style={styles.totalPrice}>{formatVND(finalTotal)}</Text>
+          </View>
+
+          <View style={styles.vatNoteBox}>
+            <Ionicons name="checkmark-circle-outline" size={14} color="#059669" />
+            <Text style={styles.vatNoteText}>
+              Đơn hàng đủ điều kiện xuất hóa đơn điện tử VAT & hợp đồng kinh tế theo Luật Thương mại.
+            </Text>
           </View>
         </View>
+
+        <View style={{ height: 100 }} />
       </ScrollView>
 
-      {/* Sticky Bottom Bar */}
-      <View style={styles.checkoutBar}>
-        <View>
-          <Text style={styles.barLabel}>Tổng đơn:</Text>
-          <Text style={styles.barPrice}>{formatVND(finalTotal)}</Text>
+      {/* Sticky Bottom Checkout Bar */}
+      <View style={styles.bottomBar}>
+        <View style={styles.bottomInfo}>
+          <Text style={styles.bottomLabel}>Tổng thanh toán ({totalItems} hộp):</Text>
+          <Text style={styles.bottomTotal}>{formatVND(finalTotal)}</Text>
         </View>
         <CustomButton
-          title="Tiến Hành Đặt Hàng"
-          icon="💳"
+          title="Xác Nhận Đặt Hàng"
+          icon="💼"
           onPress={() => navigation.navigate('Checkout')}
           size="medium"
           style={styles.checkoutBtn}
@@ -198,135 +215,213 @@ const styles = StyleSheet.create({
   },
   scroll: {
     padding: 16,
-    paddingBottom: 110,
+    paddingBottom: 40,
   },
+  // Empty State Styles
   emptyContainer: {
     flex: 1,
-    justifyContent: 'center',
     alignItems: 'center',
-    padding: 30,
+    justifyContent: 'center',
+    paddingHorizontal: 32,
+    paddingVertical: 60,
+  },
+  emptyMoonCircle: {
+    width: 88,
+    height: 88,
+    borderRadius: 44,
+    backgroundColor: COLORS.accentGoldBg,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1.5,
+    borderColor: '#E8D2A3',
+    position: 'relative',
+    marginBottom: 16,
+  },
+  emptySparkle: {
+    position: 'absolute',
+    top: 16,
+    right: 18,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: COLORS.accent,
   },
   emptyTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: COLORS.textPrimary,
-    marginTop: 16,
+    fontSize: 16,
+    fontWeight: '900',
+    color: COLORS.primaryDark,
+    marginBottom: 8,
+    textAlign: 'center',
   },
   emptySub: {
-    fontSize: 13,
-    color: COLORS.textMuted,
+    fontSize: 12,
+    color: COLORS.textSecondary,
     textAlign: 'center',
-    marginTop: 8,
-    lineHeight: 20,
+    lineHeight: 18,
+    marginBottom: 16,
+  },
+  emptyTrustBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: '#F6FFED',
+    borderWidth: 1,
+    borderColor: '#B7EB8F',
+    borderRadius: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
     marginBottom: 20,
   },
-  browseBtn: {
-    minWidth: 160,
+  emptyTrustText: {
+    fontSize: 11,
+    color: '#059669',
+    fontWeight: '700',
   },
+  emptyBtnGroup: {
+    width: '100%',
+    gap: 10,
+  },
+  browseBtn: {
+    width: '100%',
+  },
+  rfqSecondaryBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    borderRadius: 8,
+    borderWidth: 1.2,
+    borderColor: COLORS.primary,
+    backgroundColor: COLORS.surface,
+    gap: 6,
+  },
+  rfqSecondaryText: {
+    color: COLORS.primary,
+    fontSize: 13,
+    fontWeight: '700',
+  },
+
+  // Cart List Styles
   cartCard: {
-    backgroundColor: '#FFF',
+    flexDirection: 'row',
+    backgroundColor: COLORS.surface,
     borderRadius: 12,
+    padding: 12,
+    marginBottom: 12,
     borderWidth: 1,
     borderColor: COLORS.border,
-    padding: 12,
-    flexDirection: 'row',
-    marginBottom: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
   },
-  itemImg: {
-    width: 84,
-    height: 84,
+  itemImage: {
+    width: 80,
+    height: 80,
     borderRadius: 8,
-    backgroundColor: '#F0ECE4',
+    backgroundColor: '#FAF5EE',
   },
-  itemContent: {
+  itemDetails: {
     flex: 1,
     marginLeft: 12,
+    justifyContent: 'space-between',
   },
   itemHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
+    alignItems: 'flex-start',
+  },
+  itemName: {
+    fontSize: 13,
+    fontWeight: '800',
+    color: COLORS.primaryDark,
+    flex: 1,
+    marginRight: 6,
   },
   shopName: {
     fontSize: 11,
     color: COLORS.accent,
     fontWeight: '600',
   },
-  prodName: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: COLORS.textPrimary,
-    marginTop: 2,
-  },
-  variantBadge: {
-    alignSelf: 'flex-start',
-    backgroundColor: '#FAFAF8',
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 4,
-    marginTop: 4,
-  },
-  variantText: {
+  variantName: {
     fontSize: 11,
     color: COLORS.textSecondary,
+    marginTop: 2,
   },
-  discountRow: {
-    marginTop: 4,
-  },
-  discountBadge: {
-    fontSize: 10,
+  bold: {
     fontWeight: '700',
-    color: '#389E0D',
+    color: COLORS.textPrimary,
   },
-  itemFooter: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginTop: 10,
-  },
-  qtyControls: {
+  priceRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    borderRadius: 6,
+    gap: 6,
+    marginVertical: 4,
   },
-  qtyBtn: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-  },
-  qtyText: {
+  unitPrice: {
     fontSize: 13,
-    fontWeight: '700',
-    paddingHorizontal: 8,
-  },
-  priceCol: {
-    alignItems: 'flex-end',
-  },
-  itemTotal: {
-    fontSize: 15,
     fontWeight: '800',
     color: COLORS.primary,
   },
-  itemRawPrice: {
-    fontSize: 11,
-    color: COLORS.textMuted,
-    textDecorationLine: 'line-through',
+  discountBadge: {
+    backgroundColor: '#FFE58F',
+    paddingHorizontal: 6,
+    paddingVertical: 1,
+    borderRadius: 4,
   },
-  summaryCard: {
-    backgroundColor: '#FFF',
-    borderRadius: 12,
+  discountBadgeText: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#874D00',
+  },
+  qtyRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 4,
+  },
+  stepper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: COLORS.background,
+    borderRadius: 6,
     borderWidth: 1,
     borderColor: COLORS.border,
-    padding: 16,
-    marginTop: 8,
   },
-  summaryTitle: {
-    fontSize: 15,
+  stepperBtn: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+  },
+  stepperVal: {
+    paddingHorizontal: 6,
+    fontSize: 12,
     fontWeight: '700',
     color: COLORS.textPrimary,
+    minWidth: 26,
+    textAlign: 'center',
+  },
+  itemTotal: {
+    fontSize: 14,
+    fontWeight: '900',
+    color: COLORS.primaryDark,
+  },
+
+  // Summary
+  summaryCard: {
+    backgroundColor: COLORS.surface,
+    borderRadius: 12,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#E8D2A3',
+    marginTop: 4,
+    marginBottom: 20,
+  },
+  summaryHeading: {
+    fontSize: 12,
+    fontWeight: '800',
+    color: COLORS.primaryDark,
+    letterSpacing: 0.5,
     marginBottom: 12,
   },
   summaryRow: {
@@ -335,39 +430,57 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   summaryLabel: {
-    fontSize: 13,
+    fontSize: 12,
     color: COLORS.textSecondary,
   },
-  summaryVal: {
-    fontSize: 13,
+  summaryValue: {
+    fontSize: 12,
     fontWeight: '600',
     color: COLORS.textPrimary,
   },
-  greenText: {
-    color: '#389E0D',
+  summaryDiscount: {
+    fontSize: 12,
     fontWeight: '700',
+    color: '#059669',
   },
   summaryDivider: {
     height: 1,
-    backgroundColor: COLORS.border,
-    marginVertical: 10,
+    backgroundColor: '#F5F0E6',
+    marginVertical: 8,
   },
-  finalTotalLabel: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: COLORS.textPrimary,
-  },
-  finalTotalVal: {
-    fontSize: 18,
+  totalLabel: {
+    fontSize: 13,
     fontWeight: '800',
+    color: COLORS.primaryDark,
+  },
+  totalPrice: {
+    fontSize: 17,
+    fontWeight: '900',
     color: COLORS.primary,
   },
-  checkoutBar: {
+  vatNoteBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: '#F6FFED',
+    padding: 8,
+    borderRadius: 6,
+    marginTop: 10,
+  },
+  vatNoteText: {
+    fontSize: 10,
+    color: '#059669',
+    flex: 1,
+    lineHeight: 14,
+  },
+
+  // Bottom Bar
+  bottomBar: {
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: '#FFF',
+    backgroundColor: COLORS.surface,
     borderTopWidth: 1,
     borderTopColor: COLORS.border,
     paddingHorizontal: 16,
@@ -375,19 +488,26 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -3 },
+    shadowOpacity: 0.08,
+    shadowRadius: 5,
     elevation: 8,
   },
-  barLabel: {
-    fontSize: 11,
-    color: COLORS.textMuted,
+  bottomInfo: {
+    flex: 1,
   },
-  barPrice: {
-    fontSize: 18,
-    fontWeight: '800',
-    color: COLORS.primary,
+  bottomLabel: {
+    fontSize: 11,
+    color: COLORS.textSecondary,
+  },
+  bottomTotal: {
+    fontSize: 17,
+    fontWeight: '900',
+    color: COLORS.primaryDark,
   },
   checkoutBtn: {
-    paddingHorizontal: 22,
+    marginLeft: 12,
+    minWidth: 150,
   },
 });
-

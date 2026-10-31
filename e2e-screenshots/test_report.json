@@ -1,0 +1,43 @@
+{
+  "timestamp": "2026-10-31T02:08:44.331Z",
+  "tests": [],
+  "screenshots": [
+    {
+      "screen": "HomeScreen",
+      "path": "D:\\FPT-STUDY\\10_FALL-2026\\PRN232\\Github\\mooncake-mobile\\e2e-screenshots\\01_home_screen.png"
+    },
+    {
+      "screen": "SearchScreen",
+      "path": "D:\\FPT-STUDY\\10_FALL-2026\\PRN232\\Github\\mooncake-mobile\\e2e-screenshots\\02_search_screen.png"
+    },
+    {
+      "screen": "ProductDetailTop",
+      "path": "D:\\FPT-STUDY\\10_FALL-2026\\PRN232\\Github\\mooncake-mobile\\e2e-screenshots\\03_product_detail_top.png"
+    },
+    {
+      "screen": "ProductDetailCalculator",
+      "path": "D:\\FPT-STUDY\\10_FALL-2026\\PRN232\\Github\\mooncake-mobile\\e2e-screenshots\\04_product_detail_calculator.png"
+    },
+    {
+      "screen": "UiCatalog",
+      "path": "D:\\FPT-STUDY\\10_FALL-2026\\PRN232\\Github\\mooncake-mobile\\e2e-screenshots\\05_ui_catalog.png"
+    },
+    {
+      "screen": "RfqBidding",
+      "path": "D:\\FPT-STUDY\\10_FALL-2026\\PRN232\\Github\\mooncake-mobile\\e2e-screenshots\\06_rfq_bidding.png"
+    },
+    {
+      "screen": "ContractsTimeline",
+      "path": "D:\\FPT-STUDY\\10_FALL-2026\\PRN232\\Github\\mooncake-mobile\\e2e-screenshots\\07_contracts_timeline.png"
+    },
+    {
+      "screen": "ContractSignOtp",
+      "path": "D:\\FPT-STUDY\\10_FALL-2026\\PRN232\\Github\\mooncake-mobile\\e2e-screenshots\\08_contract_sign_otp.png"
+    },
+    {
+      "screen": "DeliveryPoD",
+      "path": "D:\\FPT-STUDY\\10_FALL-2026\\PRN232\\Github\\mooncake-mobile\\e2e-screenshots\\09_coldchain_pod.png"
+    }
+  ],
+  "success": true
+}

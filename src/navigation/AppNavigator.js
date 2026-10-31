@@ -32,6 +32,9 @@ import NotificationScreen from '../screens/Notification/NotificationScreen';
 import AiAssistantScreen from '../screens/AI/AiAssistantScreen';
 import ReviewFormScreen from '../screens/Reviews/ReviewFormScreen';
 
+// UI Showcase Screen
+import UiCatalogScreen from '../screens/Dev/UiCatalogScreen';
+
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
 
@@ -90,12 +93,12 @@ function MainTabs() {
       <Tab.Screen
         name="HomeTab"
         component={HomeScreen}
-        options={{ tabBarLabel: 'Khám phá' }}
+        options={{ tabBarLabel: 'Trang chủ' }}
       />
       <Tab.Screen
         name="SearchTab"
         component={SearchScreen}
-        options={{ tabBarLabel: 'Tìm bánh' }}
+        options={{ tabBarLabel: 'Sản phẩm' }}
       />
       <Tab.Screen
         name="CartTab"
@@ -110,7 +113,7 @@ function MainTabs() {
       <Tab.Screen
         name="ProfileTab"
         component={ProfileScreen}
-        options={{ tabBarLabel: 'Tài khoản' }}
+        options={{ tabBarLabel: 'Hồ sơ' }}
       />
     </Tab.Navigator>
   );
@@ -147,6 +150,9 @@ export default function AppNavigator() {
         {/* AI & Reviews */}
         <Stack.Screen name="AiAssistant" component={AiAssistantScreen} />
         <Stack.Screen name="ReviewForm" component={ReviewFormScreen} />
+
+        {/* UI Showcase AntD & Lucian */}
+        <Stack.Screen name="UiCatalog" component={UiCatalogScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );

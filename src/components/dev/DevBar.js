@@ -28,6 +28,16 @@ export default function DevBar() {
 
   const navGroups = [
     {
+      title: '✨ Giao Diện Mới: Ant Design & Lucian Labs',
+      items: [
+        {
+          label: 'UI Showcase · AntD & Lucian Labs',
+          screen: 'UiCatalog',
+          icon: 'color-palette-outline',
+        },
+      ],
+    },
+    {
       title: '🛍️ Mua Sắm & Khám Phá Bánh',
       items: [
         { label: 'Trang Chủ Khám Phá', screen: 'MainTabs', params: { screen: 'HomeTab' }, icon: 'home-outline' },
@@ -99,95 +109,106 @@ export default function DevBar() {
 
   const handleNavigate = (item) => {
     setIsOpen(false);
-    navigate(item.screen, item.params);
+    setTimeout(() => {
+      navigate(item.screen, item.params);
+    }, 150);
   };
 
   return (
     <>
-      {/* Floating Toggle Button */}
+      {/* Floating Dev Button */}
       <TouchableOpacity
         style={styles.floatingButton}
         activeOpacity={0.85}
         onPress={() => setIsOpen(true)}
       >
-        <View style={styles.floatingInner}>
-          <Ionicons name="construct" size={14} color="#FFF" />
-          <Text style={styles.floatingText}>DEV BAR</Text>
-          <View style={[styles.statusDot, user ? styles.dotLoggedIn : styles.dotGuest]} />
-        </View>
+        <Ionicons name="construct" size={18} color="#FFFFFF" />
+        <Text style={styles.floatingButtonText}>DEV BAR</Text>
       </TouchableOpacity>
 
-      {/* Full Preview Drawer Modal */}
-      <Modal visible={isOpen} animationType="slide" transparent={true}>
-        <View style={styles.modalOverlay}>
-          <SafeAreaView style={styles.modalContainer}>
-            {/* Modal Header */}
-            <View style={styles.header}>
-              <View style={styles.headerTitleBox}>
-                <Ionicons name="compass" size={20} color={COLORS.accent} />
-                <Text style={styles.headerTitle}>DEV PREVIEW BAR</Text>
+      {/* Dev Menu Modal */}
+      <Modal
+        visible={isOpen}
+        animationType="slide"
+        transparent={false}
+        onRequestClose={() => setIsOpen(false)}
+      >
+        <SafeAreaView style={styles.modalContainer}>
+          {/* Header */}
+          <View style={styles.modalHeader}>
+            <View style={styles.headerTitleWrap}>
+              <Ionicons name="construct" size={22} color={COLORS.accent} />
+              <View>
+                <Text style={styles.headerTitle}>NGUYỆT PHỐ DEV BAR</Text>
+                <Text style={styles.headerSubtitle}>Kiểm thử giao diện không cần đăng nhập</Text>
               </View>
-              <TouchableOpacity style={styles.closeBtn} onPress={() => setIsOpen(false)}>
-                <Ionicons name="close" size={22} color={COLORS.textPrimary} />
-              </TouchableOpacity>
             </View>
+            <TouchableOpacity
+              style={styles.closeButton}
+              onPress={() => setIsOpen(false)}
+            >
+              <Ionicons name="close-circle" size={28} color="#FFFFFF" />
+            </TouchableOpacity>
+          </View>
 
-            {/* Quick Auth Switcher */}
-            <View style={styles.authBanner}>
-              <View style={styles.authInfo}>
-                <Ionicons
-                  name={user ? 'person-circle' : 'person-circle-outline'}
-                  size={20}
-                  color={user ? COLORS.success : COLORS.textMuted}
-                />
-                <View style={styles.authTextBox}>
-                  <Text style={styles.authStatusText}>
-                    {user ? user.fullName : 'Chưa đăng nhập (Khách vãng lai)'}
-                  </Text>
-                  <Text style={styles.authSubText}>
-                    {user ? `Doanh nghiệp: ${user.companyName}` : 'Đang xem chế độ Guest preview'}
-                  </Text>
-                </View>
-              </View>
-              {user ? (
-                <TouchableOpacity style={styles.authBtnLogout} onPress={handleQuickLogout}>
-                  <Text style={styles.authBtnLogoutText}>Thử Guest</Text>
-                </TouchableOpacity>
-              ) : (
-                <TouchableOpacity style={styles.authBtnLogin} onPress={handleQuickLogin}>
-                  <Text style={styles.authBtnLoginText}>Đăng nhập B2B</Text>
-                </TouchableOpacity>
-              )}
-            </View>
-
-            <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-              <Text style={styles.guideText}>
-                👉 Bấm vào bất kỳ màn hình nào dưới đây để xem trực tiếp giao diện mà không cần đăng nhập:
+          {/* User Auth Simulation Bar */}
+          <View style={styles.authStatusBar}>
+            <View style={styles.authInfo}>
+              <View
+                style={[
+                  styles.statusDot,
+                  { backgroundColor: user ? COLORS.success : '#8C8C8C' },
+                ]}
+              />
+              <Text style={styles.authStatusText}>
+                {user ? `Đã đăng nhập: ${user.fullName || user.email}` : 'Chế độ: Khách vãng lai (Guest)'}
               </Text>
+            </View>
+            {user ? (
+              <TouchableOpacity
+                style={[styles.authBtn, styles.logoutBtn]}
+                onPress={handleQuickLogout}
+              >
+                <Text style={styles.authBtnText}>Đăng xuất</Text>
+              </TouchableOpacity>
+            ) : (
+              <TouchableOpacity
+                style={[styles.authBtn, styles.loginBtn]}
+                onPress={handleQuickLogin}
+              >
+                <Text style={styles.authBtnText}>Giả lập B2B Login</Text>
+              </TouchableOpacity>
+            )}
+          </View>
 
-              {navGroups.map((group, gIdx) => (
-                <View key={gIdx} style={styles.groupCard}>
-                  <Text style={styles.groupHeading}>{group.title}</Text>
-                  {group.items.map((item, iIdx) => (
+          {/* Navigation Links ScrollView */}
+          <ScrollView style={styles.navList} contentContainerStyle={styles.navListContent}>
+            {navGroups.map((group, groupIdx) => (
+              <View key={groupIdx} style={styles.groupContainer}>
+                <Text style={styles.groupTitle}>{group.title}</Text>
+                <View style={styles.groupItemsWrap}>
+                  {group.items.map((item, itemIdx) => (
                     <TouchableOpacity
-                      key={iIdx}
-                      style={[styles.navItem, iIdx !== group.items.length - 1 && styles.navItemBorder]}
+                      key={itemIdx}
+                      style={styles.navItem}
+                      activeOpacity={0.7}
                       onPress={() => handleNavigate(item)}
                     >
-                      <View style={styles.itemLeft}>
-                        <View style={styles.iconCircle}>
-                          <Ionicons name={item.icon} size={16} color={COLORS.primary} />
+                      <View style={styles.navItemLeft}>
+                        <View style={styles.navItemIconWrap}>
+                          <Ionicons name={item.icon} size={18} color={COLORS.primary} />
                         </View>
-                        <Text style={styles.itemLabel}>{item.label}</Text>
+                        <Text style={styles.navItemLabel}>{item.label}</Text>
                       </View>
                       <Ionicons name="chevron-forward" size={16} color={COLORS.textMuted} />
                     </TouchableOpacity>
                   ))}
                 </View>
-              ))}
-            </ScrollView>
-          </SafeAreaView>
-        </View>
+              </View>
+            ))}
+            <View style={{ height: 40 }} />
+          </ScrollView>
+        </SafeAreaView>
       </Modal>
     </>
   );
@@ -198,186 +219,151 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 74,
     right: 14,
-    backgroundColor: '#1F1F1F',
-    borderRadius: 20,
-    paddingHorizontal: 12,
+    backgroundColor: COLORS.primaryDark,
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingVertical: 7,
+    paddingHorizontal: 12,
+    borderRadius: 20,
     borderWidth: 1.5,
     borderColor: COLORS.accent,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.3,
+    shadowOpacity: 0.35,
     shadowRadius: 5,
-    elevation: 10,
+    elevation: 8,
     zIndex: 9999,
+    gap: 6,
   },
-  floatingInner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  floatingText: {
-    color: '#FFF',
+  floatingButtonText: {
+    color: '#FFFFFF',
     fontSize: 11,
     fontWeight: '800',
     letterSpacing: 0.5,
-    marginLeft: 6,
-    marginRight: 6,
-  },
-  statusDot: {
-    width: 7,
-    height: 7,
-    borderRadius: 4,
-  },
-  dotLoggedIn: {
-    backgroundColor: '#52C41A',
-  },
-  dotGuest: {
-    backgroundColor: '#FAAD14',
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.65)',
-    justifyContent: 'flex-end',
   },
   modalContainer: {
-    backgroundColor: COLORS.background,
-    borderTopLeftRadius: 18,
-    borderTopRightRadius: 18,
-    maxHeight: '88%',
+    flex: 1,
+    backgroundColor: '#141414',
   },
-  header: {
+  modalHeader: {
     flexDirection: 'row',
+    alignItems: 'center',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 18,
+    paddingHorizontal: 16,
     paddingVertical: 14,
+    backgroundColor: COLORS.primaryDark,
     borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
-    backgroundColor: '#FFF',
-    borderTopLeftRadius: 18,
-    borderTopRightRadius: 18,
+    borderBottomColor: COLORS.accent,
   },
-  headerTitleBox: {
+  headerTitleWrap: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: 10,
   },
   headerTitle: {
-    fontSize: 15,
+    color: '#FFFFFF',
+    fontSize: 16,
     fontWeight: '800',
-    color: COLORS.primary,
-    marginLeft: 8,
-    letterSpacing: 0.5,
+    letterSpacing: 1,
   },
-  closeBtn: {
-    padding: 4,
+  headerSubtitle: {
+    color: '#E8D2A3',
+    fontSize: 11,
   },
-  authBanner: {
+  closeButton: {
+    padding: 2,
+  },
+  authStatusBar: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#FFFBE6',
-    borderBottomWidth: 1,
-    borderBottomColor: '#FFE58F',
+    backgroundColor: '#1F1F1F',
     paddingHorizontal: 16,
     paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#2D2D2D',
   },
   authInfo: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: 8,
     flex: 1,
-    marginRight: 10,
   },
-  authTextBox: {
-    marginLeft: 8,
-    flex: 1,
+  statusDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
   },
   authStatusText: {
+    color: '#D4D4D4',
     fontSize: 12,
-    fontWeight: '700',
-    color: '#873800',
+    flex: 1,
   },
-  authSubText: {
-    fontSize: 10,
-    color: '#614700',
-  },
-  authBtnLogin: {
-    backgroundColor: COLORS.primary,
+  authBtn: {
+    paddingVertical: 5,
     paddingHorizontal: 10,
-    paddingVertical: 6,
     borderRadius: 6,
   },
-  authBtnLoginText: {
-    color: '#FFF',
+  loginBtn: {
+    backgroundColor: COLORS.accent,
+  },
+  logoutBtn: {
+    backgroundColor: '#434343',
+  },
+  authBtnText: {
+    color: '#FFFFFF',
     fontSize: 11,
     fontWeight: '700',
   },
-  authBtnLogout: {
-    backgroundColor: '#FFF',
-    borderWidth: 1,
-    borderColor: '#FFA39E',
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 6,
+  navList: {
+    flex: 1,
   },
-  authBtnLogoutText: {
-    color: COLORS.error,
-    fontSize: 11,
-    fontWeight: '700',
-  },
-  scrollContent: {
+  navListContent: {
     padding: 16,
-    paddingBottom: 40,
   },
-  guideText: {
-    fontSize: 12,
-    color: COLORS.textSecondary,
-    marginBottom: 12,
-    lineHeight: 16,
+  groupContainer: {
+    marginBottom: 20,
   },
-  groupCard: {
-    backgroundColor: '#FFF',
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    paddingHorizontal: 14,
-    paddingTop: 12,
-    paddingBottom: 4,
-    marginBottom: 14,
-  },
-  groupHeading: {
-    fontSize: 12,
-    fontWeight: '800',
-    color: COLORS.primary,
-    letterSpacing: 0.3,
+  groupTitle: {
+    color: COLORS.accent,
+    fontSize: 13,
+    fontWeight: '700',
     marginBottom: 8,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  groupItemsWrap: {
+    backgroundColor: '#1F1F1F',
+    borderRadius: 12,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: '#2D2D2D',
   },
   navItem: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: 10,
-  },
-  navItemBorder: {
+    paddingHorizontal: 14,
+    paddingVertical: 13,
     borderBottomWidth: 1,
-    borderBottomColor: '#F5F3EF',
+    borderBottomColor: '#2A2A2A',
   },
-  itemLeft: {
+  navItemLeft: {
     flexDirection: 'row',
     alignItems: 'center',
-    flex: 1,
+    gap: 12,
   },
-  iconCircle: {
+  navItemIconWrap: {
     width: 28,
     height: 28,
-    borderRadius: 14,
-    backgroundColor: 'rgba(140, 21, 36, 0.06)',
+    borderRadius: 6,
+    backgroundColor: '#FFF1F0',
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 10,
   },
-  itemLabel: {
+  navItemLabel: {
+    color: '#FFFFFF',
     fontSize: 13,
-    color: COLORS.textPrimary,
     fontWeight: '600',
   },
 });

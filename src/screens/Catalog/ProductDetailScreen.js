@@ -14,6 +14,8 @@ import AppHeader from '../../components/common/AppHeader';
 import CustomButton from '../../components/common/CustomButton';
 import { useCart } from '../../context/CartContext';
 import { MOCK_PRODUCTS } from '../../api/apiClient';
+import B2BPriceCalculator from '../../components/lucian/B2BPriceCalculator';
+import TearOffCoupon from '../../components/lucian/TearOffCoupon';
 
 export default function ProductDetailScreen({ route, navigation }) {
   const product = route?.params?.product || MOCK_PRODUCTS[0];
@@ -24,7 +26,8 @@ export default function ProductDetailScreen({ route, navigation }) {
     product.variants && product.variants.length > 0 ? product.variants[0] : null
   );
 
-  const [quantity, setQuantity] = useState(product.minOrderQty || 10);
+  const [quantity, setQuantity] = useState(product.minOrderQty || 20);
+  const [appliedCoupon, setAppliedCoupon] = useState(null);
 
   const formatVND = (num) => {
     return new Intl.NumberFormat('vi-VN', {
@@ -47,22 +50,23 @@ export default function ProductDetailScreen({ route, navigation }) {
   }
 
   const discountAmount = Math.round((subtotal * activeDiscountPercent) / 100);
-  const finalTotal = subtotal - discountAmount;
+  const couponDiscount = appliedCoupon ? 500000 : 0;
+  const finalTotal = Math.max(0, subtotal - discountAmount - couponDiscount);
 
   const handleAddToCart = () => {
     if (!selectedVariant) {
       Alert.alert('Chưa chọn biến thể', 'Vui lòng chọn loại bánh và nhân cụ thể.');
       return;
     }
-    if (quantity < product.minOrderQty) {
-      Alert.alert('Số lượng chưa đạt', `Số lượng tối thiểu là ${product.minOrderQty} hộp.`);
+    if (quantity < (product.minOrderQty || 20)) {
+      Alert.alert('Số lượng chưa đạt MOQ', `Số lượng tối thiểu là ${product.minOrderQty || 20} hộp.`);
       return;
     }
 
     addToCart(product, selectedVariant, quantity);
     Alert.alert(
-      'Đã thêm vào giỏ',
-      `Đã thêm ${quantity} hộp [${selectedVariant.name}] vào giỏ hàng.`,
+      'Đã thêm vào giỏ hàng B2B',
+      `Đã thêm ${quantity} hộp [${selectedVariant.name}] vào giỏ hàng.\nChiết khấu: -${activeDiscountPercent}%\n${appliedCoupon ? 'Áp dụng coupon: -500.000₫' : ''}`,
       [
         { text: 'Tiếp tục xem', style: 'cancel' },
         { text: 'Xem giỏ hàng', onPress: () => navigation.navigate('CartTab') },
@@ -70,10 +74,19 @@ export default function ProductDetailScreen({ route, navigation }) {
     );
   };
 
+  const handleApplyTier = (calc) => {
+    setQuantity(calc.quantity);
+  };
+
+  const handleApplyCoupon = (code) => {
+    setAppliedCoupon(code);
+    Alert.alert('Kích hoạt ưu đãi', `Đã áp dụng mã ${code} (-500.000₫) cho đơn hàng này.`);
+  };
+
   return (
     <View style={styles.container}>
       <AppHeader
-        title="Chi Tiết Bánh"
+        title="Chi Tiết Bánh Hoàng Gia"
         subtitle={product.shopName}
         showBack={true}
         onBack={() => navigation.goBack()}
@@ -81,82 +94,77 @@ export default function ProductDetailScreen({ route, navigation }) {
         onRightPress={() => navigation.navigate('CartTab')}
       />
 
-      <ScrollView contentContainerStyle={styles.scroll}>
+      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+        {/* Product Cover Image */}
         <Image source={{ uri: product.coverImage }} style={styles.image} resizeMode="cover" />
 
         <View style={styles.body}>
           {/* Shop badge & Category */}
           <View style={styles.shopRow}>
             <View style={styles.shopBadge}>
-              <Ionicons name="storefront-outline" size={14} color={COLORS.accent} />
+              <Ionicons name="storefront" size={14} color={COLORS.accent} />
               <Text style={styles.shopBadgeText}>{product.shopName}</Text>
             </View>
-            <Text style={styles.categoryBadge}>{product.category}</Text>
+            <View style={styles.categoryBadgeWrap}>
+              <Text style={styles.categoryBadge}>{product.category}</Text>
+            </View>
           </View>
 
           <Text style={styles.title}>{product.name}</Text>
 
-          {/* Rating & MOQ */}
+          {/* Rating & MOQ Info */}
           <View style={styles.metaBox}>
             <View style={styles.ratingRow}>
               <Ionicons name="star" size={16} color="#FAAD14" />
-              <Text style={styles.ratingScore}>{product.rating}</Text>
-              <Text style={styles.reviewCount}>({product.reviewCount} đánh giá doanh nghiệp)</Text>
+              <Text style={styles.ratingScore}>{product.rating || '4.9'}</Text>
+              <Text style={styles.reviewCount}>({product.reviewCount || 128} đánh giá B2B)</Text>
             </View>
             <View style={styles.moqBox}>
+              <Ionicons name="cube-outline" size={14} color={COLORS.primary} />
               <Text style={styles.moqLabel}>MOQ: </Text>
-              <Text style={styles.moqVal}>{product.minOrderQty} hộp</Text>
+              <Text style={styles.moqVal}>{product.minOrderQty || 20} hộp</Text>
             </View>
           </View>
 
-          {/* Price display */}
+          {/* Price Header */}
           <View style={styles.priceContainer}>
             <View>
-              <Text style={styles.priceSub}>Đơn giá cơ bản</Text>
-              <Text style={styles.mainPrice}>{formatVND(unitPrice)}</Text>
+              <Text style={styles.priceSub}>Đơn giá cơ sở niêm yết</Text>
+              <Text style={styles.mainPrice}>{formatVND(unitPrice)}/hộp</Text>
             </View>
             {activeDiscountPercent > 0 && (
               <View style={styles.discountTag}>
-                <Text style={styles.discountTagText}>Đang áp dụng giảm {activeDiscountPercent}%</Text>
+                <Ionicons name="trending-down" size={14} color="#874D00" />
+                <Text style={styles.discountTagText}>Giảm {activeDiscountPercent}% bậc số lượng</Text>
               </View>
             )}
           </View>
 
-          {/* Tiered Pricing Table */}
-          {product.tierPricing && product.tierPricing.length > 0 && (
-            <View style={styles.tierSection}>
-              <Text style={styles.sectionHeading}>
-                <Ionicons name="trending-down" size={16} color={COLORS.primary} /> Bảng Giá Chiết Khấu Theo Số Lượng
-              </Text>
-              <View style={styles.tierTable}>
-                {product.tierPricing.map((tier, idx) => {
-                  const isCurrent =
-                    quantity >= tier.minQty && (!tier.maxQty || quantity <= tier.maxQty);
-                  return (
-                    <View
-                      key={idx}
-                      style={[styles.tierRow, isCurrent && styles.tierRowActive]}
-                    >
-                      <Text style={[styles.tierQty, isCurrent && styles.tierTextActive]}>
-                        {tier.minQty} - {tier.maxQty ? `${tier.maxQty} hộp` : 'trở lên'}
-                      </Text>
-                      <Text style={[styles.tierDiscount, isCurrent && styles.tierTextActive]}>
-                        Giảm -{tier.discountPercent}%
-                      </Text>
-                    </View>
-                  );
-                })}
-              </View>
-            </View>
-          )}
+          {/* 1. Lucian Tear-Off Coupon Component */}
+          <TearOffCoupon
+            code="B2BMOON2026"
+            discountText="GIẢM 500.000₫"
+            conditionText="Áp dụng cho đơn hàng từ 30 hộp"
+            onApply={handleApplyCoupon}
+          />
 
-          {/* Variant Selection (Bắt buộc theo rule hệ thống) */}
+          {/* 2. Lucian B2B Price Calculator Component */}
+          <B2BPriceCalculator
+            baseRetailPrice={unitPrice}
+            initialQuantity={quantity}
+            onApplyTier={handleApplyTier}
+          />
+
+          {/* 3. Ant Design Radio Selection Cards (Variant Selection) */}
           <View style={styles.variantSection}>
-            <Text style={styles.sectionHeading}>
-              Chọn Biến Thể Bánh & Nhân <Text style={styles.required}>*</Text>
-            </Text>
+            <View style={styles.sectionHeadingWrap}>
+              <Ionicons name="list" size={16} color={COLORS.primary} />
+              <Text style={styles.sectionHeading}>
+                Chọn Biến Thể Bánh & Nhân <Text style={styles.required}>*</Text>
+              </Text>
+            </View>
             <Text style={styles.variantNotice}>
-              Quy định sàn: Quý khách bắt buộc chọn hương vị và loại vỏ trước khi thêm giỏ hàng.
+              Quy chuẩn B2B: Bắt buộc chọn hương vị và loại vỏ trước khi chốt đơn/hợp đồng.
             </Text>
 
             {product.variants.map((v) => {
@@ -166,8 +174,9 @@ export default function ProductDetailScreen({ route, navigation }) {
                   key={v.id}
                   style={[styles.variantCard, isSelected && styles.variantCardSelected]}
                   onPress={() => setSelectedVariant(v)}
+                  activeOpacity={0.8}
                 >
-                  <View style={styles.radio}>
+                  <View style={[styles.radio, isSelected && styles.radioActive]}>
                     {isSelected && <View style={styles.radioInner} />}
                   </View>
                   <View style={styles.variantInfo}>
@@ -175,13 +184,15 @@ export default function ProductDetailScreen({ route, navigation }) {
                       {v.name}
                     </Text>
                     <Text style={styles.variantMeta}>
-                      Vỏ: {v.crustType} • Nhân: {v.filling} • Tồn: {v.stock}
+                      Vỏ: {v.crustType} • Nhân: {v.filling} • Tồn kho: {v.stock} hộp
                     </Text>
                   </View>
                   {v.priceAdjustment !== 0 && (
-                    <Text style={styles.adjText}>
-                      {v.priceAdjustment > 0 ? `+${formatVND(v.priceAdjustment)}` : formatVND(v.priceAdjustment)}
-                    </Text>
+                    <View style={styles.adjBadge}>
+                      <Text style={styles.adjText}>
+                        {v.priceAdjustment > 0 ? `+${formatVND(v.priceAdjustment)}` : formatVND(v.priceAdjustment)}
+                      </Text>
+                    </View>
                   )}
                 </TouchableOpacity>
               );
@@ -190,33 +201,11 @@ export default function ProductDetailScreen({ route, navigation }) {
 
           {/* Description */}
           <View style={styles.descSection}>
-            <Text style={styles.sectionHeading}>Mô Tả Sản Phẩm & Quy Cách</Text>
-            <Text style={styles.descText}>{product.description}</Text>
-          </View>
-
-          {/* Quantity Selector */}
-          <View style={styles.qtySection}>
-            <Text style={styles.sectionHeading}>Số Lượng Đặt Mua (Hộp)</Text>
-            <View style={styles.qtyRow}>
-              <TouchableOpacity
-                style={styles.qtyBtn}
-                onPress={() => setQuantity(Math.max(product.minOrderQty, quantity - 5))}
-              >
-                <Ionicons name="remove" size={18} color={COLORS.primary} />
-              </TouchableOpacity>
-              <Text style={styles.qtyVal}>{quantity}</Text>
-              <TouchableOpacity
-                style={styles.qtyBtn}
-                onPress={() => setQuantity(quantity + 5)}
-              >
-                <Ionicons name="add" size={18} color={COLORS.primary} />
-              </TouchableOpacity>
-
-              <View style={styles.calcBox}>
-                <Text style={styles.calcSub}>Thành tiền tạm tính:</Text>
-                <Text style={styles.calcTotal}>{formatVND(finalTotal)}</Text>
-              </View>
+            <View style={styles.sectionHeadingWrap}>
+              <Ionicons name="information-circle-outline" size={16} color={COLORS.primary} />
+              <Text style={styles.sectionHeading}>Mô Tả Sản Phẩm & Quy Cách Đóng Gói</Text>
             </View>
+            <Text style={styles.descText}>{product.description}</Text>
           </View>
         </View>
       </ScrollView>
@@ -224,10 +213,12 @@ export default function ProductDetailScreen({ route, navigation }) {
       {/* Sticky Bottom Actions */}
       <View style={styles.bottomBar}>
         <View style={styles.bottomTotal}>
-          <Text style={styles.bottomLabel}>Tổng thanh toán:</Text>
+          <Text style={styles.bottomLabel}>Tổng dự toán ({quantity} hộp):</Text>
           <Text style={styles.bottomPrice}>{formatVND(finalTotal)}</Text>
-          {discountAmount > 0 && (
-            <Text style={styles.bottomDiscount}>Tiết kiệm: {formatVND(discountAmount)}</Text>
+          {(discountAmount > 0 || couponDiscount > 0) && (
+            <Text style={styles.bottomDiscount}>
+              Tiết kiệm: {formatVND(discountAmount + couponDiscount)}
+            </Text>
           )}
         </View>
         <CustomButton
@@ -248,12 +239,12 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.background,
   },
   scroll: {
-    paddingBottom: 100,
+    paddingBottom: 90,
   },
   image: {
     width: '100%',
-    height: 260,
-    backgroundColor: '#EAE5DB',
+    height: 250,
+    backgroundColor: '#FAF5EE',
   },
   body: {
     padding: 16,
@@ -267,153 +258,142 @@ const styles = StyleSheet.create({
   shopBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-  },
-  shopBadgeText: {
-    fontSize: 13,
-    color: COLORS.accent,
-    fontWeight: '600',
-    marginLeft: 6,
-  },
-  categoryBadge: {
-    backgroundColor: 'rgba(140, 21, 36, 0.08)',
-    color: COLORS.primary,
-    fontSize: 11,
-    fontWeight: '700',
+    gap: 4,
+    backgroundColor: COLORS.accentGoldBg,
     paddingHorizontal: 8,
     paddingVertical: 3,
-    borderRadius: 4,
+    borderRadius: 6,
+  },
+  shopBadgeText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: COLORS.accent,
+  },
+  categoryBadgeWrap: {
+    backgroundColor: '#FFF1F0',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+  },
+  categoryBadge: {
+    fontSize: 11,
+    color: COLORS.primary,
+    fontWeight: '600',
   },
   title: {
     fontSize: 20,
-    fontWeight: '800',
-    color: COLORS.textPrimary,
-    lineHeight: 26,
+    fontWeight: '900',
+    color: COLORS.primaryDark,
     marginBottom: 10,
+    lineHeight: 28,
   },
   metaBox: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingBottom: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
+    backgroundColor: COLORS.surface,
+    padding: 10,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: COLORS.border,
     marginBottom: 14,
   },
   ratingRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: 4,
   },
   ratingScore: {
-    fontSize: 14,
-    fontWeight: '700',
+    fontSize: 13,
+    fontWeight: '800',
     color: COLORS.textPrimary,
-    marginLeft: 4,
   },
   reviewCount: {
-    fontSize: 12,
-    color: COLORS.textMuted,
-    marginLeft: 6,
+    fontSize: 11,
+    color: COLORS.textSecondary,
   },
   moqBox: {
     flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
   },
   moqLabel: {
     fontSize: 12,
-    color: COLORS.textMuted,
+    color: COLORS.textSecondary,
   },
   moqVal: {
     fontSize: 12,
-    fontWeight: '700',
+    fontWeight: '800',
     color: COLORS.primary,
   },
   priceContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: '#FFF',
+    backgroundColor: COLORS.surface,
     padding: 14,
     borderRadius: 10,
     borderWidth: 1,
     borderColor: COLORS.border,
-    marginBottom: 16,
+    marginBottom: 10,
   },
   priceSub: {
-    fontSize: 12,
-    color: COLORS.textMuted,
+    fontSize: 11,
+    color: COLORS.textSecondary,
+    marginBottom: 2,
   },
   mainPrice: {
     fontSize: 20,
-    fontWeight: '800',
+    fontWeight: '900',
     color: COLORS.primary,
-    marginTop: 2,
   },
   discountTag: {
-    backgroundColor: '#F6FFED',
-    borderWidth: 1,
-    borderColor: '#B7EB8F',
-    paddingHorizontal: 10,
-    paddingVertical: 5,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: '#FFE58F',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
     borderRadius: 6,
   },
   discountTagText: {
     fontSize: 11,
     fontWeight: '700',
-    color: '#389E0D',
+    color: '#874D00',
   },
-  tierSection: {
-    backgroundColor: '#FFFBE6',
+
+  // Ant Design Variant Selection Cards
+  variantSection: {
+    backgroundColor: COLORS.surface,
+    borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#FFE58F',
-    borderRadius: 10,
+    borderColor: COLORS.border,
     padding: 14,
-    marginBottom: 18,
+    marginVertical: 12,
+  },
+  sectionHeadingWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 4,
   },
   sectionHeading: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: COLORS.textPrimary,
-    marginBottom: 8,
+    fontSize: 13,
+    fontWeight: '800',
+    color: COLORS.primaryDark,
   },
   required: {
-    color: COLORS.error,
-  },
-  tierTable: {
-    marginTop: 6,
-  },
-  tierRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingVertical: 6,
-    paddingHorizontal: 8,
-    borderRadius: 4,
-  },
-  tierRowActive: {
-    backgroundColor: '#FFE58F',
-  },
-  tierQty: {
-    fontSize: 13,
-    color: '#873800',
-  },
-  tierDiscount: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: '#873800',
-  },
-  tierTextActive: {
-    fontWeight: '800',
-  },
-  variantSection: {
-    marginBottom: 18,
+    color: COLORS.primary,
   },
   variantNotice: {
-    fontSize: 12,
-    color: COLORS.textMuted,
-    marginBottom: 10,
+    fontSize: 11,
+    color: COLORS.textSecondary,
+    marginBottom: 12,
   },
   variantCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFF',
+    backgroundColor: COLORS.background,
     borderWidth: 1,
     borderColor: COLORS.border,
     borderRadius: 8,
@@ -421,18 +401,22 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   variantCardSelected: {
-    borderColor: COLORS.primary,
-    backgroundColor: 'rgba(140, 21, 36, 0.03)',
+    borderColor: COLORS.accent,
+    borderWidth: 1.5,
+    backgroundColor: '#FFFDF9',
   },
   radio: {
-    width: 18,
-    height: 18,
-    borderRadius: 9,
-    borderWidth: 2,
-    borderColor: COLORS.primary,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    borderWidth: 1.5,
+    borderColor: COLORS.borderDark,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 10,
+  },
+  radioActive: {
+    borderColor: COLORS.primary,
   },
   radioInner: {
     width: 10,
@@ -444,112 +428,86 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   variantName: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '600',
     color: COLORS.textPrimary,
+    marginBottom: 2,
   },
   variantTextSelected: {
     color: COLORS.primary,
-    fontWeight: '700',
+    fontWeight: '800',
   },
   variantMeta: {
     fontSize: 11,
-    color: COLORS.textMuted,
-    marginTop: 2,
+    color: COLORS.textSecondary,
+  },
+  adjBadge: {
+    backgroundColor: '#FFF1F0',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
   },
   adjText: {
-    fontSize: 13,
+    fontSize: 11,
     fontWeight: '700',
-    color: COLORS.accent,
+    color: COLORS.primary,
   },
+
+  // Description
   descSection: {
-    marginBottom: 18,
+    backgroundColor: COLORS.surface,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    padding: 14,
+    marginBottom: 16,
   },
   descText: {
     fontSize: 13,
-    color: COLORS.textSecondary,
+    color: COLORS.textPrimary,
     lineHeight: 20,
+    marginTop: 6,
   },
-  qtySection: {
-    backgroundColor: '#FFF',
-    padding: 14,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-  },
-  qtyRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 8,
-  },
-  qtyBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    borderWidth: 1,
-    borderColor: COLORS.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#FFF',
-  },
-  qtyVal: {
-    fontSize: 16,
-    fontWeight: '700',
-    marginHorizontal: 16,
-    minWidth: 30,
-    textAlign: 'center',
-  },
-  calcBox: {
-    flex: 1,
-    alignItems: 'flex-end',
-  },
-  calcSub: {
-    fontSize: 11,
-    color: COLORS.textMuted,
-  },
-  calcTotal: {
-    fontSize: 16,
-    fontWeight: '800',
-    color: COLORS.primary,
-  },
+
+  // Bottom Sticky Bar
   bottomBar: {
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: '#FFF',
+    backgroundColor: COLORS.surface,
     borderTopWidth: 1,
     borderTopColor: COLORS.border,
     paddingHorizontal: 16,
     paddingVertical: 12,
     flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'space-between',
-    elevation: 8,
+    alignItems: 'center',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+    shadowOffset: { width: 0, height: -3 },
+    shadowOpacity: 0.08,
+    shadowRadius: 5,
+    elevation: 8,
   },
   bottomTotal: {
     flex: 1,
   },
   bottomLabel: {
     fontSize: 11,
-    color: COLORS.textMuted,
+    color: COLORS.textSecondary,
   },
   bottomPrice: {
     fontSize: 18,
-    fontWeight: '800',
-    color: COLORS.primary,
+    fontWeight: '900',
+    color: COLORS.primaryDark,
   },
   bottomDiscount: {
     fontSize: 11,
-    color: '#389E0D',
-    fontWeight: '600',
+    fontWeight: '700',
+    color: '#059669',
   },
   addBtn: {
-    paddingHorizontal: 20,
+    marginLeft: 12,
+    minWidth: 140,
   },
 });
-

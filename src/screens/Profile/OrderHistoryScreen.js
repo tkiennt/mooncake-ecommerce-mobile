@@ -2,203 +2,245 @@ import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
+  Image,
   ScrollView,
   StyleSheet,
   TouchableOpacity,
-  ActivityIndicator,
+  RefreshControl,
+  StatusBar,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS } from '../../theme/colors';
-import AppHeader from '../../components/common/AppHeader';
-import { apiClient } from '../../api/apiClient';
+import { apiClient, MOCK_PRODUCTS } from '../../api/apiClient';
 import { ENDPOINTS } from '../../api/endpoints';
+import { imageSource } from '../../utils/imageSource';
 
+const formatVND = (value = 0) => `${Math.round(value).toLocaleString('vi-VN')} ₫`;
+const productById = (id) => MOCK_PRODUCTS.find((p) => p.id === id) || MOCK_PRODUCTS[0];
+
+// Demo orders, shown immediately so the screen never waits on an unreachable backend.
 const MOCK_ORDERS = [
   {
     id: 'ord-8899',
     orderNumber: 'ORD-2026-8899',
-    createdAt: '30/10/2026 14:20',
     shopName: 'Xưởng Bánh Nghệ Nhân Kinh Đô Cổ',
-    totalItems: 50,
-    totalAmount: 29250000,
+    trusted: true,
     status: 'Pending',
-    statusLabel: 'Chờ xưởng xác nhận',
-    statusColor: '#D46B08',
-    itemSummary: '50x Hộp Hoàng Triều Thượng Hạng [Thập Cẩm Gà Quay Vi Cá]',
+    productId: 'prod-001',
+    variantName: 'Thập cẩm gà quay vi cá',
+    quantity: 50,
+    listPrice: 650000,
+    unitPrice: 617500,
+    note: 'Xưởng sẽ xác nhận trước 14:20 ngày 31/10',
   },
   {
     id: 'ord-8872',
     orderNumber: 'ORD-2026-8872',
-    createdAt: '25/10/2026 09:15',
     shopName: 'Tiệm Bánh Thủ Công An Lạc',
-    totalItems: 100,
-    totalAmount: 77440000,
     status: 'Processing',
-    statusLabel: 'Đang sản xuất bánh',
-    statusColor: '#0958D9',
-    itemSummary: '100x Hộp Nguyệt Dạ Thưởng Hoa [Hạt Sen Trà Xanh]',
+    productId: 'prod-002',
+    variantName: 'Hạt sen trà xanh matcha',
+    quantity: 100,
+    listPrice: 880000,
+    unitPrice: 774400,
+    note: 'Đang sản xuất · dự kiến giao 05/11',
+  },
+  {
+    id: 'ord-8840',
+    orderNumber: 'ORD-2026-8840',
+    shopName: 'Xưởng Bánh Nghệ Nhân Kinh Đô Cổ',
+    trusted: true,
+    status: 'Shipping',
+    productId: 'prod-004',
+    variantName: 'Hạt sen hạt điều',
+    quantity: 40,
+    listPrice: 360000,
+    unitPrice: 338400,
+    note: 'Xe lạnh đang trên đường giao · 20.5°C',
   },
   {
     id: 'ord-8711',
     orderNumber: 'ORD-2026-8711',
-    createdAt: '18/10/2026 16:40',
     shopName: 'Bảo Ngọc Đường',
-    totalItems: 30,
-    totalAmount: 11340000,
     status: 'Delivered',
-    statusLabel: 'Đã giao thành công (PoD)',
-    statusColor: '#389E0D',
-    itemSummary: '30x Bánh Dẻo Tuyết Ngọc Ngân Hà [Dừa Non]',
+    productId: 'prod-003',
+    variantName: 'Dừa non sữa tươi',
+    quantity: 30,
+    listPrice: 420000,
+    unitPrice: 378000,
+    note: 'Giao hàng thành công vào 22 Thg 10',
   },
 ];
 
+const STATUS = {
+  Pending: { label: 'Chờ xác nhận', strip: 'warning' },
+  Processing: { label: 'Đang sản xuất', strip: 'neutral' },
+  Shipping: { label: 'Đang giao', strip: 'neutral' },
+  Delivered: { label: 'Đã giao', strip: 'success' },
+  Cancelled: { label: 'Đã hủy', strip: 'neutral' },
+};
+
+const TABS = [
+  { key: 'ALL', label: 'Tất cả' },
+  { key: 'Pending', label: 'Chờ xác nhận' },
+  { key: 'Processing', label: 'Đang sản xuất' },
+  { key: 'Shipping', label: 'Đang giao' },
+  { key: 'Delivered', label: 'Đã giao' },
+  { key: 'Cancelled', label: 'Đã hủy' },
+];
+
 export default function OrderHistoryScreen({ navigation }) {
+  const insets = useSafeAreaInsets();
   const [orders, setOrders] = useState(MOCK_ORDERS);
   const [activeTab, setActiveTab] = useState('ALL');
-  const [loading, setLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const fetchOrders = async () => {
+    try {
+      const res = await apiClient.get(ENDPOINTS.MY_ORDERS);
+      if (Array.isArray(res?.data) && res.data.length > 0) setOrders(res.data);
+    } catch {
+      // Keep the demo orders when the backend is not reachable.
+    }
+  };
 
   useEffect(() => {
     fetchOrders();
   }, []);
 
-  const fetchOrders = async () => {
-    setLoading(true);
-    try {
-      const res = await apiClient.get(ENDPOINTS.MY_ORDERS);
-      if (res?.data && res.data.length > 0) {
-        setOrders(res.data);
-      }
-    } catch (e) {
-      // Dùng mock fallback
-    } finally {
-      setLoading(false);
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await fetchOrders();
+    setRefreshing(false);
+  };
+
+  const visible = activeTab === 'ALL' ? orders : orders.filter((o) => o.status === activeTab);
+
+  const actionsFor = (order) => {
+    const track = { label: 'Theo dõi đơn', onPress: () => navigation.navigate('DeliveryPoD', { orderId: order.id, orderNumber: order.orderNumber }) };
+    switch (order.status) {
+      case 'Pending':
+        return [{ label: 'Liên hệ xưởng', onPress: () => navigation.navigate('AiAssistant') }, { ...track, label: 'Xem chi tiết', primary: true }];
+      case 'Processing':
+        return [{ label: 'Xem hợp đồng', onPress: () => navigation.navigate('Contracts') }, { ...track, primary: true }];
+      case 'Shipping':
+        return [{ ...track, label: 'Theo dõi xe lạnh', primary: true }];
+      case 'Delivered':
+        return [
+          { label: 'Mua lại', onPress: () => navigation.navigate('ProductDetail', { product: productById(order.productId) }) },
+          { label: 'Đánh giá', primary: true, onPress: () => navigation.navigate('ReviewForm', { orderNumber: order.orderNumber, shopName: order.shopName }) },
+        ];
+      default:
+        return [{ label: 'Mua lại', onPress: () => navigation.navigate('ProductDetail', { product: productById(order.productId) }) }];
     }
   };
 
-  const formatVND = (num) => {
-    return new Intl.NumberFormat('vi-VN', {
-      style: 'currency',
-      currency: 'VND',
-    }).format(num);
-  };
-
-  const tabs = [
-    { key: 'ALL', label: 'Tất cả' },
-    { key: 'Pending', label: 'Chờ duyệt' },
-    { key: 'Processing', label: 'Đang làm' },
-    { key: 'Delivered', label: 'Đã giao' },
-  ];
-
-  const filteredOrders = activeTab === 'ALL'
-    ? orders
-    : orders.filter((o) => o.status === activeTab);
-
   return (
     <View style={styles.container}>
-      <AppHeader
-        title="Lịch Sử Đơn Hàng B2B"
-        subtitle="Quản lý tiến độ đơn quà tặng doanh nghiệp"
-      />
+      <StatusBar barStyle="dark-content" backgroundColor={COLORS.surface} />
 
-      {/* Tabs */}
-      <View style={styles.tabBar}>
-        {tabs.map((tab) => (
-          <TouchableOpacity
-            key={tab.key}
-            style={[styles.tabItem, activeTab === tab.key && styles.tabItemActive]}
-            onPress={() => setActiveTab(tab.key)}
-          >
-            <Text
-              style={[styles.tabText, activeTab === tab.key && styles.tabTextActive]}
-            >
-              {tab.label}
-            </Text>
-          </TouchableOpacity>
-        ))}
+      <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
+        <Text style={styles.headerTitle}>Đơn đã mua</Text>
+        <TouchableOpacity style={styles.headerIcon} onPress={() => navigation.navigate('Search')} accessibilityLabel="Tìm kiếm">
+          <Ionicons name="search-outline" size={22} color={COLORS.primary} />
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.headerIcon} onPress={() => navigation.navigate('AiAssistant')} accessibilityLabel="Tư vấn">
+          <Ionicons name="chatbubbles-outline" size={22} color={COLORS.primary} />
+        </TouchableOpacity>
       </View>
 
-      <ScrollView contentContainerStyle={styles.scroll}>
-        {loading ? (
-          <ActivityIndicator color={COLORS.primary} size="large" style={{ marginTop: 40 }} />
-        ) : filteredOrders.length > 0 ? (
-          filteredOrders.map((ord) => (
-            <View key={ord.id} style={styles.orderCard}>
-              <View style={styles.cardHeader}>
-                <View>
-                  <Text style={styles.ordNumber}>{ord.orderNumber}</Text>
-                  <Text style={styles.ordDate}>{ord.createdAt}</Text>
-                </View>
-                <View
-                  style={[
-                    styles.statusTag,
-                    { backgroundColor: `${ord.statusColor || COLORS.primary}15` },
-                  ]}
-                >
-                  <Text
-                    style={[
-                      styles.statusText,
-                      { color: ord.statusColor || COLORS.primary },
-                    ]}
-                  >
-                    {ord.statusLabel}
-                  </Text>
-                </View>
-              </View>
+      <View style={styles.tabsWrap}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.tabs}>
+          {TABS.map((tab) => {
+            const active = activeTab === tab.key;
+            return (
+              <TouchableOpacity key={tab.key} style={styles.tab} onPress={() => setActiveTab(tab.key)}>
+                <Text style={[styles.tabText, active && styles.tabTextActive]}>{tab.label}</Text>
+                <View style={[styles.tabLine, active && styles.tabLineActive]} />
+              </TouchableOpacity>
+            );
+          })}
+        </ScrollView>
+      </View>
 
-              <View style={styles.divider} />
-
-              <View style={styles.shopRow}>
-                <Ionicons name="storefront-outline" size={14} color={COLORS.accent} />
-                <Text style={styles.shopName}>{ord.shopName}</Text>
-              </View>
-              <Text style={styles.itemSummary}>{ord.itemSummary}</Text>
-
-              <View style={styles.cardFooter}>
-                <View>
-                  <Text style={styles.footSub}>Tổng giá trị đơn ({ord.totalItems} hộp):</Text>
-                  <Text style={styles.footAmount}>{formatVND(ord.totalAmount)}</Text>
-                </View>
-                <View style={styles.actionRow}>
-                  {ord.status === 'Delivered' && (
-                    <TouchableOpacity
-                      style={styles.reviewBtn}
-                      onPress={() =>
-                        navigation.navigate('ReviewForm', {
-                          orderNumber: ord.orderNumber,
-                          shopName: ord.shopName,
-                        })
-                      }
-                    >
-                      <Ionicons name="star" size={12} color="#FAAD14" />
-                      <Text style={styles.reviewBtnText}>Đánh giá</Text>
-                    </TouchableOpacity>
-                  )}
-                  <TouchableOpacity
-                    style={styles.detailBtn}
-                    onPress={() =>
-                      navigation.navigate('DeliveryPoD', {
-                        orderId: ord.id,
-                        orderNumber: ord.orderNumber,
-                      })
-                    }
-                  >
-                    <Text style={styles.detailBtnText}>
-                      {ord.status === 'Delivered' ? 'Xem PoD' : 'Theo dõi'}
-                    </Text>
-                    <Ionicons name="chevron-forward" size={14} color={COLORS.primary} />
-                  </TouchableOpacity>
-                </View>
-              </View>
-            </View>
-          ))
-        ) : (
-          <View style={styles.emptyBox}>
-            <Ionicons name="receipt-outline" size={48} color={COLORS.textMuted} />
-            <Text style={styles.emptyTitle}>Chưa có đơn hàng nào</Text>
-            <Text style={styles.emptySub}>
-              Các đơn hàng đặt bánh số lượng lớn của bạn sẽ xuất hiện tại đây.
-            </Text>
+      <ScrollView
+        contentContainerStyle={styles.list}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={COLORS.primary} />}
+      >
+        {visible.length === 0 ? (
+          <View style={styles.empty}>
+            <Ionicons name="receipt-outline" size={44} color={COLORS.textMuted} />
+            <Text style={styles.emptyTitle}>Chưa có đơn nào</Text>
+            <Text style={styles.emptySub}>Đơn hàng ở trạng thái này sẽ hiện tại đây.</Text>
+            <TouchableOpacity style={styles.emptyButton} onPress={() => navigation.navigate('HomeTab')}>
+              <Text style={styles.emptyButtonText}>Khám phá sản phẩm</Text>
+            </TouchableOpacity>
           </View>
+        ) : (
+          visible.map((order) => {
+            const product = productById(order.productId);
+            const status = STATUS[order.status] || { label: order.status, strip: 'neutral' };
+            const total = order.unitPrice * order.quantity;
+            return (
+              <View key={order.id} style={styles.card}>
+                <View style={styles.shopRow}>
+                  {order.trusted ? (
+                    <View style={styles.trustTag}><Text style={styles.trustTagText}>Uy tín</Text></View>
+                  ) : (
+                    <Ionicons name="storefront-outline" size={16} color={COLORS.textSecondary} />
+                  )}
+                  <Text style={styles.shopName} numberOfLines={1}>{order.shopName}</Text>
+                  <Text style={styles.status}>{status.label}</Text>
+                </View>
+
+                <TouchableOpacity
+                  style={styles.itemRow}
+                  activeOpacity={0.8}
+                  onPress={() => navigation.navigate('DeliveryPoD', { orderId: order.id, orderNumber: order.orderNumber })}
+                >
+                  <Image source={imageSource(product.coverImage)} style={styles.thumb} resizeMode="cover" />
+                  <View style={styles.itemBody}>
+                    <Text style={styles.itemName} numberOfLines={1}>{product.name}</Text>
+                    <View style={styles.variantRow}>
+                      <Text style={styles.variant} numberOfLines={1}>{order.variantName}</Text>
+                      <Text style={styles.qty}>x{order.quantity}</Text>
+                    </View>
+                    <View style={styles.priceRow}>
+                      {order.listPrice > order.unitPrice && <Text style={styles.listPrice}>{formatVND(order.listPrice)}</Text>}
+                      <Text style={styles.unitPrice}>{formatVND(order.unitPrice)}</Text>
+                    </View>
+                  </View>
+                </TouchableOpacity>
+
+                <Text style={styles.total}>
+                  Tổng số tiền ({order.quantity} hộp): <Text style={styles.totalValue}>{formatVND(total)}</Text>
+                </Text>
+
+                {order.note ? (
+                  <TouchableOpacity
+                    style={[styles.strip, styles[`strip_${status.strip}`]]}
+                    onPress={() => navigation.navigate('DeliveryPoD', { orderId: order.id, orderNumber: order.orderNumber })}
+                  >
+                    <Text style={[styles.stripText, styles[`stripText_${status.strip}`]]} numberOfLines={1}>{order.note}</Text>
+                    <Ionicons name="chevron-forward" size={16} color={COLORS.textMuted} />
+                  </TouchableOpacity>
+                ) : null}
+
+                <View style={styles.actions}>
+                  {actionsFor(order).map((action) => (
+                    <TouchableOpacity
+                      key={action.label}
+                      style={[styles.action, action.primary && styles.actionPrimary]}
+                      onPress={action.onPress}
+                    >
+                      <Text style={[styles.actionText, action.primary && styles.actionTextPrimary]}>{action.label}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
+            );
+          })
         )}
       </ScrollView>
     </View>
@@ -208,157 +250,219 @@ export default function OrderHistoryScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.background,
+    backgroundColor: '#F4F1EC',
   },
-  tabBar: {
+  header: {
     flexDirection: 'row',
-    backgroundColor: '#FFF',
-    borderBottomWidth: 1,
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingBottom: 8,
+    backgroundColor: COLORS.surface,
+  },
+  headerTitle: {
+    flex: 1,
+    color: COLORS.textPrimary,
+    fontSize: 20,
+    fontWeight: '600',
+  },
+  headerIcon: {
+    width: 40,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  tabsWrap: {
+    backgroundColor: COLORS.surface,
+    borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: COLORS.border,
   },
-  tabItem: {
-    flex: 1,
-    paddingVertical: 12,
-    alignItems: 'center',
-    borderBottomWidth: 2,
-    borderBottomColor: 'transparent',
+  tabs: {
+    paddingHorizontal: 8,
   },
-  tabItemActive: {
-    borderBottomColor: COLORS.primary,
+  tab: {
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingTop: 10,
   },
   tabText: {
-    fontSize: 13,
-    color: COLORS.textSecondary,
-    fontWeight: '500',
+    color: COLORS.textPrimary,
+    fontSize: 14,
   },
   tabTextActive: {
     color: COLORS.primary,
-    fontWeight: '700',
+    fontWeight: '600',
   },
-  scroll: {
-    padding: 16,
-    paddingBottom: 40,
+  tabLine: {
+    alignSelf: 'stretch',
+    height: 3,
+    marginTop: 9,
+    borderRadius: 2,
+    backgroundColor: 'transparent',
   },
-  orderCard: {
-    backgroundColor: '#FFF',
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: COLORS.border,
+  tabLineActive: {
+    backgroundColor: COLORS.primary,
+  },
+  list: {
+    padding: 10,
+    gap: 10,
+  },
+  card: {
     padding: 14,
-    marginBottom: 14,
-  },
-  cardHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  ordNumber: {
-    fontSize: 14,
-    fontWeight: '800',
-    color: COLORS.textPrimary,
-  },
-  ordDate: {
-    fontSize: 11,
-    color: COLORS.textMuted,
-    marginTop: 2,
-  },
-  statusTag: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
-  },
-  statusText: {
-    fontSize: 11,
-    fontWeight: '700',
-  },
-  divider: {
-    height: 1,
-    backgroundColor: COLORS.border,
-    marginVertical: 10,
+    gap: 12,
+    borderRadius: 10,
+    backgroundColor: COLORS.surface,
   },
   shopRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 4,
+    gap: 6,
+  },
+  trustTag: {
+    paddingHorizontal: 6,
+    paddingVertical: 1,
+    borderRadius: 999,
+    backgroundColor: '#FBEEEE',
+  },
+  trustTagText: {
+    color: COLORS.primary,
+    fontSize: 11,
+    fontWeight: '500',
   },
   shopName: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: COLORS.accent,
-    marginLeft: 6,
-  },
-  itemSummary: {
-    fontSize: 13,
+    flex: 1,
     color: COLORS.textPrimary,
-    lineHeight: 18,
-    marginBottom: 10,
+    fontSize: 14,
+    fontWeight: '600',
   },
-  cardFooter: {
+  status: {
+    color: COLORS.primary,
+    fontSize: 13,
+  },
+  itemRow: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  thumb: {
+    width: 76,
+    height: 76,
+    borderRadius: 6,
+    backgroundColor: COLORS.surfaceHover,
+  },
+  itemBody: {
+    flex: 1,
+    minWidth: 0,
+    justifyContent: 'space-between',
+  },
+  itemName: {
+    color: COLORS.textPrimary,
+    fontSize: 14,
+  },
+  variantRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'flex-end',
-    backgroundColor: '#FAFAF8',
-    padding: 10,
+    gap: 8,
+  },
+  variant: {
+    flex: 1,
+    color: COLORS.textMuted,
+    fontSize: 12,
+  },
+  qty: {
+    color: COLORS.textSecondary,
+    fontSize: 12,
+  },
+  priceRow: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    justifyContent: 'flex-end',
+    gap: 6,
+  },
+  listPrice: {
+    color: COLORS.textMuted,
+    fontSize: 12,
+    textDecorationLine: 'line-through',
+  },
+  unitPrice: {
+    color: COLORS.textPrimary,
+    fontSize: 14,
+  },
+  total: {
+    color: COLORS.textPrimary,
+    fontSize: 13,
+    textAlign: 'right',
+  },
+  totalValue: {
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  strip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
     borderRadius: 8,
   },
-  footSub: {
-    fontSize: 11,
-    color: COLORS.textMuted,
+  strip_success: { backgroundColor: '#EEF7F1' },
+  strip_warning: { backgroundColor: '#FDF5E8' },
+  strip_neutral: { backgroundColor: '#F6F3EF' },
+  stripText: {
+    flex: 1,
+    fontSize: 13,
   },
-  footAmount: {
-    fontSize: 15,
-    fontWeight: '800',
-    color: COLORS.primary,
-    marginTop: 2,
-  },
-  actionRow: {
+  stripText_success: { color: '#2F7A4A' },
+  stripText_warning: { color: '#9A5B0B' },
+  stripText_neutral: { color: COLORS.textSecondary },
+  actions: {
     flexDirection: 'row',
-    alignItems: 'center',
+    justifyContent: 'flex-end',
+    gap: 10,
   },
-  reviewBtn: {
-    flexDirection: 'row',
+  action: {
+    minWidth: 96,
     alignItems: 'center',
-    backgroundColor: '#FFFBE6',
-    borderWidth: 1,
-    borderColor: '#FFE58F',
-    paddingVertical: 4,
-    paddingHorizontal: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
     borderRadius: 6,
-    marginRight: 8,
+    borderWidth: 1,
+    borderColor: COLORS.borderDark,
   },
-  reviewBtnText: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: '#873800',
-    marginLeft: 4,
+  actionPrimary: {
+    borderColor: COLORS.primary,
   },
-  detailBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 4,
-    paddingHorizontal: 8,
+  actionText: {
+    color: COLORS.textPrimary,
+    fontSize: 13,
   },
-  detailBtnText: {
-    fontSize: 12,
+  actionTextPrimary: {
     color: COLORS.primary,
-    fontWeight: '700',
-    marginRight: 2,
+    fontWeight: '500',
   },
-  emptyBox: {
+  empty: {
     alignItems: 'center',
-    marginTop: 60,
+    gap: 8,
+    paddingVertical: 60,
   },
   emptyTitle: {
-    fontSize: 16,
-    fontWeight: '700',
     color: COLORS.textPrimary,
-    marginTop: 12,
+    fontSize: 15,
+    fontWeight: '500',
   },
   emptySub: {
+    color: COLORS.textSecondary,
     fontSize: 13,
-    color: COLORS.textMuted,
-    textAlign: 'center',
-    marginTop: 6,
-    paddingHorizontal: 30,
+  },
+  emptyButton: {
+    marginTop: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: COLORS.primary,
+  },
+  emptyButtonText: {
+    color: COLORS.primary,
+    fontSize: 13,
   },
 });

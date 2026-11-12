@@ -12,8 +12,9 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS } from '../../theme/colors';
-import { apiClient, MOCK_PRODUCTS } from '../../api/apiClient';
-import { ENDPOINTS } from '../../api/endpoints';
+import { MOCK_PRODUCTS } from '../../api/apiClient';
+import { orderService } from '../../services/api/orderService';
+import { toMobileOrder } from '../../api/mappers';
 import { imageSource } from '../../utils/imageSource';
 
 const formatVND = (value = 0) => `${Math.round(value).toLocaleString('vi-VN')} ₫`;
@@ -98,10 +99,11 @@ export default function OrderHistoryScreen({ navigation }) {
 
   const fetchOrders = async () => {
     try {
-      const res = await apiClient.get(ENDPOINTS.MY_ORDERS);
-      if (Array.isArray(res?.data) && res.data.length > 0) setOrders(res.data);
-    } catch {
-      // Keep the demo orders when the backend is not reachable.
+      const list = await orderService.listMine();
+      setOrders((Array.isArray(list) ? list : list?.items || []).map(toMobileOrder));
+    } catch (error) {
+      // Keep the demo orders only when the backend is not reachable.
+      if (error?.response) setOrders([]);
     }
   };
 
@@ -179,9 +181,13 @@ export default function OrderHistoryScreen({ navigation }) {
           </View>
         ) : (
           visible.map((order) => {
-            const product = productById(order.productId);
+            const demoProduct = order.isFromApi ? null : productById(order.productId);
+            const product = {
+              name: order.productName || demoProduct?.name || 'Sản phẩm',
+              coverImage: order.productImage || demoProduct?.coverImage || null,
+            };
             const status = STATUS[order.status] || { label: order.status, strip: 'neutral' };
-            const total = order.unitPrice * order.quantity;
+            const total = order.totalAmount || order.unitPrice * order.quantity;
             return (
               <View key={order.id} style={styles.card}>
                 <View style={styles.shopRow}>
@@ -199,7 +205,9 @@ export default function OrderHistoryScreen({ navigation }) {
                   activeOpacity={0.8}
                   onPress={() => navigation.navigate('DeliveryPoD', { orderId: order.id, orderNumber: order.orderNumber })}
                 >
-                  <Image source={imageSource(product.coverImage)} style={styles.thumb} resizeMode="cover" />
+                  {product.coverImage
+                    ? <Image source={imageSource(product.coverImage)} style={styles.thumb} resizeMode="cover" />
+                    : <View style={[styles.thumb, styles.thumbEmpty]}><Ionicons name="cube-outline" size={26} color={COLORS.textMuted} /></View>}
                   <View style={styles.itemBody}>
                     <Text style={styles.itemName} numberOfLines={1}>{product.name}</Text>
                     <View style={styles.variantRow}>
@@ -347,6 +355,10 @@ const styles = StyleSheet.create({
     height: 76,
     borderRadius: 6,
     backgroundColor: COLORS.surfaceHover,
+  },
+  thumbEmpty: {
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   itemBody: {
     flex: 1,

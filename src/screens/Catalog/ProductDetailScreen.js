@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -19,6 +19,8 @@ import { MOCK_PRODUCTS } from '../../api/apiClient';
 import B2BPriceCalculator from '../../components/lucian/B2BPriceCalculator';
 import TearOffCoupon from '../../components/lucian/TearOffCoupon';
 import { imageSource } from '../../utils/imageSource';
+import { productService } from '../../services/api/productService';
+import { toMobileProduct } from '../../api/mappers';
 
 const formatVND = (value = 0) => `${Math.round(value).toLocaleString('vi-VN')} ₫`;
 const formatCount = (count = 0) => (count >= 1000 ? `${(count / 1000).toFixed(1).replace('.0', '')}k+` : `${count}`);
@@ -47,12 +49,29 @@ function InfoRow({ icon, iconColor = COLORS.primary, title, highlight, subtitle,
 }
 
 export default function ProductDetailScreen({ route, navigation }) {
-  const product = route?.params?.product || MOCK_PRODUCTS[0];
+  const [product, setProduct] = useState(route?.params?.product || MOCK_PRODUCTS[0]);
   const insets = useSafeAreaInsets();
   const { addToCart, getCartTotals } = useCart();
   const { totalItems } = getCartTotals();
 
   const [selectedVariant, setSelectedVariant] = useState(product.variants?.[0] || null);
+
+  // Search cards carry no variants/description: load the full public detail for API products.
+  useEffect(() => {
+    const id = route?.params?.product?.id || route?.params?.productId;
+    if (!id || !(route?.params?.product?.isFromApi || route?.params?.productId)) return;
+    let alive = true;
+    productService.detail(id)
+      .then((dto) => {
+        if (!alive || !dto) return;
+        const full = toMobileProduct(dto);
+        setProduct(full);
+        setSelectedVariant(full.variants?.[0] || null);
+        setQuantity(full.minOrderQty || 1);
+      })
+      .catch(() => {});
+    return () => { alive = false; };
+  }, [route?.params?.product?.id, route?.params?.productId]);
   const [quantity, setQuantity] = useState(product.minOrderQty || 20);
   const [appliedCoupon, setAppliedCoupon] = useState(null);
   const [liked, setLiked] = useState(false);

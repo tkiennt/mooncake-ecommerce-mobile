@@ -12,7 +12,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS } from '../../theme/colors';
 import ProductGridCard from '../../components/common/ProductGridCard';
-import { MOCK_PRODUCTS } from '../../api/apiClient';
+import { useCatalogProducts } from '../../hooks/useCatalogProducts';
 import { useCart } from '../../context/CartContext';
 
 const PROMO_BANNER = require('../../../assets/products/promo-banner.jpg');
@@ -33,12 +33,13 @@ export default function HomeScreen({ navigation }) {
   const { getCartTotals } = useCart();
   const { totalItems } = getCartTotals();
 
+  const catalog = useCatalogProducts({ pageSize: 20 });
   const openProduct = (product) => navigation.navigate('ProductDetail', { product });
 
   // Feed tiles: the promo banner leads the left column, the RFQ prompt sits in the right column.
   const tiles = [
     { type: 'promo', key: 'promo' },
-    ...MOCK_PRODUCTS.map((product, index) => ({ type: 'product', key: product.id, product, ratio: IMAGE_RATIOS[index % IMAGE_RATIOS.length] })),
+    ...catalog.products.map((product, index) => ({ type: 'product', key: product.id, product, ratio: IMAGE_RATIOS[index % IMAGE_RATIOS.length] })),
     { type: 'rfq', key: 'rfq' },
   ];
   const columns = [[], []];

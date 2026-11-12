@@ -32,13 +32,32 @@ apiClient.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// Interceptor: Xử lý response & token expiration
+// Interceptor: unwrap the body; on 401 refresh the token pair once and retry (same flow as web).
+let refreshPromise = null;
+const refreshAccessToken = async () => {
+  const refreshToken = await AsyncStorage.getItem('@refresh_token');
+  if (!refreshToken) throw new Error('Phiên đăng nhập đã hết hạn.');
+  const body = await axios.post(`${API_BASE_URL}${ENDPOINTS.REFRESH_TOKEN}`, { refreshToken });
+  const { accessToken, refreshToken: nextRefresh } = body?.data?.data || {};
+  if (!accessToken || !nextRefresh) throw new Error('Phiên đăng nhập đã hết hạn.');
+  await AsyncStorage.multiSet([['@auth_token', accessToken], ['@refresh_token', nextRefresh]]);
+  return accessToken;
+};
+
 apiClient.interceptors.response.use(
   (response) => response.data,
   async (error) => {
-    if (error.response?.status === 401) {
-      await AsyncStorage.removeItem('@auth_token');
-      await AsyncStorage.removeItem('@user_profile');
+    const original = error.config;
+    if (error.response?.status === 401 && original && !original._retried && !original.url?.includes('/auth/')) {
+      original._retried = true;
+      try {
+        refreshPromise = refreshPromise || refreshAccessToken().finally(() => { refreshPromise = null; });
+        const accessToken = await refreshPromise;
+        original.headers.Authorization = `Bearer ${accessToken}`;
+        return apiClient(original);
+      } catch {
+        await AsyncStorage.multiRemove(['@auth_token', '@refresh_token', '@user_profile']);
+      }
     }
     return Promise.reject(error);
   }

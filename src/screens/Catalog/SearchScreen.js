@@ -13,6 +13,7 @@ import { COLORS } from '../../theme/colors';
 import AppHeader from '../../components/common/AppHeader';
 import ProductCard from '../../components/common/ProductCard';
 import { MOCK_PRODUCTS } from '../../api/apiClient';
+import { useCatalogProducts } from '../../hooks/useCatalogProducts';
 
 const INITIAL_RECENT_SEARCHES = [
   'Hộp Hoàng Triều VIP',
@@ -47,8 +48,11 @@ export default function SearchScreen({ navigation }) {
     setRecentSearches((prev) => prev.filter((t) => t !== term));
   };
 
-  const filtered = MOCK_PRODUCTS.filter((item) => {
+  // Keyword goes to the API; quick filters below still refine the returned page locally.
+  const catalog = useCatalogProducts({ q: keyword });
+  const filtered = catalog.products.filter((item) => {
     const matchesKeyword =
+      catalog.source === 'api' ||
       item.name.toLowerCase().includes(keyword.toLowerCase()) ||
       item.shopName.toLowerCase().includes(keyword.toLowerCase()) ||
       item.category.toLowerCase().includes(keyword.toLowerCase());
@@ -62,10 +66,10 @@ export default function SearchScreen({ navigation }) {
       if (maxD < 15) return false;
     }
     if (filterType === 'nuong') {
-      if (!item.variants.some((v) => v.crustType.toLowerCase().includes('nướng'))) return false;
+      if (!(item.variants || []).some((v) => (v.crustType || '').toLowerCase().includes('nướng'))) return false;
     }
     if (filterType === 'deo') {
-      if (!item.variants.some((v) => v.crustType.toLowerCase().includes('dẻo'))) return false;
+      if (!(item.variants || []).some((v) => (v.crustType || '').toLowerCase().includes('dẻo'))) return false;
     }
 
     // Advanced price range filter

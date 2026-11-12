@@ -34,13 +34,13 @@ export default function LoginScreen({ navigation }) {
       if (res.success) {
         if (res.isDemo) {
           Alert.alert(
-            'Đăng nhập thành công (Demo Mode)',
-            'Đã kết nối phiên người dùng B2B mẫu. Bạn có thể trải nghiệm toàn bộ tính năng mua sắm, giỏ hàng & tính chiết khấu.'
+            'Đang dùng chế độ demo',
+            'Không kết nối được máy chủ nên ứng dụng dùng dữ liệu mẫu. Đơn hàng và yêu cầu sẽ không được gửi đi.'
           );
         }
       }
     } catch (e) {
-      Alert.alert('Đăng nhập thất bại', 'Số điện thoại hoặc mật khẩu không chính xác.');
+      Alert.alert('Đăng nhập thất bại', e?.message || 'Số điện thoại hoặc mật khẩu không chính xác.');
     } finally {
       setLoading(false);
     }

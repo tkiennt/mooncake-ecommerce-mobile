@@ -10,6 +10,8 @@ import { ENDPOINTS } from '../api/endpoints';
 
 const AuthContext = createContext();
 
+const DEMO_TOKEN = 'demo_offline_session';
+
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(null);
@@ -37,55 +39,54 @@ export const AuthProvider = ({ children }) => {
   };
 
   const login = async (phoneNumber, password) => {
+    let body;
     try {
-      // Thử gọi backend trước
-      const response = await apiClient.post(ENDPOINTS.LOGIN, {
-        phoneNumber,
-        password,
-      });
-
-      const authToken = response?.data?.token || response?.token || 'mock_jwt_token_user_b2b';
-      const userProfile = response?.data?.user || {
-        id: 'usr-123',
-        fullName: 'Nguyễn Văn An (Thu Mua Doanh Nghiệp)',
-        phoneNumber: phoneNumber || '0901234567',
-        companyName: 'Công ty Cổ Phần Tập Đoàn Á Châu',
-        taxId: '0312456789',
-        role: 'Customer',
-      };
-
-      await AsyncStorage.setItem('@auth_token', authToken);
-      await AsyncStorage.setItem('@user_profile', JSON.stringify(userProfile));
-
-      setToken(authToken);
-      setUser(userProfile);
-      return { success: true };
+      body = await apiClient.post(ENDPOINTS.LOGIN, { phoneNumber, password });
     } catch (error) {
-      // Fallback demo login nếu backend local chưa bật
-      console.log('Backend chưa kết nối, sử dụng phiên demo người dùng B2B');
-      const demoToken = 'mock_jwt_token_user_b2b';
+      if (error?.response) {
+        // Wrong credentials, locked account, etc. — never fall back to a demo session here.
+        throw new Error(error.response.data?.message || 'Số điện thoại hoặc mật khẩu không chính xác.');
+      }
+      // Backend unreachable (local dev without API): open a clearly-labelled demo session.
       const demoUser = {
-        id: 'usr-123',
-        fullName: 'Nguyễn Văn An (Thu Mua Doanh Nghiệp)',
+        id: 'usr-demo',
+        fullName: 'Khách hàng demo',
         phoneNumber: phoneNumber || '0901234567',
-        companyName: 'Công ty Cổ Phần Tập Đoàn Á Châu',
-        taxId: '0312456789',
+        companyName: 'Công ty demo',
         role: 'Customer',
       };
-
-      await AsyncStorage.setItem('@auth_token', demoToken);
-      await AsyncStorage.setItem('@user_profile', JSON.stringify(demoUser));
-
-      setToken(demoToken);
+      await AsyncStorage.multiSet([['@auth_token', DEMO_TOKEN], ['@user_profile', JSON.stringify(demoUser)]]);
+      await AsyncStorage.removeItem('@refresh_token');
+      setToken(DEMO_TOKEN);
       setUser(demoUser);
       return { success: true, isDemo: true };
     }
+
+    // Backend returns { accessToken, refreshToken, user } (same contract as the web portal).
+    const { accessToken, refreshToken, user: profile } = body?.data || {};
+    if (!accessToken || !refreshToken || !profile) {
+      throw new Error('Máy chủ trả về phiên đăng nhập không hợp lệ.');
+    }
+    if (profile.role !== 'Customer') {
+      // The app only implements the customer journey.
+      apiClient.post(ENDPOINTS.LOGOUT, { refreshToken }).catch(() => {});
+      throw new Error('Ứng dụng di động dành cho khách hàng. Tài khoản nhà cung cấp và quản trị vui lòng dùng trang web.');
+    }
+    await AsyncStorage.multiSet([
+      ['@auth_token', accessToken],
+      ['@refresh_token', refreshToken],
+      ['@user_profile', JSON.stringify(profile)],
+    ]);
+    setToken(accessToken);
+    setUser(profile);
+    return { success: true };
   };
 
   const logout = async () => {
     try {
-      await AsyncStorage.removeItem('@auth_token');
-      await AsyncStorage.removeItem('@user_profile');
+      const refreshToken = await AsyncStorage.getItem('@refresh_token');
+      if (refreshToken) await apiClient.post(ENDPOINTS.LOGOUT, { refreshToken }).catch(() => {});
+      await AsyncStorage.multiRemove(['@auth_token', '@refresh_token', '@user_profile']);
     } catch (e) {
       console.error(e);
     }

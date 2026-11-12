@@ -5,6 +5,27 @@
 
 import React, { createContext, useState, useEffect, useContext } from 'react';
 import { signalRService } from '../services/signalrService';
+import { notificationService } from '../services/api/notificationService';
+
+const relativeTime = (iso) => {
+  if (!iso) return 'Gần đây';
+  const minutes = Math.round((Date.now() - new Date(iso).getTime()) / 60000);
+  if (minutes < 1) return 'Vừa xong';
+  if (minutes < 60) return `${minutes} phút trước`;
+  if (minutes < 1440) return `${Math.round(minutes / 60)} giờ trước`;
+  return `${Math.round(minutes / 1440)} ngày trước`;
+};
+
+// Backend activity notification → the shape NotificationScreen renders.
+const toMobileNotification = (n) => ({
+  id: n.id,
+  type: n.category || n.type,
+  title: n.title,
+  message: n.content || n.message || '',
+  createdAt: relativeTime(n.createdAtUtc || n.createdAt),
+  isRead: Boolean(n.isRead),
+  entityId: n.entityId,
+});
 
 const NotificationContext = createContext();
 
@@ -41,7 +62,19 @@ export const INITIAL_NOTIFICATIONS = [
 export const NotificationProvider = ({ children }) => {
   const [notifications, setNotifications] = useState(INITIAL_NOTIFICATIONS);
 
+  // Load the activity feed from GET /api/v1/notifications; keep the demo list only when offline.
+  const loadNotifications = async () => {
+    try {
+      const page = await notificationService.getNotifications({ page: 1, pageSize: 50 });
+      const items = Array.isArray(page) ? page : page?.items || [];
+      setNotifications(items.map(toMobileNotification));
+    } catch (error) {
+      if (error?.response && error.response.status !== 401) setNotifications([]);
+    }
+  };
+
   useEffect(() => {
+    loadNotifications();
     signalRService.startConnection();
 
     const unsubscribe = signalRService.addListener((newNotif) => {
@@ -68,10 +101,12 @@ export const NotificationProvider = ({ children }) => {
     setNotifications((prev) =>
       prev.map((n) => (n.id === id ? { ...n, isRead: true } : n))
     );
+    if (!String(id).startsWith('notif-')) notificationService.markAsRead(id).catch(() => {});
   };
 
   const markAllAsRead = () => {
     setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
+    notificationService.markAllAsRead().catch(() => {});
   };
 
   return (
@@ -81,6 +116,7 @@ export const NotificationProvider = ({ children }) => {
         unreadCount,
         markAsRead,
         markAllAsRead,
+        reload: loadNotifications,
       }}
     >
       {children}

@@ -13,8 +13,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS } from '../../theme/colors';
 import AppHeader from '../../components/common/AppHeader';
-import { apiClient } from '../../api/apiClient';
-import { ENDPOINTS } from '../../api/endpoints';
+import { aiService } from '../../services/api/aiService';
 
 const PRESET_PROMPTS = [
   'Tư vấn 200 hộp quà ngân sách 600k/hộp',
@@ -24,6 +23,7 @@ const PRESET_PROMPTS = [
 ];
 
 export default function AiAssistantScreen({ navigation }) {
+  const sessionTokenRef = useRef(null);
   const [messages, setMessages] = useState([
     {
       id: 'msg-1',
@@ -52,9 +52,15 @@ export default function AiAssistantScreen({ navigation }) {
     setLoading(true);
 
     try {
-      // Thử gọi backend AI Chat API
-      const res = await apiClient.post(ENDPOINTS.AI_CHAT, { message: textToSend });
-      const aiReply = res?.data?.reply || res?.reply;
+      // POST /ai/chat/sessions once, then POST /ai/chat/messages { sessionToken, content } (same as web).
+      let token = sessionTokenRef.current;
+      if (!token) {
+        const session = await aiService.startSession({});
+        token = session?.sessionToken;
+        sessionTokenRef.current = token;
+      }
+      const res = await aiService.sendMessage({ sessionToken: token, content: textToSend });
+      const aiReply = res?.content;
       if (aiReply) {
         setMessages((prev) => [
           ...prev,

@@ -1,6 +1,6 @@
 /**
  * API Endpoints Constants for Mobile App
- * Synchronized with ASP.NET Core 8 Web API (v1)
+ * Synchronized with ASP.NET Core 8 Web API (v1). Full customer route map: ./apiEndpoints.js (ported from web).
  */
 
 import { Platform } from 'react-native';
@@ -14,8 +14,11 @@ export const ENDPOINTS = {
   // Auth
   LOGIN: '/auth/login',
   REGISTER: '/auth/register',
-  SEND_OTP: '/auth/send-otp',
-  VERIFY_OTP: '/auth/verify-otp',
+  VERIFY_EMAIL: '/auth/verify-email',
+  RESEND_VERIFICATION: '/auth/resend-verification',
+  FORGOT_PASSWORD: '/auth/forgot-password',
+  RESET_PASSWORD: '/auth/reset-password',
+  GOOGLE_LOGIN: '/auth/google/login',
   REFRESH_TOKEN: '/auth/refresh-token',
   ME: '/auth/me',
   LOGOUT: '/auth/logout',
@@ -24,7 +27,7 @@ export const ENDPOINTS = {
   PRODUCTS: '/products',
   PRODUCT_DETAILS: (id) => `/products/${id}`,
   CATEGORIES: '/categories',
-  FEATURED_PRODUCTS: '/products/featured',
+  RECOMMENDATIONS: '/products/recommendations',
 
   // Orders
   CREATE_ORDER: '/orders',
@@ -34,7 +37,7 @@ export const ENDPOINTS = {
 
   // Payments
   CREATE_PAYMENT: '/payments',
-  CONFIRM_PAYMENT: (id) => `/payments/${id}/confirm`,
+  MY_PAYMENTS: '/payments/mine',
 
   // RFQ (B2B Request for Quote)
   MY_RFQS: '/rfqs/mine',
@@ -51,7 +54,8 @@ export const ENDPOINTS = {
   MY_CONTRACTS: '/contracts/mine',
   CONTRACT_DETAILS: (id) => `/contracts/${id}`,
 
-  // AI Chat
-  AI_CHAT: '/ai/chat',
+  // AI Chat (session based)
+  AI_CHAT_SESSIONS: '/ai/chat/sessions',
+  AI_CHAT_MESSAGES: '/ai/chat/messages',
 };
 

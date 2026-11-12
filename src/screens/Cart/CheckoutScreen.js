@@ -14,8 +14,7 @@ import AppHeader from '../../components/common/AppHeader';
 import CustomButton from '../../components/common/CustomButton';
 import { useCart } from '../../context/CartContext';
 import { useAuth } from '../../context/AuthContext';
-import { apiClient } from '../../api/apiClient';
-import { ENDPOINTS } from '../../api/endpoints';
+import { orderService } from '../../services/api/orderService';
 
 export default function CheckoutScreen({ navigation }) {
   const { cartItems, getCartTotals, clearCart } = useCart();
@@ -46,52 +45,65 @@ export default function CheckoutScreen({ navigation }) {
 
     setLoading(true);
 
-    const payload = {
-      customerName: fullName,
-      phoneNumber,
-      companyName,
-      shippingAddress: address,
-      expectedDeliveryDate: deliveryDate,
-      specialInstructions: notes,
-      paymentMethod,
-      items: cartItems.map((item) => ({
-        productId: item.product.id,
-        variantId: item.variant.id,
-        quantity: item.quantity,
-        unitPrice: item.product.basePrice + (item.variant.priceAdjustment || 0),
-      })),
-      totalAmount: finalTotal,
-    };
+    // The backend creates one order per shop (POST /orders): group the cart by shop.
+    const byShop = cartItems.reduce((groups, item) => {
+      const key = item.product.shopId || 'demo';
+      (groups[key] = groups[key] || []).push(item);
+      return groups;
+    }, {});
+    const dateMatch = deliveryDate.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+    const deliveryDateExpected = dateMatch
+      ? `${dateMatch[3]}-${dateMatch[2].padStart(2, '0')}-${dateMatch[1].padStart(2, '0')}`
+      : null;
 
     try {
-      // Gọi API backend
-      await apiClient.post(ENDPOINTS.CREATE_ORDER, payload);
+      if (byShop.demo) {
+        // Bundled demo products have no shop on the server; treat like offline.
+        throw Object.assign(new Error('demo'), { isDemoCart: true });
+      }
+      const created = [];
+      for (const [shopId, items] of Object.entries(byShop)) {
+        const lines = items.map((item) => ({ productId: item.product.id, variantId: item.variant.id, quantity: item.quantity }));
+        // Quote first so the order is placed against the price the customer saw.
+        const quote = await orderService.previewQuote({ shopId, items: lines }).catch(() => null);
+        created.push(await orderService.create({
+          shopId,
+          items: lines,
+          shippingZoneCode: null,
+          deliveryAddress: address.trim(),
+          recipientName: fullName.trim(),
+          recipientPhone: phoneNumber.trim(),
+          deliveryDateExpected,
+          acceptedPriceVersion: quote?.priceVersion || null,
+          notes: [companyName && `Đơn vị: ${companyName}`, notes].filter(Boolean).join(' · ') || null,
+        }));
+      }
       clearCart();
       Alert.alert(
-        'Đặt hàng B2B thành công!',
-        'Đơn hàng của bạn đã được chuyển tới các xưởng sản xuất. Chúng tôi sẽ thông báo khi xưởng xác nhận đơn.',
-        [
-          {
-            text: 'Xem đơn hàng',
-            onPress: () => {
-              navigation.navigate('OrdersTab');
-            },
-          },
-        ]
+        'Đã gửi đơn hàng',
+        `${created.map((o) => `#${o.orderNumber}`).join(', ')} đã được gửi tới xưởng. Xưởng sẽ phản hồi trong thời hạn quy định; bạn thanh toán sau khi xưởng xác nhận.`,
+        [{ text: 'Xem đơn hàng', onPress: () => navigation.navigate('MainTabs', { screen: 'OrdersTab' }) }],
       );
     } catch (e) {
-      // Fallback khi offline
-      clearCart();
-      Alert.alert(
-        'Đặt hàng thành công (Demo Mode)',
-        'Đơn hàng đã được lưu cục bộ. Mã đơn mẫu: #ORD-2026-8899.',
-        [
-          {
-            text: 'Xem danh sách đơn',
-            onPress: () => navigation.navigate('OrdersTab'),
-          },
-        ]
-      );
+      if (e?.response) {
+        const code = e.response.data?.errorCode;
+        Alert.alert(
+          'Không đặt được hàng',
+          code === 'PRICE_CHANGED'
+            ? 'Giá sản phẩm vừa thay đổi. Vui lòng xem lại giỏ hàng và đặt lại.'
+            : code === 'INSUFFICIENT_STOCK'
+              ? 'Số lượng vượt quá tồn kho của xưởng. Vui lòng giảm số lượng.'
+              : e.response.data?.message || 'Vui lòng thử lại sau.',
+        );
+      } else {
+        // Offline / demo cart: nothing is sent to a server.
+        clearCart();
+        Alert.alert(
+          'Đặt hàng (chế độ demo)',
+          'Không kết nối được máy chủ hoặc giỏ chứa sản phẩm mẫu, nên đơn chỉ được mô phỏng trên máy.',
+          [{ text: 'Xem danh sách đơn', onPress: () => navigation.navigate('MainTabs', { screen: 'OrdersTab' }) }],
+        );
+      }
     } finally {
       setLoading(false);
     }

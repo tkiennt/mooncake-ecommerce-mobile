@@ -21,12 +21,13 @@ export default function CheckoutScreen({ navigation }) {
   const { user } = useAuth();
   const { rawSubtotal, totalDiscount, finalTotal, totalItems } = getCartTotals();
 
-  const [fullName, setFullName] = useState(user?.fullName || 'Nguyễn Văn An');
-  const [phoneNumber, setPhoneNumber] = useState(user?.phoneNumber || '0901234567');
-  const [companyName, setCompanyName] = useState(user?.companyName || 'Công ty Cổ Phần Tập Đoàn Á Châu');
-  const [address, setAddress] = useState('Tòa nhà Landmark 81, 720A Điện Biên Phủ, P.22, Bình Thạnh, TP.HCM');
-  const [deliveryDate, setDeliveryDate] = useState('15/08/2026 (Trước Rằm)');
-  const [notes, setNotes] = useState('Đóng gói thùng carton chịu lực, vận chuyển bằng xe lạnh giữ nhiệt.');
+  // Prefill only from the signed-in profile — never ship someone else's name/address as defaults.
+  const [fullName, setFullName] = useState(user?.fullName || '');
+  const [phoneNumber, setPhoneNumber] = useState(user?.phoneNumber || '');
+  const [companyName, setCompanyName] = useState(user?.companyName || '');
+  const [address, setAddress] = useState(user?.address || '');
+  const [deliveryDate, setDeliveryDate] = useState('');
+  const [notes, setNotes] = useState('');
   const [paymentMethod, setPaymentMethod] = useState('vnpay'); // vnpay | escrow | cod
   const [loading, setLoading] = useState(false);
 
@@ -130,6 +131,8 @@ export default function CheckoutScreen({ navigation }) {
             <TextInput
               style={styles.input}
               value={fullName}
+              placeholder="Họ tên người nhận hàng"
+              placeholderTextColor={COLORS.textMuted}
               onChangeText={setFullName}
             />
           </View>
@@ -139,6 +142,8 @@ export default function CheckoutScreen({ navigation }) {
             <TextInput
               style={styles.input}
               value={phoneNumber}
+              placeholder="Số điện thoại liên hệ"
+              placeholderTextColor={COLORS.textMuted}
               onChangeText={setPhoneNumber}
               keyboardType="phone-pad"
             />
@@ -149,6 +154,8 @@ export default function CheckoutScreen({ navigation }) {
             <TextInput
               style={styles.input}
               value={companyName}
+              placeholder="Tên doanh nghiệp trên hóa đơn VAT"
+              placeholderTextColor={COLORS.textMuted}
               onChangeText={setCompanyName}
             />
           </View>
@@ -158,6 +165,8 @@ export default function CheckoutScreen({ navigation }) {
             <TextInput
               style={[styles.input, styles.multiline]}
               value={address}
+              placeholder="Số nhà, đường, phường/xã, quận/huyện, tỉnh/thành"
+              placeholderTextColor={COLORS.textMuted}
               onChangeText={setAddress}
               multiline
             />
@@ -168,6 +177,8 @@ export default function CheckoutScreen({ navigation }) {
             <TextInput
               style={styles.input}
               value={deliveryDate}
+              placeholder="dd/mm/yyyy (không bắt buộc)"
+              placeholderTextColor={COLORS.textMuted}
               onChangeText={setDeliveryDate}
             />
           </View>
@@ -177,6 +188,8 @@ export default function CheckoutScreen({ navigation }) {
             <TextInput
               style={[styles.input, styles.multiline]}
               value={notes}
+              placeholder="Yêu cầu đóng gói, giờ nhận hàng… (không bắt buộc)"
+              placeholderTextColor={COLORS.textMuted}
               onChangeText={setNotes}
               multiline
             />

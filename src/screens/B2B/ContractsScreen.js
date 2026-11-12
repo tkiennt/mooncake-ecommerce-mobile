@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import {
   View,
   Text,
@@ -7,10 +7,15 @@ import {
   TouchableOpacity,
   Alert,
   Modal,
+  Linking,
 } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS } from '../../theme/colors';
 import AppHeader from '../../components/common/AppHeader';
+import { contractService } from '../../services/api/contractService';
+import { paymentService } from '../../services/api/paymentService';
+import { toMobileContract } from '../../api/mappers';
 
 const MOCK_CONTRACTS = [
   {
@@ -46,7 +51,24 @@ const MOCK_CONTRACTS = [
 ];
 
 export default function ContractsScreen({ navigation }) {
-  const [contracts] = useState(MOCK_CONTRACTS);
+  const [contracts, setContracts] = useState(MOCK_CONTRACTS);
+  const [paying, setPaying] = useState(false);
+
+  // GET /contracts/mine (+ milestones); the demo contracts stay only when the backend is unreachable.
+  const loadContracts = useCallback(async () => {
+    try {
+      const list = await contractService.listMine();
+      const items = Array.isArray(list) ? list : list?.items || [];
+      const withMilestones = await Promise.all(items.map(async (c) => {
+        const milestones = c.milestones?.length ? c.milestones : await contractService.getMilestones(c.id).catch(() => []);
+        return toMobileContract(c, milestones || []);
+      }));
+      setContracts(withMilestones);
+    } catch (error) {
+      if (error?.response) setContracts([]);
+    }
+  }, []);
+  useFocusEffect(useCallback(() => { loadContracts(); }, [loadContracts]));
   const [selectedPayTarget, setSelectedPayTarget] = useState(null);
   const [paymentMethod, setPaymentMethod] = useState('vietqr');
 
@@ -61,13 +83,25 @@ export default function ContractsScreen({ navigation }) {
     setSelectedPayTarget({ contract, milestone });
   };
 
-  const handleConfirmEscrowPayment = () => {
+  const handleConfirmEscrowPayment = async () => {
     const { contract, milestone } = selectedPayTarget || {};
-    setSelectedPayTarget(null);
-    Alert.alert(
-      'Giao Dịch Đặt Cọc Thành Công!',
-      `Hệ thống SafeTrade Escrow đã nhận khoản ký quỹ ${formatVND(milestone?.amount)} cho hợp đồng ${contract?.contractNumber}.\nTrạng thái đơn hàng đã chuyển sang: "Active - Đang sản xuất".`
-    );
+    if (!contract?.isFromApi) {
+      setSelectedPayTarget(null);
+      Alert.alert('Chế độ demo', 'Đây là hợp đồng mẫu nên không có giao dịch thật nào được tạo.');
+      return;
+    }
+    setPaying(true);
+    try {
+      // POST /payments/vnpay/create-url → open the VNPay page; VNPay returns to nguyetpho://thanh-toan/ket-qua.
+      const result = await paymentService.createContractVnPayUrl(contract.id, milestone.id);
+      setSelectedPayTarget(null);
+      if (!result?.paymentUrl) throw new Error('Không nhận được đường dẫn thanh toán.');
+      await Linking.openURL(result.paymentUrl);
+    } catch (error) {
+      Alert.alert('Không tạo được thanh toán', error?.response?.data?.message || error?.message || 'Vui lòng thử lại.');
+    } finally {
+      setPaying(false);
+    }
   };
 
   return (
@@ -163,17 +197,20 @@ export default function ContractsScreen({ navigation }) {
 
             {/* Bottom Actions */}
             <View style={styles.cardFooter}>
-              <View style={styles.signedInfo}>
-                <Ionicons name="shield-checkmark" size={14} color="#059669" />
-                <Text style={styles.signedText}>Ký số OTP ngày {contract.signedDate}</Text>
-              </View>
-              <TouchableOpacity
-                style={styles.pdfBtn}
-                onPress={() => Alert.alert('Tải Hợp Đồng', 'Đang kết xuất bản PDF hợp đồng có đóng dấu thời gian số...')}
-              >
-                <Ionicons name="download-outline" size={14} color={COLORS.primary} />
-                <Text style={styles.pdfBtnText}>Tải file PDF</Text>
-              </TouchableOpacity>
+              {contract.needsCustomerSignature ? (
+                <Text style={styles.signedText}>Xưởng đã gửi hợp đồng · chờ bạn ký</Text>
+              ) : (
+                <View style={styles.signedInfo}>
+                  <Ionicons name="shield-checkmark" size={14} color="#059669" />
+                  <Text style={styles.signedText}>Đã ký ngày {contract.signedDate}</Text>
+                </View>
+              )}
+              {contract.needsCustomerSignature && (
+                <TouchableOpacity style={styles.pdfBtn} onPress={() => navigation.navigate('ContractSign', { contract })}>
+                  <Ionicons name="create-outline" size={14} color={COLORS.primary} />
+                  <Text style={styles.pdfBtnText}>Ký hợp đồng</Text>
+                </TouchableOpacity>
+              )}
             </View>
           </View>
         ))}
@@ -256,6 +293,7 @@ export default function ContractsScreen({ navigation }) {
               <TouchableOpacity
                 style={styles.confirmPayBtn}
                 onPress={handleConfirmEscrowPayment}
+                disabled={paying}
               >
                 <Text style={styles.confirmPayText}>Xác Nhận Ký Quỹ</Text>
               </TouchableOpacity>

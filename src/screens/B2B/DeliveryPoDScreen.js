@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -7,16 +7,20 @@ import {
   StyleSheet,
   TouchableOpacity,
   Alert,
+  Linking,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS } from '../../theme/colors';
 import AppHeader from '../../components/common/AppHeader';
 import CustomButton from '../../components/common/CustomButton';
+import { deliveryService } from '../../services/api/deliveryService';
+import { orderService } from '../../services/api/orderService';
+import { imageSource } from '../../utils/imageSource';
 
 export default function DeliveryPoDScreen({ route, navigation }) {
   const { orderId, orderNumber = 'ORD-2026-8711' } = route.params || {};
 
-  const [deliveryInfo] = useState({
+  const [deliveryInfo, setDeliveryInfo] = useState({
     trackingCode: 'VNP-COLD-2026-9941',
     carrierName: 'Nguyệt Phố Express (Đội xe lạnh chuyên dụng)',
     driverName: 'Trần Văn Mạnh',
@@ -35,30 +39,82 @@ export default function DeliveryPoDScreen({ route, navigation }) {
       { step: 'Đã giao tới điểm nhận & Ký nghiệm thu PoD', time: '18/10/2026 16:30', done: true },
     ],
     podData: {
-      packagePhoto: 'https://images.unsplash.com/photo-1549465220-1a8b9238cd48?w=800&auto=format&fit=crop&q=80',
-      signaturePhoto: 'https://images.unsplash.com/photo-1450133064473-71024230f91b?w=800&auto=format&fit=crop&q=80',
+      packagePhoto: require('../../../assets/products/hop-son-mai.jpg'),
+      signaturePhoto: null,
       deliveredAt: '18/10/2026 16:30:15 GMT+7',
       gpsLocation: '10.7951° N, 106.7218° E (Landmark 81, TP.HCM)',
       receiverName: 'Nguyễn Văn An (Kế toán trưởng ký nhận)',
     },
   });
 
-  const handleConfirmInspection = () => {
-    Alert.alert(
-      'Nghiệm Thu Thành Công',
-      'Bạn đã xác nhận biên bản bàn giao PoD hợp lệ. Đơn hàng chính thức hoàn tất và sẵn sàng đánh giá 4 tiêu chí chất lượng.',
-      [
-        {
-          text: 'Đánh Giá Chất Lượng 4 Tiêu Chí',
-          onPress: () =>
-            navigation.navigate('ReviewForm', {
-              orderNumber,
-              shopName: 'Xưởng Bánh Nghệ Nhân Kinh Đô Cổ',
-            }),
-        },
-      ]
-    );
+  const isRealOrder = Boolean(orderId) && !String(orderId).startsWith('ord-');
+
+  // GET /deliveries/order/{orderId} (+ proofs). Driver/vehicle/temperature are not provided by the
+  // backend, so those panels stay hidden for real deliveries instead of showing invented values.
+  useEffect(() => {
+    if (!isRealOrder) return;
+    (async () => {
+      try {
+        const found = await deliveryService.getByOrder(orderId);
+        const delivery = Array.isArray(found) ? found[0] : found;
+        if (!delivery) { setDeliveryInfo(null); return; }
+        const detail = await deliveryService.get(delivery.id).catch(() => delivery);
+        const proof = (detail.proofs || []).find((item) => item.photoUrl || item.signatureUrl) || {};
+        const steps = ['Pending', 'PickedUp', 'InTransit', 'Delivered'];
+        const reached = Math.max(0, steps.indexOf(detail.status));
+        setDeliveryInfo({
+          trackingCode: detail.trackingCode || detail.deliveryNumber,
+          carrierName: detail.supplierName || 'Xưởng giao hàng',
+          driverName: null,
+          storageTemp: null,
+          status: detail.status,
+          destination: detail.toAddress,
+          timeline: [
+            { step: 'Xưởng chuẩn bị hàng', time: detail.scheduledDate ? `Dự kiến ${detail.scheduledDate}` : '', done: reached >= 0 },
+            { step: 'Đã lấy hàng lên xe', time: '', done: reached >= 1 },
+            { step: 'Đang vận chuyển', time: '', done: reached >= 2 },
+            { step: 'Đã giao tới điểm nhận', time: detail.actualDeliveryDate || '', done: reached >= 3 },
+          ],
+          podData: {
+            packagePhoto: proof.photoUrl || null,
+            signaturePhoto: proof.signatureUrl || null,
+            deliveredAt: proof.takenAt ? new Date(proof.takenAt).toLocaleString('vi-VN') : '—',
+            gpsLocation: proof.locationLat != null ? `${proof.locationLat}, ${proof.locationLng}` : '—',
+            receiverName: detail.recipientName || proof.takenBy || '—',
+          },
+        });
+      } catch (error) {
+        if (error?.response) setDeliveryInfo(null);
+      }
+    })();
+  }, [orderId]);
+
+  const handleConfirmInspection = async () => {
+    const goReview = () => navigation.navigate('ReviewForm', { orderId: isRealOrder ? orderId : undefined, orderNumber });
+    if (!isRealOrder) {
+      Alert.alert('Chế độ demo', 'Đây là đơn mẫu nên không có xác nhận thật nào được gửi.', [{ text: 'Đánh giá đơn mẫu', onPress: goReview }]);
+      return;
+    }
+    try {
+      // POST /orders/{id}/delivery/confirm-receipt
+      await orderService.confirmDeliveryReceipt(orderId);
+      Alert.alert('Đã xác nhận nhận hàng', 'Đơn hàng hoàn tất. Bạn có thể đánh giá xưởng ngay.', [{ text: 'Đánh giá', onPress: goReview }]);
+    } catch (error) {
+      Alert.alert('Không xác nhận được', error?.response?.data?.message || 'Vui lòng thử lại.');
+    }
   };
+
+  if (!deliveryInfo) {
+    return (
+      <View style={styles.container}>
+        <AppHeader title="Giao hàng" subtitle={orderNumber} showBack onBack={() => navigation.goBack()} />
+        <View style={{ alignItems: 'center', padding: 40, gap: 8 }}>
+          <Ionicons name="car-outline" size={40} color={COLORS.textMuted} />
+          <Text style={{ color: COLORS.textSecondary, textAlign: 'center' }}>Xưởng chưa tạo chuyến giao cho đơn này.</Text>
+        </View>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -83,7 +139,8 @@ export default function DeliveryPoDScreen({ route, navigation }) {
             </View>
           </View>
 
-          {/* Temperature Gauge Bar (IoT Sensor) */}
+          {/* Temperature gauge — demo only; the backend has no temperature data */}
+          {deliveryInfo.storageTemp != null && (
           <View style={styles.gaugeContainer}>
             <View style={styles.gaugeHeader}>
               <View style={styles.gaugeTitleWrap}>
@@ -118,8 +175,10 @@ export default function DeliveryPoDScreen({ route, navigation }) {
               </Text>
             </View>
           </View>
+          )}
 
           {/* Driver Row */}
+          {deliveryInfo.driverName ? (
           <View style={styles.driverRow}>
             <View style={styles.driverInfo}>
               <Ionicons name="person-circle-outline" size={32} color={COLORS.accent} />
@@ -130,11 +189,12 @@ export default function DeliveryPoDScreen({ route, navigation }) {
             </View>
             <TouchableOpacity
               style={styles.callBtn}
-              onPress={() => Alert.alert('Gọi điện', `Đang kết nối tới tài xế: ${deliveryInfo.driverPhone}`)}
+              onPress={() => Linking.openURL(`tel:${String(deliveryInfo.driverPhone).replace(/\s/g, '')}`).catch(() => {})}
             >
               <Ionicons name="call" size={16} color="#FFF" />
             </TouchableOpacity>
           </View>
+          ) : null}
         </View>
 
         {/* Timeline */}
@@ -163,11 +223,15 @@ export default function DeliveryPoDScreen({ route, navigation }) {
           <View style={styles.podGrid}>
             <View style={styles.podCol}>
               <Text style={styles.podLabel}>Ảnh kiện hàng bàn giao:</Text>
-              <Image source={{ uri: deliveryInfo.podData.packagePhoto }} style={styles.podImage} />
+              {deliveryInfo.podData.packagePhoto
+                ? <Image source={imageSource(deliveryInfo.podData.packagePhoto)} style={styles.podImage} />
+                : <View style={[styles.podImage, styles.podEmpty]}><Text style={styles.podEmptyText}>Chưa có ảnh</Text></View>}
             </View>
             <View style={styles.podCol}>
               <Text style={styles.podLabel}>Chữ ký điện tử người nhận:</Text>
-              <Image source={{ uri: deliveryInfo.podData.signaturePhoto }} style={styles.podImage} />
+              {deliveryInfo.podData.signaturePhoto
+                ? <Image source={imageSource(deliveryInfo.podData.signaturePhoto)} style={styles.podImage} resizeMode="contain" />
+                : <View style={[styles.podImage, styles.podEmpty]}><Text style={styles.podEmptyText}>Chưa có chữ ký</Text></View>}
             </View>
           </View>
 
@@ -198,6 +262,15 @@ export default function DeliveryPoDScreen({ route, navigation }) {
 }
 
 const styles = StyleSheet.create({
+  podEmpty: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#F6F3EF',
+  },
+  podEmptyText: {
+    color: COLORS.textMuted,
+    fontSize: 12,
+  },
   container: {
     flex: 1,
     backgroundColor: COLORS.background,

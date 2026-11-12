@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback, useState } from 'react';
 import {
   View,
   Text,
@@ -6,14 +6,40 @@ import {
   StyleSheet,
   TouchableOpacity,
   Alert,
+  Linking,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS } from '../../theme/colors';
 import AppHeader from '../../components/common/AppHeader';
 import { useAuth } from '../../context/AuthContext';
+import { useFocusEffect } from '@react-navigation/native';
+import { profileService } from '../../services/api/profileService';
+import { orderService } from '../../services/api/orderService';
+import { rfqService } from '../../services/rfqService';
 
 export default function ProfileScreen({ navigation }) {
-  const { user, logout } = useAuth();
+  const { user: sessionUser, logout } = useAuth();
+  const [profile, setProfile] = useState(null);
+  const [stats, setStats] = useState({ orders: '–', rfqs: '–', boxes: '–' });
+  const user = { ...sessionUser, ...profile };
+
+  // GET /users/me plus counts from the customer's own orders and RFQs.
+  useFocusEffect(useCallback(() => {
+    let alive = true;
+    profileService.getMine().then((p) => alive && p && setProfile(p)).catch(() => {});
+    Promise.all([orderService.listMine().catch(() => null), rfqService.listMine().catch(() => null)])
+      .then(([orders, rfqs]) => {
+        if (!alive) return;
+        const orderList = Array.isArray(orders) ? orders : orders?.items;
+        const boxes = (orderList || []).reduce((sum, o) => sum + (o.items || []).reduce((s2, i) => s2 + (i.quantity || 0), 0), 0);
+        setStats({
+          orders: orderList ? orderList.length : '–',
+          rfqs: Array.isArray(rfqs) ? rfqs.length : '–',
+          boxes: orderList ? boxes.toLocaleString('vi-VN') : '–',
+        });
+      });
+    return () => { alive = false; };
+  }, []));
 
   const handleLogout = () => {
     Alert.alert('Đăng xuất', 'Bạn có chắc chắn muốn đăng xuất tài khoản này?', [
@@ -43,21 +69,15 @@ export default function ProfileScreen({ navigation }) {
     },
     {
       icon: 'shield-checkmark-outline',
-      title: 'Ký Quỹ SafeTrade & Hạn Mức',
-      subtitle: 'Bảo vệ thanh toán đơn hàng B2B',
-      onPress: () => {},
-    },
-    {
-      icon: 'finger-print-outline',
-      title: 'Bảo Mật & Sinh Trắc Học',
-      subtitle: 'Đăng nhập nhanh bằng Face ID / Vân tay',
-      onPress: () => Alert.alert('Sinh Trắc Học', 'Tính năng xác thực Face ID đã được kích hoạt trên thiết bị.'),
+      title: 'Ký quỹ & thanh toán theo mốc',
+      subtitle: 'Tiền cọc giữ trong ký quỹ, giải ngân khi nghiệm thu',
+      onPress: () => navigation.navigate('Contracts'),
     },
     {
       icon: 'headset-outline',
-      title: 'Hotline Hỗ Trợ Thu Mua 24/7',
-      subtitle: '1900 8899 (Ưu tiên khách hàng doanh nghiệp)',
-      onPress: () => {},
+      title: 'Hotline hỗ trợ',
+      subtitle: '1900 6868 (8:00 – 21:00)',
+      onPress: () => Linking.openURL('tel:19006868').catch(() => {}),
     },
   ];
 
@@ -74,14 +94,10 @@ export default function ProfileScreen({ navigation }) {
             </Text>
           </View>
           <View style={styles.userInfo}>
-            <Text style={styles.userName}>{user?.fullName || 'Khách Hàng Doanh Nghiệp'}</Text>
-            <Text style={styles.companyName}>{user?.companyName || 'Công ty TNHH Mẫu'}</Text>
+            <Text style={styles.userName}>{user?.fullName || 'Khách hàng'}</Text>
+            <Text style={styles.companyName}>{user?.companyName || 'Chưa cập nhật doanh nghiệp'}</Text>
             <View style={styles.badgeRow}>
-              <View style={styles.tierBadge}>
-                <Ionicons name="ribbon-outline" size={12} color="#FFF" />
-                <Text style={styles.tierText}>Đối Tác Vàng B2B</Text>
-              </View>
-              <Text style={styles.phoneText}>• {user?.phoneNumber}</Text>
+              <Text style={styles.phoneText}>{[user?.phoneNumber, user?.email].filter(Boolean).join(' · ')}</Text>
             </View>
           </View>
         </View>
@@ -92,7 +108,7 @@ export default function ProfileScreen({ navigation }) {
             style={styles.statCol}
             onPress={() => navigation.navigate('OrdersTab')}
           >
-            <Text style={styles.statVal}>3</Text>
+            <Text style={styles.statVal}>{stats.orders}</Text>
             <Text style={styles.statLabel}>Đơn hàng</Text>
           </TouchableOpacity>
           <View style={styles.statDivider} />
@@ -100,12 +116,12 @@ export default function ProfileScreen({ navigation }) {
             style={styles.statCol}
             onPress={() => navigation.navigate('RfqList')}
           >
-            <Text style={styles.statVal}>2</Text>
+            <Text style={styles.statVal}>{stats.rfqs}</Text>
             <Text style={styles.statLabel}>Gói thầu RFQ</Text>
           </TouchableOpacity>
           <View style={styles.statDivider} />
           <View style={styles.statCol}>
-            <Text style={styles.statVal}>180</Text>
+            <Text style={styles.statVal}>{stats.boxes}</Text>
             <Text style={styles.statLabel}>Hộp đã đặt</Text>
           </View>
         </View>

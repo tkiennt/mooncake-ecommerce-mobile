@@ -15,7 +15,8 @@ export default function App() {
           <NotificationProvider>
             <StatusBar style="light" />
             <AppNavigator />
-            <DevBar />
+            {/* Developer shortcuts only in dev builds; never shipped to customers. */}
+            {__DEV__ && <DevBar />}
           </NotificationProvider>
         </CartProvider>
       </AuthProvider>

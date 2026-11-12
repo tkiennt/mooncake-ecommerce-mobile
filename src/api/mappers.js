@@ -101,3 +101,54 @@ export function toMobileOrder(dto) {
     isFromApi: true,
   };
 }
+
+const CONTRACT_STATUS = {
+  Draft: ['Bản nháp', '#6B6861'],
+  PendingSignature: ['Chờ ký hợp đồng', '#9A5B0B'],
+  Signed: ['Đã ký', '#3E5872'],
+  PendingDeposit: ['Chờ thanh toán cọc', '#9A5B0B'],
+  Active: ['Đang thực hiện', '#3E5872'],
+  CompletedOnTime: ['Hoàn tất đúng hạn', '#2F7A4A'],
+  CompletedLate: ['Hoàn tất trễ hạn', '#2F7A4A'],
+  Breached: ['Vi phạm hợp đồng', '#8C1524'],
+  Disputed: ['Đang tranh chấp', '#8C1524'],
+  Cancelled: ['Đã hủy', '#6B6861'],
+};
+
+// Backend MilestoneStatus → the four states ContractsScreen renders.
+const MILESTONE_STATE = {
+  Pending: 'Upcoming', AwaitingPayment: 'Pending', Paid: 'Completed', InProgress: 'InProgress',
+  PendingReview: 'InProgress', CompletedOnTime: 'Completed', CompletedLate: 'Completed', Overdue: 'Pending', Failed: 'Upcoming',
+};
+const viDate = (value) => {
+  if (!value) return '—';
+  const d = new Date(value);
+  return Number.isNaN(d.getTime()) ? String(value) : d.toLocaleDateString('vi-VN');
+};
+
+/** ContractResponse (+ milestones) → contract card used by ContractsScreen. */
+export function toMobileContract(dto, milestones = dto.milestones || []) {
+  const [statusLabel, statusColor] = CONTRACT_STATUS[dto.status] || [dto.status, '#6B6861'];
+  return {
+    id: dto.id,
+    contractNumber: dto.contractNumber,
+    supplierName: dto.title || 'Hợp đồng cung ứng',
+    totalValue: Number(dto.totalValue || 0),
+    status: dto.status,
+    statusLabel,
+    statusColor,
+    signedDate: viDate(dto.signedByCustomerAt || dto.signedBySupplierAt),
+    needsCustomerSignature: dto.status === 'PendingSignature' && !dto.signedByCustomerAt,
+    milestones: [...milestones].sort((a, b) => a.sequenceNumber - b.sequenceNumber).map((m) => ({
+      id: m.id,
+      name: m.name,
+      amount: Number(m.amount || 0),
+      status: MILESTONE_STATE[m.status] || 'Upcoming',
+      rawStatus: m.status,
+      dueDate: viDate(m.dueDate),
+      isMandatory: Boolean(m.isDeposit),
+      desc: m.description || '',
+    })),
+    isFromApi: true,
+  };
+}

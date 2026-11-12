@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -13,9 +13,11 @@ import AppHeader from '../../components/common/AppHeader';
 import CustomButton from '../../components/common/CustomButton';
 import AntdSteps from '../../components/antd/AntdSteps';
 import AntdOtpInput from '../../components/antd/AntdOtpInput';
+import { contractService } from '../../services/api/contractService';
 
 export default function ContractSignScreen({ route, navigation }) {
-  const { bid, rfq, contractNumber } = route.params || {};
+  const { bid, rfq, contract } = route.params || {};
+  const contractNumber = contract?.contractNumber || route.params?.contractNumber;
 
   const [agreed, setAgreed] = useState(false);
   const [otpCode, setOtpCode] = useState('');
@@ -25,37 +27,48 @@ export default function ContractSignScreen({ route, navigation }) {
     setOtpCode(code);
   };
 
-  const handleConfirmSign = () => {
+  const handleConfirmSign = async () => {
     if (!agreed) {
       Alert.alert('Chưa xác nhận điều khoản', 'Vui lòng đánh dấu vào ô đồng ý với các điều khoản pháp lý và bảo chứng SafeTrade.');
       return;
     }
     if (otpCode.length < 6) {
-      Alert.alert('Chưa nhập đủ OTP', 'Vui lòng nhập đủ 6 chữ số mã OTP xác thực (Mã demo: 123456).');
+      Alert.alert('Chưa nhập đủ OTP', 'Vui lòng nhập đủ 6 chữ số mã OTP xác thực.');
       return;
     }
 
     setLoading(true);
-    setTimeout(() => {
+    const done = (title, message) => Alert.alert(title, message, [
+      { text: 'Về danh sách hợp đồng', onPress: () => navigation.navigate('Contracts') },
+    ]);
+    if (!contract?.isFromApi) {
       setLoading(false);
-      Alert.alert(
-        'Ký Hợp Đồng Điện Tử Thành Công!',
-        `Hợp đồng số ${contractNumber || 'HĐ-2026-0812'} đã được ký số OTP hợp pháp và lưu trên hạ tầng lưu trữ bảo mật.\n\nBước tiếp theo: Vui lòng thanh toán khoản Đặt Cọc M1 (30%) để xưởng chính thức kích hoạt dây chuyền sản xuất.`,
-        [
-          {
-            text: 'Quản lý Hợp Đồng & Đặt Cọc M1',
-            onPress: () => navigation.navigate('Contracts'),
-          },
-        ]
-      );
-    }, 1000);
+      done('Chế độ demo', 'Đây là hợp đồng mẫu nên không có chữ ký thật nào được ghi nhận.');
+      return;
+    }
+    try {
+      // POST /contracts/{id}/sign { otpCode, confirmTerms }
+      await contractService.sign(contract.id, otpCode, true);
+      done('Đã ký hợp đồng', `Hợp đồng ${contract.contractNumber} đã được ký. Bước tiếp theo: thanh toán khoản đặt cọc để xưởng bắt đầu sản xuất.`);
+    } catch (error) {
+      Alert.alert('Không ký được hợp đồng', error?.response?.data?.message || 'Mã OTP không đúng hoặc đã hết hạn.');
+    } finally {
+      setLoading(false);
+    }
   };
+
+  // Ask the backend to send the signing OTP when a real contract opens.
+  useEffect(() => {
+    if (!contract?.isFromApi) return;
+    contractService.requestSignatureOtp(contract.id)
+      .catch((error) => Alert.alert('Không gửi được mã OTP', error?.response?.data?.message || 'Vui lòng thử lại.'));
+  }, [contract?.id]);
 
   return (
     <View style={styles.container}>
       <AppHeader
         title="Ký Số Hợp Đồng Điện Tử"
-        subtitle={contractNumber || 'HĐ-2026-0812'}
+        subtitle={contractNumber || 'Hợp đồng mẫu'}
         showBack={true}
         onBack={() => navigation.goBack()}
       />
@@ -148,7 +161,7 @@ export default function ContractSignScreen({ route, navigation }) {
             <Text style={styles.otpTitle}>Xác Thực Chữ Ký Số Doanh Nghiệp</Text>
           </View>
           <Text style={styles.otpSub}>
-            Mã OTP 6 số bảo mật đã được gửi tới số điện thoại đại diện pháp luật (Mã mẫu demo: <Text style={styles.bold}>123456</Text>).
+            Mã OTP 6 số bảo mật đã được gửi tới số điện thoại đại diện pháp luật {__DEV__ ? <Text> (Mã demo: <Text style={styles.bold}>123456</Text>)</Text> : null}.
           </Text>
 
           <AntdOtpInput

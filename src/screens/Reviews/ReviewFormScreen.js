@@ -14,9 +14,11 @@ import { COLORS } from '../../theme/colors';
 import AppHeader from '../../components/common/AppHeader';
 import CustomButton from '../../components/common/CustomButton';
 import ReviewFilterStars from '../../components/lucian/ReviewFilterStars';
+import { reviewService } from '../../services/api/reviewService';
 
 export default function ReviewFormScreen({ route, navigation }) {
-  const { orderNumber = 'ORD-2026-8711', shopName = 'Bảo Ngọc Đường' } = route.params || {};
+  // orderId is the real order (from order history); without it the screen is a demo.
+  const { orderId, orderNumber = 'Đơn mẫu', shopName = 'Xưởng bánh' } = route.params || {};
 
   const [scores, setScores] = useState({
     taste: 5,
@@ -25,13 +27,7 @@ export default function ReviewFormScreen({ route, navigation }) {
     contract: 5,
   });
 
-  const [comment, setComment] = useState(
-    'Bánh dẻo nếp cái hoa vàng rất thơm ngon, vị ngọt thanh tự nhiên. Đội xe lạnh giao hàng đúng hẹn, logo công ty in ép kim trên hộp sắc nét và sang trọng.'
-  );
-  const [attachedPhotos] = useState([
-    'https://images.unsplash.com/photo-1541781774459-bb2af2f05b55?w=800&auto=format&fit=crop&q=80',
-    'https://images.unsplash.com/photo-1549465220-1a8b9238cd48?w=800&auto=format&fit=crop&q=80',
-  ]);
+  const [comment, setComment] = useState('');
   const [loading, setLoading] = useState(false);
 
   const handleSubmitReview = () => {
@@ -40,20 +36,27 @@ export default function ReviewFormScreen({ route, navigation }) {
       return;
     }
 
+    if (!orderId) {
+      Alert.alert('Chế độ demo', 'Đây là đơn mẫu nên đánh giá không được gửi đi.', [{ text: 'Quay lại', onPress: () => navigation.goBack() }]);
+      return;
+    }
     setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
-      Alert.alert(
-        'Đánh Giá Doanh Nghiệp Thành Công!',
-        'Cảm ơn đánh giá quý báu của quý công ty. Đánh giá 5★ đã được lưu trữ và cộng +3 điểm tín nhiệm bảo chứng cho xưởng sản xuất.',
-        [
-          {
-            text: 'Về lịch sử đơn',
-            onPress: () => navigation.goBack(),
-          },
-        ]
-      );
-    }, 1000);
+    // POST /reviews/transaction — the four on-screen criteria map onto the backend's ratings.
+    const overall = Math.round((scores.taste + scores.packaging + scores.delivery + scores.contract) / 4);
+    reviewService.submitTransactionReview({
+      orderId,
+      qualityRating: scores.taste,
+      deliveryRating: scores.delivery,
+      serviceRating: Math.round((scores.packaging + scores.contract) / 2),
+      overallRating: overall,
+      comment: comment.trim(),
+      isAnonymous: false,
+    })
+      .then(() => Alert.alert('Đã gửi đánh giá', 'Cảm ơn bạn. Đánh giá sẽ được tính vào điểm uy tín của xưởng.', [
+        { text: 'Về lịch sử đơn', onPress: () => navigation.goBack() },
+      ]))
+      .catch((error) => Alert.alert('Không gửi được đánh giá', error?.response?.data?.message || 'Vui lòng thử lại.'))
+      .finally(() => setLoading(false));
   };
 
   return (
@@ -95,19 +98,6 @@ export default function ReviewFormScreen({ route, navigation }) {
             placeholder="Chia sẻ trải nghiệm về chất lượng bánh, quy cách hộp quà, tiến độ giao vận..."
           />
 
-          <Text style={styles.subHeading}>Ảnh chụp kiện hàng thực tế tại địa điểm giao:</Text>
-          <View style={styles.photoRow}>
-            {attachedPhotos.map((uri, idx) => (
-              <Image key={idx} source={{ uri }} style={styles.photoThumb} />
-            ))}
-            <TouchableOpacity
-              style={styles.addPhotoBtn}
-              onPress={() => Alert.alert('Thêm ảnh', 'Chọn thêm ảnh chụp kiện hàng hoặc hộp quà từ thư viện.')}
-            >
-              <Ionicons name="camera-outline" size={24} color={COLORS.primary} />
-              <Text style={styles.addPhotoText}>Thêm ảnh</Text>
-            </TouchableOpacity>
-          </View>
         </View>
 
         {/* Action Button */}

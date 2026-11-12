@@ -17,8 +17,9 @@ import { useAuth } from '../../context/AuthContext';
 
 export default function LoginScreen({ navigation }) {
   const { login } = useAuth();
-  const [phoneNumber, setPhoneNumber] = useState('0901234567');
-  const [password, setPassword] = useState('Mooncake@2026');
+  // Demo credentials are a dev convenience only; release builds start empty.
+  const [phoneNumber, setPhoneNumber] = useState(__DEV__ ? '0901234567' : '');
+  const [password, setPassword] = useState(__DEV__ ? 'Mooncake@2026' : '');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 

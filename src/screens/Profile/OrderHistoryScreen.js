@@ -131,7 +131,7 @@ export default function OrderHistoryScreen({ navigation }) {
       case 'Delivered':
         return [
           { label: 'Mua lại', onPress: () => navigation.navigate('ProductDetail', { product: productById(order.productId) }) },
-          { label: 'Đánh giá', primary: true, onPress: () => navigation.navigate('ReviewForm', { orderNumber: order.orderNumber, shopName: order.shopName }) },
+          { label: 'Đánh giá', primary: true, onPress: () => navigation.navigate('ReviewForm', { orderId: order.isFromApi ? order.id : undefined, orderNumber: order.orderNumber, shopName: order.shopName }) },
         ];
       default:
         return [{ label: 'Mua lại', onPress: () => navigation.navigate('ProductDetail', { product: productById(order.productId) }) }];

@@ -5,8 +5,10 @@
 
 import * as signalR from '@microsoft/signalr';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { API_BASE_URL } from '../api/endpoints';
 
-const HUB_URL = 'http://10.0.2.2:8089/api/v1/hubs/notifications';
+// Same host as the REST API, so one setting (EXPO_PUBLIC_API_BASE_URL) covers both.
+const HUB_URL = `${API_BASE_URL}/hubs/notifications`;
 
 class SignalRService {
   constructor() {

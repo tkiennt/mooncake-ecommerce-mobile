@@ -3,7 +3,12 @@
  * Synchronized with ASP.NET Core 8 Web API (v1)
  */
 
-export const API_BASE_URL = 'http://10.0.2.2:8089/api/v1'; // 10.0.2.2 cho Android Emulator, localhost cho iOS
+import { Platform } from 'react-native';
+
+// Override with EXPO_PUBLIC_API_BASE_URL (e.g. http://192.168.1.15:8089/api/v1 for a physical device).
+// Defaults: 10.0.2.2 reaches the host from the Android emulator; web and iOS use localhost.
+export const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL
+  || (Platform.OS === 'android' ? 'http://10.0.2.2:8089/api/v1' : 'http://localhost:8089/api/v1');
 
 export const ENDPOINTS = {
   // Auth
@@ -35,6 +40,12 @@ export const ENDPOINTS = {
   MY_RFQS: '/rfqs/mine',
   CREATE_RFQ: '/rfqs',
   RFQ_DETAILS: (id) => `/rfqs/${id}`,
+  RFQ_PUBLISH: (id) => `/rfqs/${id}/publish`,
+  RFQ_CANCEL: (id) => `/rfqs/${id}/cancel`,
+  RFQ_SUGGESTED_SUPPLIERS: (id) => `/rfqs/${id}/suggested-suppliers`,
+  RFQ_INVITATIONS: (id) => `/rfqs/${id}/invitations`,
+  RFQ_BIDS: (id) => `/rfqs/${id}/bids`,
+  RFQ_ACCEPT_BID: (rfqId, bidId) => `/rfqs/${rfqId}/bids/${bidId}/accept`,
 
   // Contracts
   MY_CONTRACTS: '/contracts/mine',

@@ -32,9 +32,9 @@ import NotificationScreen from '../screens/Notification/NotificationScreen';
 import AiAssistantScreen from '../screens/AI/AiAssistantScreen';
 import ReviewFormScreen from '../screens/Reviews/ReviewFormScreen';
 
-// UI Showcase Screen & Lucian Notched Tab Bar (#041)
+// UI Showcase Screen
 import UiCatalogScreen from '../screens/Dev/UiCatalogScreen';
-import NotchedTabBar from '../components/lucian/NotchedTabBar';
+import BottomTabBar from '../components/common/BottomTabBar';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -45,7 +45,7 @@ function MainTabs() {
 
   return (
     <Tab.Navigator
-      tabBar={(props) => <NotchedTabBar {...props} cartBadgeCount={totalItems} />}
+      tabBar={(props) => <BottomTabBar {...props} cartBadgeCount={totalItems} />}
       screenOptions={{
         headerShown: false,
       }}
@@ -68,12 +68,12 @@ function MainTabs() {
       <Tab.Screen
         name="OrdersTab"
         component={OrderHistoryScreen}
-        options={{ tabBarLabel: 'Hợp đồng' }}
+        options={{ tabBarLabel: 'Đơn hàng' }}
       />
       <Tab.Screen
         name="ProfileTab"
         component={ProfileScreen}
-        options={{ tabBarLabel: 'Doanh nghiệp' }}
+        options={{ tabBarLabel: 'Tài khoản' }}
       />
     </Tab.Navigator>
   );

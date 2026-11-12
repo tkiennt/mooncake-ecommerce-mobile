@@ -1,18 +1,16 @@
 // Lucian UX/UI Prompt #041 · MIT License (c) 2026 Seokwoooo · https://lucianlabs.dev/uxui-prompt/#041
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   View,
   Text,
   TouchableOpacity,
   StyleSheet,
   Animated,
-  Dimensions,
+  useWindowDimensions,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS } from '../../theme/colors';
 import { LUCIAN_TOKENS } from '../../theme/tokens';
-
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 export default function NotchedTabBar({
   state,
@@ -30,22 +28,33 @@ export default function NotchedTabBar({
     { key: 'HomeTab', name: 'HomeTab', label: 'Trang chủ', icon: 'home-outline', activeIcon: 'home' },
     { key: 'SearchTab', name: 'SearchTab', label: 'Khám phá', icon: 'search-outline', activeIcon: 'search' },
     { key: 'CartTab', name: 'CartTab', label: 'Giỏ hàng', icon: 'cart-outline', activeIcon: 'cart', badge: cartBadgeCount },
-    { key: 'OrdersTab', name: 'OrdersTab', label: 'Hợp đồng', icon: 'receipt-outline', activeIcon: 'receipt' },
+    { key: 'OrdersTab', name: 'OrdersTab', label: 'Đơn hàng', icon: 'receipt-outline', activeIcon: 'receipt' },
     { key: 'ProfileTab', name: 'ProfileTab', label: 'Doanh nghiệp', icon: 'business-outline', activeIcon: 'business' },
   ];
 
-  const tabWidth = SCREEN_WIDTH / tabs.length;
-  const bubbleX = useRef(new Animated.Value(currentIdx * tabWidth + tabWidth / 2 - 27)).current;
+  // Position the bubble from the bar's measured width, not a width captured once at module load:
+  // after a rotation or window resize the old width put the bubble under the wrong tab (or off-screen).
+  const { width: windowWidth } = useWindowDimensions();
+  const [barWidth, setBarWidth] = useState(0);
+  const tabWidth = (barWidth || windowWidth) / tabs.length;
+  const bubbleOffset = (idx) => idx * tabWidth + tabWidth / 2 - BUBBLE_SIZE / 2;
+  const bubbleX = useRef(new Animated.Value(bubbleOffset(currentIdx))).current;
+  const hasPositioned = useRef(false);
   const iconTranslateYs = useRef(tabs.map(() => new Animated.Value(0))).current;
 
   useEffect(() => {
-    // Spring sliding bubble animation
-    Animated.spring(bubbleX, {
-      toValue: currentIdx * tabWidth + tabWidth / 2 - 27,
-      useNativeDriver: true,
-      friction: 6,
-      tension: 60,
-    }).start();
+    // Jump straight to place on first measure / resize; spring only when the user switches tabs.
+    if (!hasPositioned.current || !barWidth) {
+      bubbleX.setValue(bubbleOffset(currentIdx));
+      hasPositioned.current = Boolean(barWidth);
+    } else {
+      Animated.spring(bubbleX, {
+        toValue: bubbleOffset(currentIdx),
+        useNativeDriver: true,
+        friction: 6,
+        tension: 60,
+      }).start();
+    }
 
     // Lift icon animation for active tab, return others
     tabs.forEach((_, idx) => {
@@ -55,7 +64,7 @@ export default function NotchedTabBar({
         friction: 6,
       }).start();
     });
-  }, [currentIdx, tabWidth]);
+  }, [currentIdx, tabWidth]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handlePress = (idx, tab) => {
     if (isNavControlled) {
@@ -76,7 +85,7 @@ export default function NotchedTabBar({
   return (
     <View style={styles.container}>
       {/* Background Tab Bar with Top Notch Illusion */}
-      <View style={styles.barBackground}>
+      <View style={styles.barBackground} onLayout={(event) => setBarWidth(event.nativeEvent.layout.width)}>
         {/* Sliding Round Bubble (#041) */}
         <Animated.View
           style={[
@@ -144,6 +153,8 @@ export default function NotchedTabBar({
   );
 }
 
+const BUBBLE_SIZE = 54;
+
 const styles = StyleSheet.create({
   container: {
     backgroundColor: 'transparent',
@@ -173,9 +184,9 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: -18,
     left: 0,
-    width: 54,
-    height: 54,
-    borderRadius: 27,
+    width: BUBBLE_SIZE,
+    height: BUBBLE_SIZE,
+    borderRadius: BUBBLE_SIZE / 2,
     backgroundColor: COLORS.primary,
     borderWidth: 3.5,
     borderColor: COLORS.background, // Match screen background for notch effect

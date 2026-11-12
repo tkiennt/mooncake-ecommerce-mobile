@@ -17,6 +17,7 @@ import { useCart } from '../../context/CartContext';
 import { MOCK_PRODUCTS } from '../../api/apiClient';
 import B2BPriceCalculator from '../../components/lucian/B2BPriceCalculator';
 import TearOffCoupon from '../../components/lucian/TearOffCoupon';
+import { imageSource } from '../../utils/imageSource';
 
 export default function ProductDetailScreen({ route, navigation }) {
   const product = route?.params?.product || MOCK_PRODUCTS[0];
@@ -92,7 +93,7 @@ export default function ProductDetailScreen({ route, navigation }) {
 
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         {/* Product Cover Image */}
-        <Image source={{ uri: product.coverImage }} style={styles.image} resizeMode="cover" />
+        <Image source={imageSource(product.coverImage)} style={styles.image} resizeMode="cover" />
 
         <View style={styles.body}>
           {/* Shop badge & Category */}

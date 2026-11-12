@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, Image, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS } from '../../theme/colors';
+import { imageSource } from '../../utils/imageSource';
 
 export default function ProductCard({ product, onPress }) {
   const formatVND = (price) => {
@@ -23,7 +24,7 @@ export default function ProductCard({ product, onPress }) {
     >
       <View style={styles.imageContainer}>
         <Image
-          source={{ uri: product.coverImage }}
+          source={imageSource(product.coverImage)}
           style={styles.image}
           resizeMode="cover"
         />

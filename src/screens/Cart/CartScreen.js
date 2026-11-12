@@ -13,6 +13,7 @@ import { COLORS } from '../../theme/colors';
 import AppHeader from '../../components/common/AppHeader';
 import CustomButton from '../../components/common/CustomButton';
 import { useCart } from '../../context/CartContext';
+import { imageSource } from '../../utils/imageSource';
 
 export default function CartScreen({ navigation }) {
   const {
@@ -96,7 +97,7 @@ export default function CartScreen({ navigation }) {
           const calc = calculateItemDiscount(item);
           return (
             <View key={item.cartId || idx} style={styles.cartCard}>
-              <Image source={{ uri: item.product.coverImage }} style={styles.itemImage} />
+              <Image source={imageSource(item.product.coverImage)} style={styles.itemImage} />
 
               <View style={styles.itemDetails}>
                 <View style={styles.itemHeader}>

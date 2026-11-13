@@ -39,11 +39,12 @@ export default function NotificationScreen({ navigation }) {
   return (
     <View style={styles.container}>
       <AppHeader
-        title="Trung Tâm Thông Báo B2B"
+        title="Thông báo"
         subtitle={unreadCount > 0 ? `${unreadCount} thông báo chưa đọc` : 'Cập nhật thời gian thực'}
         showBack={true}
         onBack={() => navigation.goBack()}
         rightIcon={unreadCount > 0 ? 'checkmark-done-outline' : undefined}
+        rightLabel="Đánh dấu tất cả đã đọc"
         onRightPress={markAllAsRead}
       />
 

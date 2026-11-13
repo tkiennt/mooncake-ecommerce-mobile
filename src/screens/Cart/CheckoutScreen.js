@@ -113,8 +113,8 @@ export default function CheckoutScreen({ navigation }) {
   return (
     <View style={styles.container}>
       <AppHeader
-        title="Xác Nhận Đặt Hàng"
-        subtitle="Thông tin giao hàng & Thanh toán"
+        title="Xác nhận đặt hàng"
+        subtitle="Thông tin nhận hàng và thanh toán"
         showBack={true}
         onBack={() => navigation.goBack()}
       />

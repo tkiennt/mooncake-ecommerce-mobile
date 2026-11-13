@@ -67,7 +67,7 @@ export default function ContractSignScreen({ route, navigation }) {
   return (
     <View style={styles.container}>
       <AppHeader
-        title="Ký Số Hợp Đồng Điện Tử"
+        title="Ký hợp đồng"
         subtitle={contractNumber || 'Hợp đồng mẫu'}
         showBack={true}
         onBack={() => navigation.goBack()}

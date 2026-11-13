@@ -62,7 +62,7 @@ export default function ReviewFormScreen({ route, navigation }) {
   return (
     <View style={styles.container}>
       <AppHeader
-        title="Đánh Giá Đơn Hàng B2B"
+        title="Đánh giá đơn hàng"
         subtitle={orderNumber}
         showBack={true}
         onBack={() => navigation.goBack()}

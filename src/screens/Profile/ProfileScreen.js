@@ -83,7 +83,7 @@ export default function ProfileScreen({ navigation }) {
 
   return (
     <View style={styles.container}>
-      <AppHeader title="Tài Khoản Doanh Nghiệp" />
+      <AppHeader title="Tài khoản" />
 
       <ScrollView contentContainerStyle={styles.scroll}>
         {/* User Card */}

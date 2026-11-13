@@ -107,8 +107,8 @@ export default function ContractsScreen({ navigation }) {
   return (
     <View style={styles.container}>
       <AppHeader
-        title="Hợp Đồng Điện Tử (e-Contract)"
-        subtitle="Quản lý cam kết pháp lý & Tiến độ Milestone"
+        title="Hợp đồng"
+        subtitle="Ký kết, đặt cọc và tiến độ từng mốc"
         showBack={true}
         onBack={() => navigation.goBack()}
       />

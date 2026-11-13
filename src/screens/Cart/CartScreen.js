@@ -45,7 +45,7 @@ export default function CartScreen({ navigation }) {
   if (cartItems.length === 0) {
     return (
       <View style={styles.container}>
-        <AppHeader title="Giỏ Hàng Doanh Nghiệp" />
+        <AppHeader title="Giỏ hàng" />
         <View style={styles.emptyContainer}>
           <View style={styles.emptyMoonCircle}>
             <Ionicons name="cart-outline" size={42} color={COLORS.primary} />
@@ -86,9 +86,10 @@ export default function CartScreen({ navigation }) {
   return (
     <View style={styles.container}>
       <AppHeader
-        title="Giỏ Hàng Doanh Nghiệp"
+        title="Giỏ hàng"
         subtitle={`${totalItems} hộp bánh đã chọn`}
         rightIcon="trash-outline"
+        rightLabel="Xóa giỏ hàng"
         onRightPress={handleClear}
       />
 

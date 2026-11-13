@@ -11,7 +11,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS } from '../../theme/colors';
 import AppHeader from '../../components/common/AppHeader';
-import ProductCard from '../../components/common/ProductCard';
+import ProductGridCard from '../../components/common/ProductGridCard';
 import { MOCK_PRODUCTS } from '../../api/apiClient';
 import { useCatalogProducts } from '../../hooks/useCatalogProducts';
 
@@ -22,7 +22,7 @@ const INITIAL_RECENT_SEARCHES = [
   'Chiết khấu 35%',
 ];
 
-export default function SearchScreen({ navigation }) {
+export default function SearchScreen({ navigation, route }) {
   const [keyword, setKeyword] = useState('');
   const [filterType, setFilterType] = useState('all');
   const [recentSearches, setRecentSearches] = useState(INITIAL_RECENT_SEARCHES);
@@ -83,9 +83,9 @@ export default function SearchScreen({ navigation }) {
   return (
     <View style={styles.container}>
       <AppHeader
-        title="Tìm Kiếm & Khám Phá"
-        subtitle="Catalog bánh trung thu & xưởng đối tác"
-        showBack={true}
+        title="Khám phá"
+        subtitle="Bánh trung thu và xưởng đối tác"
+        showBack={navigation.canGoBack() && route?.name !== 'SearchTab'}
         onBack={() => navigation.goBack()}
       />
 
@@ -190,7 +190,7 @@ export default function SearchScreen({ navigation }) {
       {/* Results Count & Current Filter Summary */}
       <View style={styles.resultBar}>
         <Text style={styles.resultCount}>
-          Tìm thấy <Text style={styles.resultCountHighlight}>{filtered.length}</Text> bộ quà tặng B2B
+          <Text style={styles.resultCountHighlight}>{filtered.length}</Text> sản phẩm
         </Text>
         {(keyword || filterType !== 'all' || priceRange !== 'all') && (
           <TouchableOpacity
@@ -243,13 +243,20 @@ export default function SearchScreen({ navigation }) {
             </View>
           </View>
         ) : (
-          filtered.map((item) => (
-            <ProductCard
-              key={item.id}
-              product={item}
-              onPress={(p) => navigation.navigate('ProductDetail', { product: p })}
-            />
-          ))
+          // Same two-column grid and card as the home feed.
+          <View style={styles.grid}>
+            {[0, 1].map((col) => (
+              <View key={col} style={styles.gridColumn}>
+                {filtered.filter((_, index) => index % 2 === col).map((item) => (
+                  <ProductGridCard
+                    key={item.id}
+                    product={item}
+                    onPress={(p) => navigation.navigate('ProductDetail', { product: p })}
+                  />
+                ))}
+              </View>
+            ))}
+          </View>
         )}
         <View style={{ height: 40 }} />
       </ScrollView>
@@ -329,7 +336,7 @@ export default function SearchScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.background,
+    backgroundColor: '#F4F1EC', // same page tone as home so white cards stand out
   },
   searchHeader: {
     backgroundColor: COLORS.surface,
@@ -485,8 +492,15 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   listContent: {
-    paddingHorizontal: 16,
+    paddingHorizontal: 8,
     paddingTop: 4,
+  },
+  grid: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  gridColumn: {
+    flex: 1,
   },
 
   // Empty state polish

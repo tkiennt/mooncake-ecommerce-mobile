@@ -119,7 +119,7 @@ export default function DeliveryPoDScreen({ route, navigation }) {
   return (
     <View style={styles.container}>
       <AppHeader
-        title="Giám Sát Vận Chuyển & PoD"
+        title="Theo dõi giao hàng"
         subtitle={orderNumber}
         showBack={true}
         onBack={() => navigation.goBack()}

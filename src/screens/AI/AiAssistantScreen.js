@@ -114,8 +114,8 @@ export default function AiAssistantScreen({ navigation }) {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <AppHeader
-        title="Trợ Lý Ảo Nguyệt Phố"
-        subtitle="AI tư vấn quà tặng & ngân sách B2B"
+        title="Trợ lý Nguyệt Phố"
+        subtitle="Tư vấn quà tặng theo ngân sách"
         showBack={true}
         onBack={() => navigation.goBack()}
       />

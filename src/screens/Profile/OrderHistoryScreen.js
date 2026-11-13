@@ -120,21 +120,41 @@ export default function OrderHistoryScreen({ navigation }) {
   const visible = activeTab === 'ALL' ? orders : orders.filter((o) => o.status === activeTab);
 
   const actionsFor = (order) => {
-    const track = { label: 'Theo dõi đơn', onPress: () => navigation.navigate('DeliveryPoD', { orderId: order.id, orderNumber: order.orderNumber }) };
+    const viewDetail = {
+      label: 'Chi tiết đơn',
+      primary: true,
+      onPress: () => navigation.navigate('OrderDetail', { orderId: order.id, order }),
+    };
     switch (order.status) {
       case 'Pending':
-        return [{ label: 'Liên hệ xưởng', onPress: () => navigation.navigate('AiAssistant') }, { ...track, label: 'Xem chi tiết', primary: true }];
+        return [
+          { label: 'Liên hệ xưởng', onPress: () => navigation.navigate('AiAssistant') },
+          viewDetail,
+        ];
       case 'Processing':
-        return [{ label: 'Xem hợp đồng', onPress: () => navigation.navigate('Contracts') }, { ...track, primary: true }];
+        return [
+          { label: 'Hợp đồng', onPress: () => navigation.navigate('Contracts') },
+          viewDetail,
+        ];
       case 'Shipping':
-        return [{ ...track, label: 'Theo dõi xe lạnh', primary: true }];
+        return [
+          { label: 'Xe lạnh PoD', onPress: () => navigation.navigate('DeliveryPoD', { orderId: order.id, orderNumber: order.orderNumber }) },
+          viewDetail,
+        ];
       case 'Delivered':
         return [
-          { label: 'Mua lại', onPress: () => navigation.navigate('ProductDetail', { product: productById(order.productId) }) },
-          { label: 'Đánh giá', primary: true, onPress: () => navigation.navigate('ReviewForm', { orderId: order.isFromApi ? order.id : undefined, orderNumber: order.orderNumber, shopName: order.shopName }) },
+          {
+            label: 'Đánh giá',
+            onPress: () => navigation.navigate('ReviewForm', {
+              orderId: order.isFromApi ? order.id : undefined,
+              orderNumber: order.orderNumber,
+              shopName: order.shopName,
+            }),
+          },
+          viewDetail,
         ];
       default:
-        return [{ label: 'Mua lại', onPress: () => navigation.navigate('ProductDetail', { product: productById(order.productId) }) }];
+        return [viewDetail];
     }
   };
 
@@ -203,7 +223,7 @@ export default function OrderHistoryScreen({ navigation }) {
                 <TouchableOpacity
                   style={styles.itemRow}
                   activeOpacity={0.8}
-                  onPress={() => navigation.navigate('DeliveryPoD', { orderId: order.id, orderNumber: order.orderNumber })}
+                  onPress={() => navigation.navigate('OrderDetail', { orderId: order.id, order })}
                 >
                   {product.coverImage
                     ? <Image source={imageSource(product.coverImage)} style={styles.thumb} resizeMode="cover" />
@@ -228,7 +248,7 @@ export default function OrderHistoryScreen({ navigation }) {
                 {order.note ? (
                   <TouchableOpacity
                     style={[styles.strip, styles[`strip_${status.strip}`]]}
-                    onPress={() => navigation.navigate('DeliveryPoD', { orderId: order.id, orderNumber: order.orderNumber })}
+                    onPress={() => navigation.navigate('OrderDetail', { orderId: order.id, order })}
                   >
                     <Text style={[styles.stripText, styles[`stripText_${status.strip}`]]} numberOfLines={1}>{order.note}</Text>
                     <Ionicons name="chevron-forward" size={16} color={COLORS.textMuted} />

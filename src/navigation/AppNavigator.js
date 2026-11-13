@@ -16,7 +16,9 @@ import SearchScreen from '../screens/Catalog/SearchScreen';
 import ProductDetailScreen from '../screens/Catalog/ProductDetailScreen';
 import CartScreen from '../screens/Cart/CartScreen';
 import CheckoutScreen from '../screens/Cart/CheckoutScreen';
+import PaymentResultScreen from '../screens/Cart/PaymentResultScreen';
 import OrderHistoryScreen from '../screens/Profile/OrderHistoryScreen';
+import OrderDetailScreen from '../screens/Profile/OrderDetailScreen';
 import ProfileScreen from '../screens/Profile/ProfileScreen';
 
 // Phase 2: B2B Core Screens
@@ -38,6 +40,27 @@ import BottomTabBar from '../components/common/BottomTabBar';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
+
+const linking = {
+  prefixes: ['nguyetpho://', 'http://localhost:19006', 'http://localhost:8081'],
+  config: {
+    screens: {
+      MainTabs: {
+        screens: {
+          HomeTab: '',
+          SearchTab: 'kham-pha',
+          CartTab: 'gio-hang',
+          OrdersTab: 'don-hang',
+          ProfileTab: 'tai-khoan',
+        },
+      },
+      PaymentResult: 'thanh-toan/ket-qua',
+      OrderDetail: 'don-hang/:orderId',
+      Contracts: 'hop-dong',
+      DeliveryPoD: 'giao-hang/:orderId',
+    },
+  },
+};
 
 function MainTabs() {
   const { getCartTotals } = useCart();
@@ -87,7 +110,7 @@ export default function AppNavigator() {
   }
 
   return (
-    <NavigationContainer ref={navigationRef}>
+    <NavigationContainer ref={navigationRef} linking={linking}>
       <Stack.Navigator
         initialRouteName="MainTabs"
         screenOptions={{ headerShown: false }}
@@ -97,6 +120,8 @@ export default function AppNavigator() {
         <Stack.Screen name="Search" component={SearchScreen} />
         <Stack.Screen name="ProductDetail" component={ProductDetailScreen} />
         <Stack.Screen name="Checkout" component={CheckoutScreen} />
+        <Stack.Screen name="OrderDetail" component={OrderDetailScreen} />
+        <Stack.Screen name="PaymentResult" component={PaymentResultScreen} />
 
         {/* B2B Screens */}
         <Stack.Screen name="Notification" component={NotificationScreen} />

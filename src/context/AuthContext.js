@@ -82,6 +82,22 @@ export const AuthProvider = ({ children }) => {
     return { success: true };
   };
 
+  const setSession = async (accessToken, refreshToken, profile) => {
+    await AsyncStorage.multiSet([
+      ['@auth_token', accessToken],
+      ['@refresh_token', refreshToken],
+      ['@user_profile', JSON.stringify(profile)],
+    ]);
+    setToken(accessToken);
+    setUser(profile);
+  };
+
+  const updateUserProfile = async (partial) => {
+    const updated = { ...user, ...partial };
+    await AsyncStorage.setItem('@user_profile', JSON.stringify(updated));
+    setUser(updated);
+  };
+
   const logout = async () => {
     try {
       const refreshToken = await AsyncStorage.getItem('@refresh_token');
@@ -95,7 +111,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, loading, login, logout }}>
+    <AuthContext.Provider value={{ user, token, loading, login, logout, setSession, updateUserProfile }}>
       {children}
     </AuthContext.Provider>
   );

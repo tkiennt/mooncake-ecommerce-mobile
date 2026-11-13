@@ -9,11 +9,13 @@ import {
   Platform,
   ScrollView,
   Alert,
+  Linking,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS } from '../../theme/colors';
 import CustomButton from '../../components/common/CustomButton';
 import { useAuth } from '../../context/AuthContext';
+import { authService } from '../../services/api/authService';
 
 export default function LoginScreen({ navigation }) {
   const { login } = useAuth();
@@ -42,6 +44,28 @@ export default function LoginScreen({ navigation }) {
       }
     } catch (e) {
       Alert.alert('Đăng nhập thất bại', e?.message || 'Số điện thoại hoặc mật khẩu không chính xác.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    try {
+      setLoading(true);
+      const res = await authService.getGoogleAuthorizationUrl();
+      const url = res?.authorizationUrl || res?.data?.authorizationUrl;
+      if (url) {
+        await Linking.openURL(url);
+      } else {
+        throw new Error('Không lấy được liên kết đăng nhập Google.');
+      }
+    } catch (e) {
+      if (!e?.response) {
+        // Fallback demo in offline dev
+        handleLogin();
+      } else {
+        Alert.alert('Lỗi đăng nhập Google', e?.response?.data?.message || e.message);
+      }
     } finally {
       setLoading(false);
     }
@@ -105,7 +129,10 @@ export default function LoginScreen({ navigation }) {
             </View>
           </View>
 
-          <TouchableOpacity style={styles.forgotPass}>
+          <TouchableOpacity
+            style={styles.forgotPass}
+            onPress={() => navigation.navigate('ForgotPassword')}
+          >
             <Text style={styles.forgotText}>Quên mật khẩu?</Text>
           </TouchableOpacity>
 
@@ -125,7 +152,8 @@ export default function LoginScreen({ navigation }) {
 
           <TouchableOpacity
             style={styles.googleBtn}
-            onPress={() => handleLogin()}
+            onPress={handleGoogleLogin}
+            disabled={loading}
           >
             <Ionicons name="logo-google" size={18} color="#EA4335" />
             <Text style={styles.googleBtnText}>Đăng nhập với Google</Text>
@@ -134,7 +162,7 @@ export default function LoginScreen({ navigation }) {
 
         <View style={styles.footerPrompt}>
           <Text style={styles.footerText}>Chưa có tài khoản thu mua? </Text>
-          <TouchableOpacity>
+          <TouchableOpacity onPress={() => navigation.navigate('Register')}>
             <Text style={styles.footerLink}>Đăng ký ngay</Text>
           </TouchableOpacity>
         </View>

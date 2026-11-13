@@ -11,6 +11,10 @@ import { navigationRef } from './navigationRef';
 
 // Core Screens
 import LoginScreen from '../screens/Auth/LoginScreen';
+import RegisterScreen from '../screens/Auth/RegisterScreen';
+import VerifyEmailScreen from '../screens/Auth/VerifyEmailScreen';
+import ForgotPasswordScreen from '../screens/Auth/ForgotPasswordScreen';
+import ResetPasswordScreen from '../screens/Auth/ResetPasswordScreen';
 import HomeScreen from '../screens/Home/HomeScreen';
 import SearchScreen from '../screens/Catalog/SearchScreen';
 import ProductDetailScreen from '../screens/Catalog/ProductDetailScreen';
@@ -20,6 +24,7 @@ import PaymentResultScreen from '../screens/Cart/PaymentResultScreen';
 import OrderHistoryScreen from '../screens/Profile/OrderHistoryScreen';
 import OrderDetailScreen from '../screens/Profile/OrderDetailScreen';
 import ProfileScreen from '../screens/Profile/ProfileScreen';
+import EditProfileScreen from '../screens/Profile/EditProfileScreen';
 
 // Phase 2: B2B Core Screens
 import CreateRfqScreen from '../screens/B2B/CreateRfqScreen';
@@ -29,6 +34,7 @@ import ContractsScreen from '../screens/B2B/ContractsScreen';
 import ContractSignScreen from '../screens/B2B/ContractSignScreen';
 import DeliveryPoDScreen from '../screens/B2B/DeliveryPoDScreen';
 import NotificationScreen from '../screens/Notification/NotificationScreen';
+import NotificationSettingsScreen from '../screens/Notification/NotificationSettingsScreen';
 
 // Phase 3: AI & Reviews Screens
 import AiAssistantScreen from '../screens/AI/AiAssistantScreen';
@@ -58,6 +64,12 @@ const linking = {
       OrderDetail: 'don-hang/:orderId',
       Contracts: 'hop-dong',
       DeliveryPoD: 'giao-hang/:orderId',
+      Register: 'dang-ky',
+      VerifyEmail: 'xac-thuc-email',
+      ForgotPassword: 'quen-mat-khau',
+      ResetPassword: 'dat-lai-mat-khau',
+      EditProfile: 'sua-ho-so',
+      NotificationSettings: 'thong-bao/cai-dat',
     },
   },
 };
@@ -117,14 +129,20 @@ export default function AppNavigator() {
       >
         <Stack.Screen name="MainTabs" component={MainTabs} />
         <Stack.Screen name="Login" component={LoginScreen} />
+        <Stack.Screen name="Register" component={RegisterScreen} />
+        <Stack.Screen name="VerifyEmail" component={VerifyEmailScreen} />
+        <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
+        <Stack.Screen name="ResetPassword" component={ResetPasswordScreen} />
         <Stack.Screen name="Search" component={SearchScreen} />
         <Stack.Screen name="ProductDetail" component={ProductDetailScreen} />
         <Stack.Screen name="Checkout" component={CheckoutScreen} />
         <Stack.Screen name="OrderDetail" component={OrderDetailScreen} />
         <Stack.Screen name="PaymentResult" component={PaymentResultScreen} />
+        <Stack.Screen name="EditProfile" component={EditProfileScreen} />
 
         {/* B2B Screens */}
         <Stack.Screen name="Notification" component={NotificationScreen} />
+        <Stack.Screen name="NotificationSettings" component={NotificationSettingsScreen} />
         <Stack.Screen name="CreateRfq" component={CreateRfqScreen} />
         <Stack.Screen name="RfqList" component={RfqListScreen} />
         <Stack.Screen name="RfqDetailBidding" component={RfqDetailBiddingScreen} />

@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   Alert,
   Linking,
+  Image,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS } from '../../theme/colors';
@@ -16,6 +17,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { profileService } from '../../services/api/profileService';
 import { orderService } from '../../services/api/orderService';
 import { rfqService } from '../../services/rfqService';
+import { imageSource } from '../../utils/imageSource';
 
 export default function ProfileScreen({ navigation }) {
   const { user: sessionUser, logout } = useAuth();
@@ -50,10 +52,16 @@ export default function ProfileScreen({ navigation }) {
 
   const menuItems = [
     {
-      icon: 'business-outline',
-      title: 'Hồ sơ doanh nghiệp & MST',
-      subtitle: user?.taxId ? `MST: ${user.taxId}` : 'Chưa cập nhật',
-      onPress: () => Alert.alert('Hồ sơ', `Công ty: ${user?.companyName}\nMST: ${user?.taxId}`),
+      icon: 'person-circle-outline',
+      title: 'Hồ sơ cá nhân & Doanh nghiệp',
+      subtitle: user?.companyName ? `${user.companyName}${user?.taxId ? ` · MST: ${user.taxId}` : ''}` : 'Cập nhật tên công ty, MST, địa chỉ',
+      onPress: () => navigation.navigate('EditProfile'),
+    },
+    {
+      icon: 'notifications-outline',
+      title: 'Cài đặt nhận thông báo',
+      subtitle: 'Quản lý thông báo đơn hàng, báo giá và xe lạnh',
+      onPress: () => navigation.navigate('NotificationSettings'),
     },
     {
       icon: 'document-text-outline',
@@ -88,18 +96,36 @@ export default function ProfileScreen({ navigation }) {
       <ScrollView contentContainerStyle={styles.scroll}>
         {/* User Card */}
         <View style={styles.userCard}>
-          <View style={styles.avatar}>
-            <Text style={styles.avatarText}>
-              {user?.fullName ? user.fullName.charAt(0) : 'U'}
-            </Text>
-          </View>
+          <TouchableOpacity
+            style={styles.avatarWrap}
+            onPress={() => navigation.navigate('EditProfile')}
+          >
+            {user?.avatarUrl || user?.avatar ? (
+              <Image
+                source={imageSource(user?.avatarUrl || user?.avatar)}
+                style={styles.avatarImage}
+              />
+            ) : (
+              <View style={styles.avatar}>
+                <Text style={styles.avatarText}>
+                  {user?.fullName ? user.fullName.charAt(0) : 'U'}
+                </Text>
+              </View>
+            )}
+          </TouchableOpacity>
           <View style={styles.userInfo}>
             <Text style={styles.userName}>{user?.fullName || 'Khách hàng'}</Text>
-            <Text style={styles.companyName}>{user?.companyName || 'Chưa cập nhật doanh nghiệp'}</Text>
+            <Text style={styles.companyName}>{user?.companyName || 'Khách hàng thu mua'}</Text>
             <View style={styles.badgeRow}>
               <Text style={styles.phoneText}>{[user?.phoneNumber, user?.email].filter(Boolean).join(' · ')}</Text>
             </View>
           </View>
+          <TouchableOpacity
+            style={styles.editProfileBtn}
+            onPress={() => navigation.navigate('EditProfile')}
+          >
+            <Ionicons name="pencil" size={16} color={COLORS.primary} />
+          </TouchableOpacity>
         </View>
 
         {/* Stats Row */}
@@ -187,6 +213,25 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.accent,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  avatarWrap: {
+    position: 'relative',
+  },
+  avatarImage: {
+    width: 54,
+    height: 54,
+    borderRadius: 27,
+    borderWidth: 1.5,
+    borderColor: COLORS.accent,
+  },
+  editProfileBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: 8,
   },
   avatarText: {
     fontSize: 22,

@@ -14,6 +14,7 @@ import { COLORS } from '../../theme/colors';
 import ProductGridCard from '../../components/common/ProductGridCard';
 import { useCatalogProducts } from '../../hooks/useCatalogProducts';
 import { useCart } from '../../context/CartContext';
+import { useNotification } from '../../context/NotificationContext';
 
 const PROMO_BANNER = require('../../../assets/products/promo-banner.jpg');
 
@@ -32,6 +33,7 @@ export default function HomeScreen({ navigation }) {
   const insets = useSafeAreaInsets();
   const { getCartTotals } = useCart();
   const { totalItems } = getCartTotals();
+  const { unreadCount } = useNotification();
 
   const catalog = useCatalogProducts({ pageSize: 20 });
   const openProduct = (product) => navigation.navigate('ProductDetail', { product });
@@ -104,7 +106,11 @@ export default function HomeScreen({ navigation }) {
         </TouchableOpacity>
         <TouchableOpacity style={styles.headerIcon} onPress={() => navigation.navigate('Notification')} accessibilityLabel="Thông báo">
           <Ionicons name="notifications-outline" size={23} color={COLORS.textWhite} />
-          <View style={styles.headerDot} />
+          {unreadCount > 0 ? (
+            <View style={styles.headerBadge}>
+              <Text style={styles.headerBadgeText}>{unreadCount > 99 ? '99+' : unreadCount}</Text>
+            </View>
+          ) : null}
         </TouchableOpacity>
       </View>
 

@@ -43,12 +43,20 @@ export default function NotificationScreen({ navigation }) {
         subtitle={unreadCount > 0 ? `${unreadCount} thông báo chưa đọc` : 'Cập nhật thời gian thực'}
         showBack={true}
         onBack={() => navigation.goBack()}
-        rightIcon={unreadCount > 0 ? 'checkmark-done-outline' : undefined}
-        rightLabel="Đánh dấu tất cả đã đọc"
-        onRightPress={markAllAsRead}
+        rightIcon="settings-outline"
+        rightLabel="Cài đặt thông báo"
+        onRightPress={() => navigation.navigate('NotificationSettings')}
       />
 
       <ScrollView contentContainerStyle={styles.scroll}>
+        {unreadCount > 0 && (
+          <View style={styles.topBar}>
+            <Text style={styles.unreadCountText}>{unreadCount} thông báo mới</Text>
+            <TouchableOpacity onPress={markAllAsRead}>
+              <Text style={styles.markAllText}>Đánh dấu tất cả đã đọc</Text>
+            </TouchableOpacity>
+          </View>
+        )}
         {notifications.length > 0 ? (
           notifications.map((item) => {
             const icon = getIconForType(item.type);
@@ -173,6 +181,28 @@ const styles = StyleSheet.create({
     color: COLORS.textMuted,
     textAlign: 'center',
     marginTop: 6,
+  },
+  topBar: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: '#FFF1F0',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#FFA39E',
+  },
+  unreadCountText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: COLORS.primary,
+  },
+  markAllText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: COLORS.primary,
   },
 });
 

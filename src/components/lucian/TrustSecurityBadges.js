@@ -15,7 +15,7 @@ const BADGES = [
   {
     id: 'iso',
     code: 'ISO 22000',
-    title: 'AT Thực Phẩm',
+    title: 'An toàn thực phẩm',
     scope: 'Chứng nhận VSATTP quốc tế',
     desc: '100% xưởng sản xuất đối tác trên nền tảng đạt chứng nhận ISO 22000 & HACCP còn hiệu lực.',
     icon: 'shield-checkmark',
@@ -24,16 +24,16 @@ const BADGES = [
   {
     id: 'safetrade',
     code: 'SafeTrade',
-    title: 'Ký Quỹ Ngân Hàng',
-    scope: 'Bảo chứng tài khoản Escrow',
-    desc: 'Tiền cọc và thanh toán được ký quỹ an toàn, chỉ giải ngân cho xưởng khi doanh nghiệp ký PoD.',
+    title: 'Ký quỹ ngân hàng',
+    scope: 'Tài khoản ký quỹ',
+    desc: 'Tiền cọc và thanh toán được ký quỹ an toàn, chỉ chuyển cho xưởng khi doanh nghiệp ký nhận hàng.',
     icon: 'lock-closed',
     color: COLORS.primary,
   },
   {
     id: 'contract',
     code: 'e-Contract',
-    title: 'Hợp Đồng Số & VAT',
+    title: 'Hợp đồng số & VAT',
     scope: 'Ký số OTP 6 số pháp lý 100%',
     desc: 'Hợp đồng điện tử có giá trị pháp lý tương đương văn bản giấy. Xuất hóa đơn VAT điện tử trong 24h.',
     icon: 'document-text',
@@ -41,8 +41,8 @@ const BADGES = [
   },
   {
     id: 'coldchain',
-    code: 'Xe Lạnh PoD',
-    title: 'Nhiệt Độ 20-25°C',
+    code: 'Xe lạnh',
+    title: 'Nhiệt độ 20-25°C',
     scope: 'Giao vận bảo ôn kiểm định',
     desc: 'Vận chuyển bằng xe lạnh chuyên dụng giữ nguyên kết cấu bánh, cam kết đổi mới 100% nếu phát sinh lỗi.',
     icon: 'snow',
@@ -74,7 +74,7 @@ export default function TrustSecurityBadges() {
     <View style={styles.container}>
       <View style={styles.headerRow}>
         <View style={styles.goldLine} />
-        <Text style={styles.sectionTitle}>BẢO CHỨNG B2B TIÊU CHUẨN HOÀNG GIA</Text>
+        <Text style={styles.sectionTitle}>Cam kết của Nguyệt Phố</Text>
         <View style={styles.goldLine} />
       </View>
 

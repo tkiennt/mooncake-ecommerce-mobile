@@ -76,7 +76,7 @@ export default function ReviewFormScreen({ route, navigation }) {
           </View>
           <View style={styles.shopInfo}>
             <Text style={styles.shopName}>{shopName}</Text>
-            <Text style={styles.shopSub}>Đơn hàng đã bàn giao xe lạnh & ký PoD thành công</Text>
+            <Text style={styles.shopSub}>Đơn hàng đã giao và ký nhận thành công</Text>
           </View>
         </View>
 
@@ -88,7 +88,7 @@ export default function ReviewFormScreen({ route, navigation }) {
 
         {/* Comment Section */}
         <View style={styles.card}>
-          <Text style={styles.cardHeading}>NHẬN XÉT CHI TIẾT ĐỢT GIAO NHẬN</Text>
+          <Text style={styles.cardHeading}>Nhận xét chi tiết đợt giao nhận</Text>
           <TextInput
             style={styles.commentInput}
             value={comment}

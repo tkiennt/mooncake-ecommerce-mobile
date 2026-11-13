@@ -79,7 +79,7 @@ export const MOCK_PRODUCTS = [
     rating: 4.9,
     reviewCount: 128,
     isCustomPackagingSupported: true,
-    description: 'Bộ sưu tập quà tặng Trung Thu hoàng gia với 4 vị bánh nghệ nhân hảo hạng, hộp sơn mài đỏ lụa dập kim biểu tượng trăng tròn sum vầy.',
+    description: 'Bộ sưu tập quà tặng Trung thu cao cấp với 4 vị bánh nghệ nhân hảo hạng, hộp sơn mài đỏ lụa dập kim biểu tượng trăng tròn sum vầy.',
     variants: [
       { id: 'var-101', name: 'Thập Cẩm Gà Quay Vi Cá (180g)', crustType: 'Bánh nướng', filling: 'Thập cẩm vi cá', priceAdjustment: 0, stock: 250 },
       { id: 'var-102', name: 'Đậu Xanh Hạt Sen Hạnh Nhân (180g)', crustType: 'Bánh nướng', filling: 'Đậu xanh sen', priceAdjustment: -30000, stock: 300 },

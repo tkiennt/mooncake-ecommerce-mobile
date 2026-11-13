@@ -16,14 +16,14 @@ const ANNOUNCEMENTS = [
   'Mở cổng phân phối vụ mùa 2026 · Chiết khấu tới 35%',
   'Miễn phí in logo & thiệp thương hiệu từ 30 hộp',
   'Hỗ trợ gửi 01 hộp mẫu thử nguyên seal tận nơi 24h',
-  'Ký quỹ SafeTrade · 100% xuất hóa đơn VAT điện tử',
+  'Tiền cọc giữ trong ký quỹ · xuất hóa đơn VAT',
 ];
 
 const DETAIL_LOGS = [
   {
     tag: 'MỚI NHẤT',
     title: 'Chính sách chiết khấu bậc thang 2026',
-    desc: 'Áp dụng mức 10% - 35% cho đơn từ 20 đến 500+ hộp. Bảo hộ giá độc quyền theo hợp đồng B2B.',
+    desc: 'Áp dụng mức 10% - 35% cho đơn từ 20 đến 500+ hộp. Giá được giữ nguyên theo hợp đồng.',
   },
   {
     tag: 'ĐẶC QUYỀN',
@@ -32,7 +32,7 @@ const DETAIL_LOGS = [
   },
   {
     tag: 'CAM KẾT',
-    title: 'Bảo hành & Xe lạnh PoD',
+    title: 'Giao xe lạnh & biên bản bàn giao',
     desc: 'Giao hàng bằng xe lạnh chuyên dụng 20-25°C. Đổi mới 100% trong 12h nếu phát sinh móp méo.',
   },
 ];
@@ -96,7 +96,7 @@ export default function AnnouncementPill({ onNavigate }) {
         style={styles.pillContainer}
       >
         <Animated.View style={[styles.badgeIcon, { transform: [{ scale: pulseAnim }] }]}>
-          <Ionicons name="sparkles" size={13} color={COLORS.accent} />
+          <Ionicons name="gift-outline" size={13} color={COLORS.accent} />
         </Animated.View>
 
         <View style={styles.textTrack}>
@@ -124,7 +124,7 @@ export default function AnnouncementPill({ onNavigate }) {
             <View style={styles.modalHeader}>
               <View style={styles.modalHeaderTitleWrap}>
                 <Ionicons name="megaphone-outline" size={20} color={COLORS.primary} />
-                <Text style={styles.modalHeaderTitle}>Thông Cáo Vụ Mùa B2B</Text>
+                <Text style={styles.modalHeaderTitle}>Ưu đãi mùa trăng</Text>
               </View>
               <TouchableOpacity onPress={() => setModalVisible(false)} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
                 <Ionicons name="close-circle-outline" size={24} color={COLORS.textSecondary} />

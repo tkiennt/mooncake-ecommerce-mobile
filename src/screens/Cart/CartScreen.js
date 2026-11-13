@@ -52,19 +52,19 @@ export default function CartScreen({ navigation }) {
             <View style={styles.emptySparkle} />
           </View>
 
-          <Text style={styles.emptyTitle}>Giỏ Hàng Doanh Nghiệp Đang Trống</Text>
+          <Text style={styles.emptyTitle}>Giỏ hàng doanh nghiệp đang trống</Text>
           <Text style={styles.emptySub}>
-            Quý khách chưa chọn hộp bánh nào. Khám phá các bộ sưu tập quà tặng Trung Thu hoàng gia hoặc tạo gói thầu để nhận chiết khấu lên đến 35%.
+            Quý khách chưa chọn hộp bánh nào. Khám phá các bộ sưu tập quà tặng Trung thu hoặc tạo gói thầu để nhận chiết khấu lên đến 35%.
           </Text>
 
           <View style={styles.emptyTrustBadge}>
             <Ionicons name="shield-checkmark" size={14} color="#059669" />
-            <Text style={styles.emptyTrustText}>100% Xuất Hóa Đơn VAT & Ký e-Contract Pháp Lý</Text>
+            <Text style={styles.emptyTrustText}>Xuất hóa đơn VAT · ký hợp đồng điện tử</Text>
           </View>
 
           <View style={styles.emptyBtnGroup}>
             <CustomButton
-              title="Khám Phá Bộ Sưu Tập"
+              title="Khám phá bộ sưu tập"
               icon="🏮"
               onPress={() => navigation.navigate('HomeTab')}
               size="medium"
@@ -75,7 +75,7 @@ export default function CartScreen({ navigation }) {
               onPress={() => navigation.navigate('CreateRfq')}
             >
               <Ionicons name="briefcase-outline" size={16} color={COLORS.primary} />
-              <Text style={styles.rfqSecondaryText}>Mở Thầu RFQ May Đo</Text>
+              <Text style={styles.rfqSecondaryText}>Gửi yêu cầu báo giá</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -123,7 +123,7 @@ export default function CartScreen({ navigation }) {
                   <Text style={styles.unitPrice}>{formatVND(calc.discountedUnitPrice)}/hộp</Text>
                   {calc.discountPercent > 0 && (
                     <View style={styles.discountBadge}>
-                      <Text style={styles.discountBadgeText}>-{calc.discountPercent}% B2B</Text>
+                      <Text style={styles.discountBadgeText}>-{calc.discountPercent}%</Text>
                     </View>
                   )}
                 </View>
@@ -155,7 +155,7 @@ export default function CartScreen({ navigation }) {
 
         {/* VAT & B2B Summary Card */}
         <View style={styles.summaryCard}>
-          <Text style={styles.summaryHeading}>DỰ TOÁN THANH TOÁN B2B</Text>
+          <Text style={styles.summaryHeading}>Dự toán thanh toán</Text>
 
           <View style={styles.summaryRow}>
             <Text style={styles.summaryLabel}>Tổng tiền hàng gốc:</Text>
@@ -170,14 +170,14 @@ export default function CartScreen({ navigation }) {
           )}
 
           <View style={styles.summaryRow}>
-            <Text style={styles.summaryLabel}>Thuế GTGT (VAT 8% B2B):</Text>
+            <Text style={styles.summaryLabel}>Thuế GTGT (VAT 8%):</Text>
             <Text style={styles.summaryValue}>Đã bao gồm trong giá</Text>
           </View>
 
           <View style={styles.summaryDivider} />
 
           <View style={styles.summaryRow}>
-            <Text style={styles.totalLabel}>TỔNG THANH TOÁN:</Text>
+            <Text style={styles.totalLabel}>Tổng thanh toán:</Text>
             <Text style={styles.totalPrice}>{formatVND(finalTotal)}</Text>
           </View>
 
@@ -199,7 +199,7 @@ export default function CartScreen({ navigation }) {
           <Text style={styles.bottomTotal}>{formatVND(finalTotal)}</Text>
         </View>
         <CustomButton
-          title="Xác Nhận Đặt Hàng"
+          title="Xác nhận đặt hàng"
           icon="💼"
           onPress={() => navigation.navigate('Checkout')}
           size="medium"

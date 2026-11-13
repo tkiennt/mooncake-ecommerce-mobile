@@ -29,7 +29,7 @@ export default function ContractSignScreen({ route, navigation }) {
 
   const handleConfirmSign = async () => {
     if (!agreed) {
-      Alert.alert('Chưa xác nhận điều khoản', 'Vui lòng đánh dấu vào ô đồng ý với các điều khoản pháp lý và bảo chứng SafeTrade.');
+      Alert.alert('Chưa xác nhận điều khoản', 'Vui lòng đánh dấu vào ô đồng ý với các điều khoản của hợp đồng.');
       return;
     }
     if (otpCode.length < 6) {
@@ -79,19 +79,19 @@ export default function ContractSignScreen({ route, navigation }) {
           <AntdSteps
             current={2}
             items={[
-              { title: '1. Nhu Cầu', desc: 'Đã hoàn tất' },
-              { title: '2. Báo Giá', desc: 'Đã duyệt Bid' },
-              { title: '3. Ký HĐ', desc: 'Ký số & Cọc M1' },
+              { title: '1. Nhu cầu', desc: 'Đã hoàn tất' },
+              { title: '2. Báo giá', desc: 'Đã chọn báo giá' },
+              { title: '3. Ký hợp đồng', desc: 'Ký và đặt cọc' },
             ]}
           />
         </View>
 
         {/* Parties Box */}
         <View style={styles.card}>
-          <Text style={styles.cardHeading}>CÁC BÊN THAM GIA HỢP ĐỒNG</Text>
+          <Text style={styles.cardHeading}>Các bên tham gia hợp đồng</Text>
 
           <View style={styles.partyItem}>
-            <Text style={styles.partyRole}>BÊN A (BÊN MUA):</Text>
+            <Text style={styles.partyRole}>Bên A (bên mua):</Text>
             <Text style={styles.partyName}>Công ty Cổ Phần Tập Đoàn Á Châu</Text>
             <Text style={styles.partyMeta}>MST: 0312456789 • Đại diện: Nguyễn Văn An</Text>
           </View>
@@ -99,7 +99,7 @@ export default function ContractSignScreen({ route, navigation }) {
           <View style={styles.divider} />
 
           <View style={styles.partyItem}>
-            <Text style={styles.partyRole}>BÊN B (XƯỞNG CUNG CẤP):</Text>
+            <Text style={styles.partyRole}>Bên B (xưởng cung cấp):</Text>
             <Text style={styles.partyName}>{bid?.supplierName || 'Xưởng Bánh Nghệ Nhân Kinh Đô Cổ'}</Text>
             <Text style={styles.partyMeta}>MST: 0108991234 • Chứng nhận: ISO 22000 & HACCP</Text>
           </View>
@@ -107,7 +107,7 @@ export default function ContractSignScreen({ route, navigation }) {
 
         {/* Terms Box */}
         <View style={styles.card}>
-          <Text style={styles.cardHeading}>ĐIỀU KHOẢN & TIẾN ĐỘ THỰC HIỆN</Text>
+          <Text style={styles.cardHeading}>Điều khoản & tiến độ thực hiện</Text>
 
           <View style={styles.termRow}>
             <Ionicons name="cube-outline" size={16} color={COLORS.primary} />
@@ -133,7 +133,7 @@ export default function ContractSignScreen({ route, navigation }) {
           <View style={styles.termRow}>
             <Ionicons name="shield-checkmark-outline" size={16} color="#059669" />
             <Text style={styles.termText}>
-              Bảo chứng SafeTrade: Tiền cọc được giữ tại tài khoản ký quỹ trung gian, chỉ giải ngân từng mốc sau khi ký biên bản PoD.
+              Ký quỹ: tiền cọc được giữ ở tài khoản trung gian và chỉ chuyển cho xưởng theo từng mốc sau khi bạn ký nhận hàng.
             </Text>
           </View>
         </View>
@@ -158,7 +158,7 @@ export default function ContractSignScreen({ route, navigation }) {
         <View style={styles.otpCard}>
           <View style={styles.otpHeader}>
             <Ionicons name="key-outline" size={18} color={COLORS.primary} />
-            <Text style={styles.otpTitle}>Xác Thực Chữ Ký Số Doanh Nghiệp</Text>
+            <Text style={styles.otpTitle}>Xác thực chữ ký số doanh nghiệp</Text>
           </View>
           <Text style={styles.otpSub}>
             Mã OTP 6 số bảo mật đã được gửi tới số điện thoại đại diện pháp luật {__DEV__ ? <Text> (Mã demo: <Text style={styles.bold}>123456</Text>)</Text> : null}.

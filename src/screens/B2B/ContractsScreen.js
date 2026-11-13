@@ -24,13 +24,13 @@ const MOCK_CONTRACTS = [
     supplierName: 'Xưởng Bánh Nghệ Nhân Kinh Đô Cổ',
     totalValue: 238000000,
     status: 'Pending_Deposit',
-    statusLabel: 'Chờ thanh toán cọc M1',
+    statusLabel: 'Chờ thanh toán cọc',
     statusColor: '#D46B08',
     signedDate: '30/10/2026',
     milestones: [
-      { name: 'M1: Đặt cọc 30%', amount: 71400000, status: 'Pending', dueDate: '05/08/2026', isMandatory: true, desc: 'Kích hoạt hợp đồng và xuất hóa đơn VAT đợt 1' },
-      { name: 'M2: Giao hàng đợt 1 (50%)', amount: 119000000, status: 'Upcoming', dueDate: '15/08/2026', desc: 'Vận chuyển xe lạnh chuyên dụng kiểm định PoD' },
-      { name: 'M3: Nghiệm thu & Thanh toán 20%', amount: 47600000, status: 'Upcoming', dueDate: '25/08/2026', desc: 'Hoàn tất giải ngân ký quỹ SafeTrade' },
+      { name: 'Đợt 1: Đặt cọc 30%', amount: 71400000, status: 'Pending', dueDate: '05/08/2026', isMandatory: true, desc: 'Kích hoạt hợp đồng và xuất hóa đơn VAT đợt 1' },
+      { name: 'Đợt 2: Giao hàng (50%)', amount: 119000000, status: 'Upcoming', dueDate: '15/08/2026', desc: 'Giao bằng xe lạnh, ký biên bản khi nhận hàng' },
+      { name: 'Đợt 3: Nghiệm thu & Thanh toán 20%', amount: 47600000, status: 'Upcoming', dueDate: '25/08/2026', desc: 'Hoàn tất thanh toán phần còn lại' },
     ],
   },
   {
@@ -43,9 +43,9 @@ const MOCK_CONTRACTS = [
     statusColor: '#0958D9',
     signedDate: '15/10/2026',
     milestones: [
-      { name: 'M1: Đặt cọc 30%', amount: 54000000, status: 'Completed', dueDate: '18/10/2026', desc: 'Đã thanh toán qua Ký quỹ Ngân hàng Escrow' },
-      { name: 'M2: Giao hàng đợt 1 (50%)', amount: 90000000, status: 'InProgress', dueDate: '02/11/2026', desc: 'Đang đóng gói và kiểm định chất lượng bao bì' },
-      { name: 'M3: Nghiệm thu 20%', amount: 36000000, status: 'Upcoming', dueDate: '15/11/2026', desc: 'Nghiệm thu thực tế tại địa điểm giao nhận' },
+      { name: 'Đợt 1: Đặt cọc 30%', amount: 54000000, status: 'Completed', dueDate: '18/10/2026', desc: 'Đã thanh toán vào tài khoản ký quỹ' },
+      { name: 'Đợt 2: Giao hàng (50%)', amount: 90000000, status: 'InProgress', dueDate: '02/11/2026', desc: 'Đang đóng gói và kiểm định chất lượng bao bì' },
+      { name: 'Đợt 3: Nghiệm thu 20%', amount: 36000000, status: 'Upcoming', dueDate: '15/11/2026', desc: 'Nghiệm thu thực tế tại địa điểm giao nhận' },
     ],
   },
 ];
@@ -138,7 +138,7 @@ export default function ContractsScreen({ navigation }) {
             <View style={styles.timelineSection}>
               <View style={styles.timelineHeader}>
                 <Ionicons name="git-network-outline" size={16} color={COLORS.primary} />
-                <Text style={styles.timelineTitle}>Lộ Trình Giải Ngân & Milestones</Text>
+                <Text style={styles.timelineTitle}>Lộ trình thanh toán theo mốc</Text>
               </View>
 
               <View style={styles.timelineList}>
@@ -185,7 +185,7 @@ export default function ContractsScreen({ navigation }) {
                             onPress={() => handleOpenPayment(contract, m)}
                           >
                             <Ionicons name="card-outline" size={14} color="#FFFFFF" />
-                            <Text style={styles.payBtnText}>Thanh Toán Đặt Cọc M1 (30%)</Text>
+                            <Text style={styles.payBtnText}>Thanh toán đặt cọc (30%)</Text>
                           </TouchableOpacity>
                         )}
                       </View>
@@ -234,7 +234,7 @@ export default function ContractsScreen({ navigation }) {
                 <Ionicons name="shield-checkmark" size={26} color={COLORS.accent} />
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={styles.escrowTitle}>BẢO CHỨNG KÝ QUỸ SAFETRADE</Text>
+                <Text style={styles.escrowTitle}>Thanh toán qua ký quỹ</Text>
                 <Text style={styles.escrowSub}>Tiền cọc được giữ an toàn tại tài khoản trung gian ngân hàng</Text>
               </View>
             </View>
@@ -262,9 +262,9 @@ export default function ContractsScreen({ navigation }) {
             <Text style={styles.methodTitle}>Phương thức thanh toán bảo chứng:</Text>
             <View style={styles.methodsRow}>
               {[
-                { id: 'vietqr', label: 'VietQR Doanh Nghiệp', icon: 'qr-code-outline' },
-                { id: 'vnpay', label: 'VNPay B2B Gateway', icon: 'card-outline' },
-                { id: 'napas', label: 'Napas 24/7 Escrow', icon: 'swap-horizontal-outline' },
+                { id: 'vietqr', label: 'VietQR doanh nghiệp', icon: 'qr-code-outline' },
+                { id: 'vnpay', label: 'VNPay', icon: 'card-outline' },
+                { id: 'napas', label: 'Chuyển khoản Napas 24/7', icon: 'swap-horizontal-outline' },
               ].map((m) => {
                 const isActive = paymentMethod === m.id;
                 return (
@@ -295,7 +295,7 @@ export default function ContractsScreen({ navigation }) {
                 onPress={handleConfirmEscrowPayment}
                 disabled={paying}
               >
-                <Text style={styles.confirmPayText}>Xác Nhận Ký Quỹ</Text>
+                <Text style={styles.confirmPayText}>Xác nhận ký quỹ</Text>
               </TouchableOpacity>
             </View>
           </View>

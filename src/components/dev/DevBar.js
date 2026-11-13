@@ -62,7 +62,7 @@ export default function DevBar() {
           screen: 'RfqDetailBidding',
           params: {
             rfq: {
-              id: 'rfq-001',
+              id: 'rfq-0042',
               rfqNumber: 'RFQ-2026-0042',
               title: 'Đặt 350 Hộp Quà Hoàng Triều Tri Ân Đối Tác VIP',
               targetQuantity: 350,

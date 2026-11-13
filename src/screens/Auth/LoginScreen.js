@@ -57,14 +57,14 @@ export default function LoginScreen({ navigation }) {
           <View style={styles.logoBadge}>
             <Ionicons name="moon" size={32} color={COLORS.accent} />
           </View>
-          <Text style={styles.brandTitle}>NGUYỆT PHỐ B2B</Text>
+          <Text style={styles.brandTitle}>Nguyệt Phố</Text>
           <Text style={styles.brandSubtitle}>
-            Sàn Đấu Thầu & Quà Tặng Trung Thu Doanh Nghiệp
+            Sàn đấu thầu & quà tặng Trung thu doanh nghiệp
           </Text>
         </View>
 
         <View style={styles.formCard}>
-          <Text style={styles.cardHeading}>Đăng nhập Khách hàng</Text>
+          <Text style={styles.cardHeading}>Đăng nhập</Text>
           <Text style={styles.cardDesc}>
             Dành cho đại diện thu mua doanh nghiệp & người mua sỉ
           </Text>
@@ -110,7 +110,7 @@ export default function LoginScreen({ navigation }) {
           </TouchableOpacity>
 
           <CustomButton
-            title="Đăng Nhập"
+            title="Đăng nhập"
             onPress={handleLogin}
             loading={loading}
             size="large"
@@ -128,7 +128,7 @@ export default function LoginScreen({ navigation }) {
             onPress={() => handleLogin()}
           >
             <Ionicons name="logo-google" size={18} color="#EA4335" />
-            <Text style={styles.googleBtnText}>Đăng nhập với Google Doanh Nghiệp</Text>
+            <Text style={styles.googleBtnText}>Đăng nhập với Google</Text>
           </TouchableOpacity>
         </View>
 

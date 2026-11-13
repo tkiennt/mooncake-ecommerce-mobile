@@ -20,7 +20,7 @@ const PROMO_BANNER = require('../../../assets/products/promo-banner.jpg');
 const SHORTCUTS = [
   { key: 'catalog', label: 'Danh mục', icon: 'grid-outline', screen: 'Search' },
   { key: 'rfq', label: 'Báo giá', icon: 'document-text-outline', screen: 'CreateRfq' },
-  { key: 'ai', label: 'Trợ lý AI', icon: 'sparkles-outline', screen: 'AiAssistant' },
+  { key: 'ai', label: 'Tư vấn quà', icon: 'chatbubbles-outline', screen: 'AiAssistant' },
   { key: 'contracts', label: 'Hợp đồng', icon: 'reader-outline', screen: 'Contracts' },
   { key: 'delivery', label: 'Giao hàng', icon: 'car-outline', screen: 'DeliveryPoD' },
 ];

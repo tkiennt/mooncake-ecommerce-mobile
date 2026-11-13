@@ -223,7 +223,7 @@ export default function CreateRfqScreen({ navigation }) {
 
       <View style={[styles.footer, { paddingBottom: insets.bottom + 10 }]}>
         <TouchableOpacity style={styles.submit} onPress={submit} disabled={submitting}>
-          {submitting ? <ActivityIndicator color={COLORS.textWhite} /> : <Text style={styles.submitText}>Phát hành RFQ</Text>}
+          {submitting ? <ActivityIndicator color={COLORS.textWhite} /> : <Text style={styles.submitText}>Gửi yêu cầu báo giá</Text>}
         </TouchableOpacity>
       </View>
     </KeyboardAvoidingView>

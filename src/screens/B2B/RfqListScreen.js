@@ -131,7 +131,7 @@ export default function RfqListScreen({ navigation }) {
         <Text style={styles.headerTitle}>Đấu thầu báo giá</Text>
         <TouchableOpacity style={styles.createButton} onPress={() => navigation.navigate('CreateRfq')}>
           <Ionicons name="add" size={16} color={COLORS.textWhite} />
-          <Text style={styles.createButtonText}>Tạo RFQ</Text>
+          <Text style={styles.createButtonText}>Tạo yêu cầu</Text>
         </TouchableOpacity>
       </View>
 
@@ -166,7 +166,7 @@ export default function RfqListScreen({ navigation }) {
             style={styles.searchInput}
             value={query}
             onChangeText={setQuery}
-            placeholder="Tìm mã RFQ hoặc tiêu đề"
+            placeholder="Tìm mã hoặc tiêu đề yêu cầu"
             placeholderTextColor={COLORS.textMuted}
           />
         </View>
@@ -194,7 +194,7 @@ export default function RfqListScreen({ navigation }) {
               style={styles.emptyButton}
               onPress={hasFilters ? () => { setStatus(''); setQuery(''); } : () => navigation.navigate('CreateRfq')}
             >
-              <Text style={styles.emptyButtonText}>{hasFilters ? 'Xóa bộ lọc' : 'Tạo RFQ đầu tiên'}</Text>
+              <Text style={styles.emptyButtonText}>{hasFilters ? 'Xóa bộ lọc' : 'Tạo yêu cầu đầu tiên'}</Text>
             </TouchableOpacity>
           </View>
         ) : (

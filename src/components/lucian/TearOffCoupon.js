@@ -64,7 +64,7 @@ export default function TearOffCoupon({
         {/* Left Side: Offer Info */}
         <View style={styles.ticketMain}>
           <View style={styles.subBadge}>
-            <Text style={styles.subBadgeText}>ĐẶC QUYỀN DOANH NGHIỆP</Text>
+            <Text style={styles.subBadgeText}>Đặc quyền doanh nghiệp</Text>
           </View>
           <Text style={styles.discountTitle}>{discountText}</Text>
           <Text style={styles.conditionText}>{conditionText}</Text>
@@ -103,7 +103,7 @@ export default function TearOffCoupon({
           {isTorn ? (
             <View style={styles.appliedWrap}>
               <Ionicons name="gift-outline" size={24} color={COLORS.accent} />
-              <Text style={styles.appliedText}>ĐÃ NHẬN</Text>
+              <Text style={styles.appliedText}>Đã nhận</Text>
               <Text style={styles.appliedSub}>Sẵn sàng dùng</Text>
             </View>
           ) : (
@@ -113,7 +113,7 @@ export default function TearOffCoupon({
               style={styles.tearBtn}
             >
               <Ionicons name="cut-outline" size={20} color={COLORS.textWhite} />
-              <Text style={styles.tearBtnText}>XÉ PHIẾU</Text>
+              <Text style={styles.tearBtnText}>Xé phiếu</Text>
               <Text style={styles.tearBtnSub}>Nhận ngay</Text>
             </TouchableOpacity>
           )}

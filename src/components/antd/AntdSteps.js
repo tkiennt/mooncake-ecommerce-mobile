@@ -8,8 +8,8 @@ export default function AntdSteps({
   current = 0,
   items = [
     { title: 'Thiết lập', desc: 'Chọn mẫu & SL' },
-    { title: 'Nhận Bid', desc: 'So sánh báo giá' },
-    { title: 'Ký Hợp Đồng', desc: 'Cọc M1 30%' },
+    { title: 'Nhận bid', desc: 'So sánh báo giá' },
+    { title: 'Ký hợp đồng', desc: 'Đặt cọc 30%' },
   ],
   direction = 'horizontal',
 }) {

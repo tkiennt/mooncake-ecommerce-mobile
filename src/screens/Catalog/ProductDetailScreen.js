@@ -211,7 +211,7 @@ export default function ProductDetailScreen({ route, navigation }) {
             iconColor={COLORS.success}
             highlight="Giao xe lạnh 20–25°C"
             title="· dự kiến 3–5 ngày"
-            subtitle="Theo dõi hành trình và nhận biên bản giao hàng (PoD)."
+            subtitle="Theo dõi hành trình và nhận biên bản giao hàng."
             onPress={() => navigation.navigate('DeliveryPoD')}
           />
           <InfoRow

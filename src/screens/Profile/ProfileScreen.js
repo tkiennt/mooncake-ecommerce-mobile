@@ -51,20 +51,20 @@ export default function ProfileScreen({ navigation }) {
   const menuItems = [
     {
       icon: 'business-outline',
-      title: 'Hồ Sơ Doanh Nghiệp & MST',
+      title: 'Hồ sơ doanh nghiệp & MST',
       subtitle: user?.taxId ? `MST: ${user.taxId}` : 'Chưa cập nhật',
-      onPress: () => Alert.alert('Hồ Sơ', `Công ty: ${user?.companyName}\nMST: ${user?.taxId}`),
+      onPress: () => Alert.alert('Hồ sơ', `Công ty: ${user?.companyName}\nMST: ${user?.taxId}`),
     },
     {
       icon: 'document-text-outline',
-      title: 'Hợp Đồng Điện Tử (e-Contract)',
-      subtitle: 'Quản lý hợp đồng & Ký số bằng OTP',
+      title: 'Hợp đồng điện tử',
+      subtitle: 'Ký hợp đồng bằng mã OTP, theo dõi đặt cọc',
       onPress: () => navigation.navigate('Contracts'),
     },
     {
       icon: 'briefcase-outline',
-      title: 'Yêu Cầu Báo Giá (RFQ) Đang Mở',
-      subtitle: 'Theo dõi các gói đấu thầu & Báo giá từ xưởng',
+      title: 'Yêu cầu báo giá',
+      subtitle: 'Theo dõi yêu cầu và báo giá từ các xưởng',
       onPress: () => navigation.navigate('RfqList'),
     },
     {
@@ -117,7 +117,7 @@ export default function ProfileScreen({ navigation }) {
             onPress={() => navigation.navigate('RfqList')}
           >
             <Text style={styles.statVal}>{stats.rfqs}</Text>
-            <Text style={styles.statLabel}>Gói thầu RFQ</Text>
+            <Text style={styles.statLabel}>Yêu cầu báo giá</Text>
           </TouchableOpacity>
           <View style={styles.statDivider} />
           <View style={styles.statCol}>
@@ -152,10 +152,10 @@ export default function ProfileScreen({ navigation }) {
         {/* Logout button */}
         <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
           <Ionicons name="log-out-outline" size={18} color={COLORS.error} />
-          <Text style={styles.logoutText}>Đăng Xuất Tài Khoản</Text>
+          <Text style={styles.logoutText}>Đăng xuất tài khoản</Text>
         </TouchableOpacity>
 
-        <Text style={styles.versionText}>Nguyệt Phố B2B Mobile • v1.0.0 (Phase 1 MVP)</Text>
+        <Text style={styles.versionText}>Nguyệt Phố · phiên bản 1.0.0</Text>
       </ScrollView>
     </View>
   );

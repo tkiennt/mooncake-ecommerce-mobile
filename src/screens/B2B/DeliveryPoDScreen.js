@@ -35,8 +35,8 @@ export default function DeliveryPoDScreen({ route, navigation }) {
     timeline: [
       { step: 'Đã đóng gói hoàn tất tại xưởng', time: '18/10/2026 08:30', done: true },
       { step: 'Bàn giao xe lạnh chuyên dụng kiểm soát nhiệt', time: '18/10/2026 10:15', done: true },
-      { step: 'Đang vận chuyển liên tỉnh kiểm soát IoT', time: '18/10/2026 13:45', done: true },
-      { step: 'Đã giao tới điểm nhận & Ký nghiệm thu PoD', time: '18/10/2026 16:30', done: true },
+      { step: 'Đang vận chuyển, theo dõi nhiệt độ', time: '18/10/2026 13:45', done: true },
+      { step: 'Đã giao tới điểm nhận và ký nhận', time: '18/10/2026 16:30', done: true },
     ],
     podData: {
       packagePhoto: require('../../../assets/products/hop-son-mai.jpg'),
@@ -135,7 +135,7 @@ export default function DeliveryPoDScreen({ route, navigation }) {
             </View>
             <View style={styles.statusTag}>
               <Ionicons name="checkmark-circle" size={14} color="#059669" />
-              <Text style={styles.statusLabel}>Đã Bàn Giao</Text>
+              <Text style={styles.statusLabel}>Đã bàn giao</Text>
             </View>
           </View>
 
@@ -145,7 +145,7 @@ export default function DeliveryPoDScreen({ route, navigation }) {
             <View style={styles.gaugeHeader}>
               <View style={styles.gaugeTitleWrap}>
                 <Ionicons name="snow" size={18} color="#0284C7" />
-                <Text style={styles.gaugeTitle}>CẢM BIẾN NHIỆT ĐỘ THÙNG LẠNH IOT</Text>
+                <Text style={styles.gaugeTitle}>Nhiệt độ thùng lạnh</Text>
               </View>
               <View style={styles.tempBadge}>
                 <Text style={styles.tempBadgeText}>{deliveryInfo.storageTemp} °C</Text>
@@ -199,7 +199,7 @@ export default function DeliveryPoDScreen({ route, navigation }) {
 
         {/* Timeline */}
         <View style={styles.timelineCard}>
-          <Text style={styles.cardHeading}>Hành Trình Giao Hàng B2B</Text>
+          <Text style={styles.cardHeading}>Hành trình giao hàng</Text>
           {deliveryInfo.timeline.map((step, idx) => (
             <View key={idx} style={styles.timelineItem}>
               <View style={styles.stepDot}>
@@ -217,7 +217,7 @@ export default function DeliveryPoDScreen({ route, navigation }) {
         <View style={styles.podCard}>
           <View style={styles.podHeader}>
             <Ionicons name="document-attach-outline" size={20} color={COLORS.primary} />
-            <Text style={styles.podTitle}>Biên Bản Nghiệm Thu & Chữ Ký PoD</Text>
+            <Text style={styles.podTitle}>Biên bản giao hàng</Text>
           </View>
 
           <View style={styles.podGrid}>
@@ -240,15 +240,12 @@ export default function DeliveryPoDScreen({ route, navigation }) {
               <Text style={styles.bold}>Thời gian bàn giao:</Text> {deliveryInfo.podData.deliveredAt}
             </Text>
             <Text style={styles.podDetailText}>
-              <Text style={styles.bold}>Tọa độ GPS:</Text> {deliveryInfo.podData.gpsLocation}
-            </Text>
-            <Text style={styles.podDetailText}>
               <Text style={styles.bold}>Đại diện ký nhận:</Text> {deliveryInfo.podData.receiverName}
             </Text>
           </View>
 
           <CustomButton
-            title="Xác Nhận Nghiệm Thu & Đánh Giá"
+            title="Xác nhận nghiệm thu & đánh giá"
             icon="✅"
             onPress={handleConfirmInspection}
             style={styles.confirmBtn}

@@ -44,7 +44,7 @@ export default function ReviewFilterStars({
       {/* Header Summary */}
       <View style={styles.header}>
         <View>
-          <Text style={styles.headerTitle}>ĐÁNH GIÁ 4 TIÊU CHÍ CHẤT LƯỢNG B2B</Text>
+          <Text style={styles.headerTitle}>Đánh giá 4 tiêu chí chất lượng</Text>
           <Text style={styles.headerSubtitle}>Theo chuẩn nghiệm thu thu mua doanh nghiệp</Text>
         </View>
         <View style={styles.overallBadge}>

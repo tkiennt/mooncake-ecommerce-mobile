@@ -42,7 +42,7 @@ class SignalRService {
         this.notifyListeners({
           type: 'NEW_BID',
           title: 'Báo giá mới!',
-          message: `Xưởng ${bidData.supplierName || 'bánh'} vừa nộp báo giá cho RFQ ${bidData.rfqNumber || ''}`,
+          message: `Xưởng ${bidData.supplierName || 'bánh'} vừa nộp báo giá cho yêu cầu ${bidData.rfqNumber || ''}`,
           data: bidData,
           createdAt: new Date().toISOString(),
         });

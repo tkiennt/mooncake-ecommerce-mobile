@@ -123,7 +123,7 @@ export default function CheckoutScreen({ navigation }) {
         {/* Recipient Information */}
         <View style={styles.sectionCard}>
           <Text style={styles.sectionTitle}>
-            <Ionicons name="location-outline" size={16} color={COLORS.primary} /> Thông Tin Giao Nhận Doanh Nghiệp
+            <Ionicons name="location-outline" size={16} color={COLORS.primary} /> Thông tin giao nhận doanh nghiệp
           </Text>
 
           <View style={styles.inputBox}>
@@ -199,7 +199,7 @@ export default function CheckoutScreen({ navigation }) {
         {/* Payment Methods */}
         <View style={styles.sectionCard}>
           <Text style={styles.sectionTitle}>
-            <Ionicons name="card-outline" size={16} color={COLORS.primary} /> Phương Thức Thanh Toán
+            <Ionicons name="card-outline" size={16} color={COLORS.primary} /> Phương thức thanh toán
           </Text>
 
           <TouchableOpacity
@@ -222,7 +222,7 @@ export default function CheckoutScreen({ navigation }) {
           >
             <Ionicons name="shield-checkmark-outline" size={20} color={COLORS.accent} />
             <View style={styles.payInfo}>
-              <Text style={styles.payTitle}>Ký Quỹ SafeTrade Escrow B2B</Text>
+              <Text style={styles.payTitle}>Đặt cọc qua tài khoản ký quỹ</Text>
               <Text style={styles.paySub}>Tiền cọc giữ an toàn bởi sàn, chỉ giải ngân khi nhận bánh đạt chuẩn</Text>
             </View>
             <View style={styles.radio}>
@@ -247,7 +247,7 @@ export default function CheckoutScreen({ navigation }) {
 
         {/* Bill Summary */}
         <View style={styles.sectionCard}>
-          <Text style={styles.sectionTitle}>Tóm Tắt Thanh Toán</Text>
+          <Text style={styles.sectionTitle}>Tóm tắt thanh toán</Text>
 
           <View style={styles.billRow}>
             <Text style={styles.billLabel}>Tổng số lượng đặt</Text>
@@ -271,7 +271,7 @@ export default function CheckoutScreen({ navigation }) {
         </View>
 
         <CustomButton
-          title="Xác Nhận & Hoàn Tất Đơn Hàng"
+          title="Xác nhận & hoàn tất đơn hàng"
           onPress={handlePlaceOrder}
           loading={loading}
           size="large"

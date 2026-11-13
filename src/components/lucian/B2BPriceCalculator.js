@@ -58,10 +58,10 @@ export default function B2BPriceCalculator({
       <View style={styles.header}>
         <View style={styles.headerTitleWrap}>
           <Ionicons name="calculator-outline" size={20} color={COLORS.primary} />
-          <Text style={styles.headerTitle}>BẢNG TÍNH GIÁ SỈ B2B TỰ ĐỘNG</Text>
+          <Text style={styles.headerTitle}>Giá theo số lượng</Text>
         </View>
         <View style={styles.liveBadge}>
-          <Text style={styles.liveBadgeText}>CHIẾT KHẤU TỨC THÌ</Text>
+          <Text style={styles.liveBadgeText}>Chiết khấu tức thì</Text>
         </View>
       </View>
 
@@ -192,7 +192,7 @@ export default function B2BPriceCalculator({
 
         <View style={styles.totalRow}>
           <View>
-            <Text style={styles.totalLabel}>TỔNG DỰ TOÁN ĐƠN HÀNG</Text>
+            <Text style={styles.totalLabel}>Tổng dự toán đơn hàng</Text>
             <Text style={styles.savingsText}>
               Tiết kiệm: {totalSavings.toLocaleString('vi-VN')} ₫
             </Text>

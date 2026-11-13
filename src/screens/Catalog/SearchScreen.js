@@ -238,7 +238,7 @@ export default function SearchScreen({ navigation, route }) {
                 style={styles.emptyRfqBtn}
                 onPress={() => navigation.navigate('CreateRfq')}
               >
-                <Text style={styles.emptyRfqBtnText}>Mở thầu RFQ ngay</Text>
+                <Text style={styles.emptyRfqBtnText}>Gửi yêu cầu báo giá</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -273,7 +273,7 @@ export default function SearchScreen({ navigation, route }) {
             <View style={styles.sheetHandle} />
 
             <View style={styles.sheetHeader}>
-              <Text style={styles.sheetTitle}>Bộ Lọc B2B Đa Chiều</Text>
+              <Text style={styles.sheetTitle}>Bộ lọc</Text>
               <TouchableOpacity onPress={() => setIsFilterModalOpen(false)}>
                 <Ionicons name="close-circle-outline" size={24} color={COLORS.textSecondary} />
               </TouchableOpacity>
@@ -316,7 +316,7 @@ export default function SearchScreen({ navigation, route }) {
                 color={COLORS.primary}
               />
               <Text style={styles.sheetCheckLabel}>
-                Chỉ hiện xưởng đạt chứng nhận ISO 22000 & SafeTrade
+                Chỉ hiện xưởng đạt chứng nhận ISO 22000
               </Text>
             </TouchableOpacity>
 

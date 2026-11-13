@@ -35,7 +35,7 @@ export default function ProductCard({ product, onPress }) {
         )}
         {product.isCustomPackagingSupported && (
           <View style={styles.packagingBadge}>
-            <Text style={styles.packagingText}>In Logo</Text>
+            <Text style={styles.packagingText}>In logo</Text>
           </View>
         )}
       </View>

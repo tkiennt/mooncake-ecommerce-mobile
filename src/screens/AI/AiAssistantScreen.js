@@ -18,7 +18,7 @@ import { aiService } from '../../services/api/aiService';
 const PRESET_PROMPTS = [
   'Tư vấn 200 hộp quà ngân sách 600k/hộp',
   'Set quà nào phù hợp biếu đối tác chiến lược?',
-  'Quy trình xuất hóa đơn VAT & ký quỹ SafeTrade?',
+  'Xuất hóa đơn VAT và đặt cọc thế nào?',
   'Bánh lava trứng chảy có hạn dùng bao lâu?',
 ];
 
@@ -28,7 +28,7 @@ export default function AiAssistantScreen({ navigation }) {
     {
       id: 'msg-1',
       sender: 'ai',
-      text: 'Xin chào quý doanh nghiệp! Tôi là Trợ lý AI Nguyệt Phố. Tôi có thể giúp quý khách lập kế hoạch ngân sách quà tặng, chọn hương vị bánh nghệ nhân phù hợp với văn hóa đối tác, hoặc giải đáp các chính sách đấu thầu B2B.',
+      text: 'Xin chào quý doanh nghiệp! Tôi là trợ lý tư vấn của Nguyệt Phố. Tôi có thể giúp quý khách lập kế hoạch ngân sách quà tặng, chọn hương vị bánh nghệ nhân phù hợp với văn hóa đối tác, hoặc giải đáp cách đặt hàng số lượng lớn.',
       time: 'Vừa xong',
     },
   ]);
@@ -85,13 +85,13 @@ export default function AiAssistantScreen({ navigation }) {
             'Với ngân sách khoảng 600.000 ₫/hộp cho 200 suất quà, đề xuất tối ưu nhất là Hộp Hoàng Triều Thượng Hạng (4 Bánh + Trà Ô Long) từ Xưởng Kinh Đô Cổ. Khi đặt số lượng 200 hộp, quý doanh nghiệp được hưởng mức chiết khấu bậc thang -15%, đơn giá thực tế chỉ còn khoảng 552.500 ₫/hộp và được miễn phí in logo doanh nghiệp ép kim nổi.';
         } else if (lower.includes('đối tác') || lower.includes('vip') || lower.includes('chiến lược')) {
           replyText =
-            'Dành cho đối tác chiến lược cấp cao, quý khách nên chọn Set Hộp Sơn Mài Nguyệt Dạ Thưởng Hoa với vị nhân Bào Ngư Vi Cá và Lava Trứng Chảy Hồng Kông. Mẫu hộp gỗ sơn mài dập kim không chỉ thể hiện đẳng cấp hoàng gia mà còn đi kèm thiệp chúc mừng thiết kế riêng.';
+            'Dành cho đối tác chiến lược cấp cao, quý khách nên chọn Set Hộp Sơn Mài Nguyệt Dạ Thưởng Hoa với vị nhân Bào Ngư Vi Cá và Lava Trứng Chảy Hồng Kông. Mẫu hộp gỗ sơn mài dập kim sang trọng và đi kèm thiệp chúc mừng thiết kế riêng.';
         } else if (lower.includes('vat') || lower.includes('ký quỹ') || lower.includes('safetrade')) {
           replyText =
-            'Tất cả các đơn hàng và hợp đồng trên sàn Nguyệt Phố B2B đều được xuất hóa đơn điện tử VAT đầy đủ. Cơ chế ký quỹ SafeTrade Escrow giữ tiền cọc an toàn, sàn chỉ giải ngân cho xưởng khi quý doanh nghiệp đã ký biên bản bàn giao xe lạnh PoD đạt chuẩn.';
+            'Mọi đơn hàng và hợp đồng trên Nguyệt Phố đều được xuất hóa đơn VAT điện tử. Tiền cọc được giữ trong tài khoản ký quỹ và chỉ chuyển cho xưởng sau khi quý khách ký nhận hàng.';
         } else {
           replyText =
-            `Tôi đã ghi nhận yêu cầu của quý khách: "${textToSend}". Hệ thống khuyến nghị quý khách có thể mở một gói thầu RFQ để hơn 50 xưởng nghệ nhân gửi báo giá cạnh tranh nhất, hoặc liên hệ Hotline B2B 1900 8899 để chuyên viên thu mua hỗ trợ trực tiếp.`;
+            `Tôi đã ghi nhận yêu cầu của quý khách: "${textToSend}". Quý khách có thể gửi yêu cầu báo giá để nhiều xưởng cùng đề xuất, hoặc gọi hotline 1900 6868 để được hỗ trợ trực tiếp.`;
         }
 
         setMessages((prev) => [
@@ -153,7 +153,7 @@ export default function AiAssistantScreen({ navigation }) {
             >
               {isAi && (
                 <View style={styles.aiAvatar}>
-                  <Ionicons name="sparkles" size={14} color="#FFF" />
+                  <Ionicons name="chatbubble-ellipses" size={14} color="#FFF" />
                 </View>
               )}
               <View
@@ -186,11 +186,11 @@ export default function AiAssistantScreen({ navigation }) {
         {loading && (
           <View style={styles.loadingRow}>
             <View style={styles.aiAvatar}>
-              <Ionicons name="sparkles" size={14} color="#FFF" />
+              <Ionicons name="chatbubble-ellipses" size={14} color="#FFF" />
             </View>
             <View style={styles.loadingBubble}>
               <ActivityIndicator size="small" color={COLORS.primary} />
-              <Text style={styles.loadingText}>Trợ lý AI đang phân tích dữ liệu xưởng bánh...</Text>
+              <Text style={styles.loadingText}>Đang soạn câu trả lời...</Text>
             </View>
           </View>
         )}

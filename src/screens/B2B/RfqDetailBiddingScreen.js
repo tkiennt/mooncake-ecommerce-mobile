@@ -124,7 +124,7 @@ export default function RfqDetailBiddingScreen({ route, navigation }) {
           <View style={styles.awarded}>
             <Ionicons name="checkmark-circle" size={18} color="#2F7A4A" />
             <Text style={styles.awardedText}>
-              Bạn đã chọn {awardedBid.bidNumber}. {rfq?.status === 'Awarded' ? 'Xưởng đã xác nhận.' : 'Xưởng đang xác nhận lựa chọn của bạn.'}
+              Bạn đã chọn báo giá của {supplierFor(awardedBid)?.companyName || 'xưởng'}. {rfq?.status === 'Awarded' ? 'Xưởng đã xác nhận.' : 'Xưởng đang xác nhận lựa chọn của bạn.'}
             </Text>
           </View>
         )}
@@ -163,7 +163,6 @@ export default function RfqDetailBiddingScreen({ route, navigation }) {
                   </View>
 
                   <Text style={[styles.total, isBest && styles.totalBest]}>{formatVND(bid.totalPrice)}</Text>
-                  <Text style={styles.bidNumber}>{bid.bidNumber}</Text>
 
                   <View style={styles.facts}>
                     <View style={styles.fact}><Ionicons name="car-outline" size={14} color={COLORS.textSecondary} /><Text style={styles.factText}>Giao {bid.estimatedDeliveryDays} ngày</Text></View>

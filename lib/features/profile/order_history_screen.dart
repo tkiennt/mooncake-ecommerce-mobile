@@ -1,76 +1,32 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_tokens.dart';
 import '../../shared_widgets/common/app_header.dart';
 import '../../data/models/order.dart';
+import '../../data/repositories/order_repository.dart';
 
-class OrderHistoryScreen extends StatefulWidget {
+class OrderHistoryScreen extends ConsumerStatefulWidget {
   const OrderHistoryScreen({super.key});
 
   @override
-  State<OrderHistoryScreen> createState() => _OrderHistoryScreenState();
+  ConsumerState<OrderHistoryScreen> createState() => _OrderHistoryScreenState();
 }
 
-class _OrderHistoryScreenState extends State<OrderHistoryScreen> with SingleTickerProviderStateMixin {
+class _OrderHistoryScreenState extends ConsumerState<OrderHistoryScreen>
+    with SingleTickerProviderStateMixin {
   late TabController _tabController;
-
-  static final List<Order> mockOrders = [
-    Order(
-      id: 'ord-1',
-      orderCode: 'DH-2026-9921',
-      status: 'Processing',
-      totalAmount: 18500000,
-      finalAmount: 14800000,
-      discountAmount: 3700000,
-      shippingAddress: 'Tòa nhà FPT, Cầu Giấy, Hà Nội',
-      recipientName: 'Nguyễn Văn Kiên',
-      recipientPhone: '0901234567',
-      createdAt: DateTime.now().subtract(const Duration(hours: 4)),
-      deliveryNote: 'Giao xe lạnh 20-25°C trước 17h',
-      items: [
-        OrderItem(
-          id: 'item-1',
-          productName: 'Hộp Sơn Mài Hoàng Triều 4 Bánh',
-          variantName: 'Yến Sào & Hạt Sen',
-          quantity: 20,
-          unitPrice: 850000,
-          totalPrice: 17000000,
-          imageUrl: 'assets/products/hop-son-mai.jpg',
-        ),
-      ],
-    ),
-    Order(
-      id: 'ord-2',
-      orderCode: 'DH-2026-8802',
-      status: 'Delivered',
-      totalAmount: 8250000,
-      finalAmount: 7012500,
-      discountAmount: 1237500,
-      shippingAddress: 'Khu công nghệ cao Láng Hòa Lạc, Thạch Thất, Hà Nội',
-      recipientName: 'Nguyễn Văn Kiên',
-      recipientPhone: '0901234567',
-      createdAt: DateTime.now().subtract(const Duration(days: 3)),
-      deliveryNote: 'Đã hoàn tất ký biên bản PoD',
-      items: [
-        OrderItem(
-          id: 'item-2',
-          productName: 'Bánh Trung Thu Nướng Thập Cẩm Bát Bửu',
-          variantName: '2 Trứng 210g',
-          quantity: 50,
-          unitPrice: 165000,
-          totalPrice: 8250000,
-          imageUrl: 'assets/products/banh-nuong.jpg',
-        ),
-      ],
-    ),
-  ];
+  bool _isLoading = true;
+  String? _errorMessage;
+  List<Order> _orders = [];
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 5, vsync: this);
+    _loadOrders();
   }
 
   @override
@@ -79,8 +35,67 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> with SingleTick
     super.dispose();
   }
 
+  Future<void> _loadOrders() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      final orders = await ref.read(orderRepositoryProvider).getMyOrders();
+      if (mounted) {
+        setState(() {
+          _orders = orders;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _errorMessage = e.toString();
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
   String _formatCurrency(double amount) {
     return '${NumberFormat('#,###', 'vi_VN').format(amount)} ₫';
+  }
+
+  List<Order> _getFilteredOrders(int tabIndex) {
+    switch (tabIndex) {
+      case 1:
+        return _orders
+            .where((o) => o.status.toLowerCase() == 'pending')
+            .toList();
+      case 2:
+        return _orders
+            .where((o) => [
+                  'confirmed',
+                  'processing',
+                  'in_production',
+                  'inproduction'
+                ].contains(o.status.toLowerCase()))
+            .toList();
+      case 3:
+        return _orders
+            .where((o) => [
+                  'shipping',
+                  'shipped',
+                  'delivering'
+                ].contains(o.status.toLowerCase()))
+            .toList();
+      case 4:
+        return _orders
+            .where((o) => [
+                  'delivered',
+                  'completed'
+                ].contains(o.status.toLowerCase()))
+            .toList();
+      default:
+        return _orders;
+    }
   }
 
   Widget _buildStatusBadge(String status) {
@@ -88,22 +103,38 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> with SingleTick
     Color fg;
     String label;
 
-    switch (status) {
-      case 'Processing':
+    switch (status.toLowerCase()) {
+      case 'processing':
+      case 'in_production':
+      case 'inproduction':
         bg = AppColors.infoBg;
         fg = AppColors.info;
         label = 'Đang sản xuất';
         break;
-      case 'Delivered':
+      case 'confirmed':
+        bg = AppColors.primaryTint;
+        fg = AppColors.primary;
+        label = 'Đã xác nhận';
+        break;
+      case 'delivered':
+      case 'completed':
         bg = AppColors.successBg;
         fg = AppColors.success;
         label = 'Đã giao thành công';
         break;
-      case 'Shipping':
+      case 'shipping':
+      case 'shipped':
+      case 'delivering':
         bg = AppColors.warningBg;
         fg = AppColors.warning;
         label = 'Đang giao hàng';
         break;
+      case 'cancelled':
+        bg = AppColors.errorBg;
+        fg = AppColors.error;
+        label = 'Đã hủy';
+        break;
+      case 'pending':
       default:
         bg = AppColors.primaryTint;
         fg = AppColors.primary;
@@ -119,6 +150,294 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> with SingleTick
       child: Text(
         label,
         style: TextStyle(color: fg, fontSize: 11, fontWeight: FontWeight.w600),
+      ),
+    );
+  }
+
+  Widget _buildEmptyState(int tabIndex) {
+    String title;
+    String desc;
+    IconData icon;
+
+    switch (tabIndex) {
+      case 1:
+        title = 'Không có đơn hàng chờ duyệt';
+        desc = 'Các đơn hàng mới đặt sẽ xuất hiện tại đây khi chờ xác nhận.';
+        icon = Icons.pending_actions_outlined;
+        break;
+      case 2:
+        title = 'Không có đơn hàng đang sản xuất';
+        desc = 'Xưởng bánh sẽ cập nhật tiến độ khi bắt đầu làm bánh.';
+        icon = Icons.precision_manufacturing_outlined;
+        break;
+      case 3:
+        title = 'Không có đơn hàng đang giao';
+        desc = 'Đơn hàng đang trên xe lạnh vận chuyển sẽ hiển thị tại đây.';
+        icon = Icons.local_shipping_outlined;
+        break;
+      case 4:
+        title = 'Chưa có đơn hàng hoàn thành';
+        desc = 'Đơn hàng đã giao thành công và nghiệm thu PoD sẽ lưu tại đây.';
+        icon = Icons.task_alt_outlined;
+        break;
+      default:
+        title = 'Bạn chưa có đơn hàng nào';
+        desc = 'Khám phá các bộ sưu tập bánh trung thu doanh nghiệp cao cấp ngay!';
+        icon = Icons.receipt_long_outlined;
+    }
+
+    return Center(
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              width: 72,
+              height: 72,
+              decoration: const BoxDecoration(
+                color: AppColors.primaryTint,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(icon, size: 36, color: AppColors.primary),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              title,
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: AppColors.textPrimary,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              desc,
+              style: const TextStyle(
+                fontSize: 13,
+                color: AppColors.textSecondary,
+                height: 1.4,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 24),
+            OutlinedButton.icon(
+              onPressed: () => context.go('/search'),
+              icon: const Icon(Icons.shopping_bag_outlined, size: 18),
+              label: const Text('Khám phá sản phẩm'),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: AppColors.primary,
+                side: const BorderSide(color: AppColors.primary),
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(AppTokens.radiusDefault),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLoadingState() {
+    return const Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          CircularProgressIndicator(color: AppColors.primary),
+          SizedBox(height: 16),
+          Text(
+            'Đang tải danh sách đơn hàng...',
+            style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildErrorState() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.error_outline, size: 56, color: AppColors.error),
+            const SizedBox(height: 16),
+            const Text(
+              'Không thể tải danh sách đơn hàng',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: AppColors.textPrimary,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              _errorMessage ?? 'Đã có lỗi xảy ra trong quá trình kết nối máy chủ.',
+              style: const TextStyle(fontSize: 12.5, color: AppColors.textSecondary),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 20),
+            ElevatedButton.icon(
+              onPressed: _loadOrders,
+              icon: const Icon(Icons.refresh, size: 18),
+              label: const Text('Thử lại'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(AppTokens.radiusDefault),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildOrderList(List<Order> orders, int tabIndex) {
+    if (orders.isEmpty) {
+      return _buildEmptyState(tabIndex);
+    }
+
+    return RefreshIndicator(
+      color: AppColors.primary,
+      onRefresh: _loadOrders,
+      child: ListView.builder(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.all(16),
+        itemCount: orders.length,
+        itemBuilder: (context, index) {
+          final order = orders[index];
+          return Container(
+            margin: const EdgeInsets.only(bottom: 12),
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              borderRadius: BorderRadius.circular(AppTokens.lucianRadiusLg),
+              border: Border.all(color: AppColors.border),
+              boxShadow: AppTokens.shadowSubtle,
+            ),
+            child: InkWell(
+              onTap: () async {
+                await context.push('/order-detail', extra: order);
+                _loadOrders();
+              },
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        order.orderCode,
+                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                      ),
+                      _buildStatusBadge(order.status),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  ...order.items.map((item) => Padding(
+                        padding: const EdgeInsets.only(bottom: 8),
+                        child: Row(
+                          children: [
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(6),
+                              child: item.imageUrl != null && item.imageUrl!.startsWith('http')
+                                  ? Image.network(
+                                      item.imageUrl!,
+                                      width: 48,
+                                      height: 48,
+                                      fit: BoxFit.cover,
+                                      errorBuilder: (_, __, ___) => Image.asset(
+                                        'assets/products/banh-nuong.jpg',
+                                        width: 48,
+                                        height: 48,
+                                        fit: BoxFit.cover,
+                                      ),
+                                    )
+                                  : Image.asset(
+                                      item.imageUrl ?? 'assets/products/banh-nuong.jpg',
+                                      width: 48,
+                                      height: 48,
+                                      fit: BoxFit.cover,
+                                      errorBuilder: (_, __, ___) => Container(
+                                        width: 48,
+                                        height: 48,
+                                        color: AppColors.background,
+                                        child: const Icon(Icons.cake, color: AppColors.primary),
+                                      ),
+                                    ),
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    item.productName,
+                                    style: const TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                  Text(
+                                    'SL: ${item.quantity} hộp',
+                                    style: const TextStyle(
+                                      fontSize: 11.5,
+                                      color: AppColors.textSecondary,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Text(
+                              _formatCurrency(item.totalPrice),
+                              style: const TextStyle(
+                                fontSize: 12.5,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                      )),
+                  const Divider(height: 16, color: AppColors.border),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Ngày đặt: ${DateFormat('dd/MM/yyyy HH:mm').format(order.createdAt)}',
+                        style: const TextStyle(fontSize: 11, color: AppColors.textMuted),
+                      ),
+                      Row(
+                        children: [
+                          const Text('Thực trả: ',
+                              style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                          Text(
+                            _formatCurrency(order.finalAmount),
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.primary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
       ),
     );
   }
@@ -153,88 +472,20 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> with SingleTick
             ),
           ),
           Expanded(
-            child: ListView.builder(
-              padding: const EdgeInsets.all(16),
-              itemCount: mockOrders.length,
-              itemBuilder: (context, index) {
-                final order = mockOrders[index];
-                return Container(
-                  margin: const EdgeInsets.only(bottom: 12),
-                  padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(
-                    color: AppColors.surface,
-                    borderRadius: BorderRadius.circular(AppTokens.lucianRadiusLg),
-                    border: Border.all(color: AppColors.border),
-                    boxShadow: AppTokens.shadowSubtle,
-                  ),
-                  child: InkWell(
-                    onTap: () => context.push('/order-detail', extra: order),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              order.orderCode,
-                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-                            ),
-                            _buildStatusBadge(order.status),
-                          ],
-                        ),
-                        const SizedBox(height: 10),
-                        ...order.items.map((item) => Padding(
-                          padding: const EdgeInsets.only(bottom: 8),
-                          child: Row(
-                            children: [
-                              ClipRRect(
-                                borderRadius: BorderRadius.circular(6),
-                                child: Image.asset(
-                                  item.imageUrl ?? 'assets/products/banh-nuong.jpg',
-                                  width: 48,
-                                  height: 48,
-                                  fit: BoxFit.cover,
-                                ),
-                              ),
-                              const SizedBox(width: 10),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(item.productName, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
-                                    Text('SL: ${item.quantity} hộp', style: const TextStyle(fontSize: 11.5, color: AppColors.textSecondary)),
-                                  ],
-                                ),
-                              ),
-                              Text(_formatCurrency(item.totalPrice), style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold)),
-                            ],
+            child: _isLoading
+                ? _buildLoadingState()
+                : _errorMessage != null && _orders.isEmpty
+                    ? _buildErrorState()
+                    : TabBarView(
+                        controller: _tabController,
+                        children: List.generate(
+                          5,
+                          (tabIndex) => _buildOrderList(
+                            _getFilteredOrders(tabIndex),
+                            tabIndex,
                           ),
-                        )),
-                        const Divider(height: 16, color: AppColors.border),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              'Ngày đặt: ${DateFormat('dd/MM/yyyy HH:mm').format(order.createdAt)}',
-                              style: const TextStyle(fontSize: 11, color: AppColors.textMuted),
-                            ),
-                            Row(
-                              children: [
-                                const Text('Thực trả: ', style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
-                                Text(
-                                  _formatCurrency(order.finalAmount),
-                                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.primary),
-                                ),
-                              ],
-                            ),
-                          ],
                         ),
-                      ],
-                    ),
-                  ),
-                );
-              },
-            ),
+                      ),
           ),
         ],
       ),

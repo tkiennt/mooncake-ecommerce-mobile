@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/theme/app_colors.dart';
-import '../../core/theme/app_tokens.dart';
 import '../../shared_widgets/common/app_header.dart';
 import '../../shared_widgets/common/custom_button.dart';
 

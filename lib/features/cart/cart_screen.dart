@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import '../../core/network/api_client.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_tokens.dart';
 import '../../shared_widgets/common/app_header.dart';
@@ -23,6 +24,16 @@ class _CartScreenState extends ConsumerState<CartScreen> {
   }
 
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref
+          .read(cartProvider.notifier)
+          .syncServerQuote(ref.read(apiClientProvider));
+    });
+  }
+
+  @override
   void dispose() {
     _couponController.dispose();
     super.dispose();
@@ -40,26 +51,48 @@ class _CartScreenState extends ConsumerState<CartScreen> {
       ),
       body: cartState.items.isEmpty
           ? Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(Icons.remove_shopping_cart_outlined, size: 64, color: AppColors.textMuted),
-                  const SizedBox(height: 16),
-                  const Text(
-                    'Giỏ hàng của bạn đang trống',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
-                  ),
-                  const SizedBox(height: 8),
-                  const Text(
-                    'Khám phá ngay các bộ sưu tập bánh trung thu cao cấp',
-                    style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
-                  ),
-                  const SizedBox(height: 20),
-                  CustomButton(
-                    title: 'Khám phá sản phẩm',
-                    onPress: () => context.go('/search'),
-                  ),
-                ],
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Container(
+                      width: 80,
+                      height: 80,
+                      decoration: const BoxDecoration(
+                        color: AppColors.primaryTint,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.remove_shopping_cart_outlined,
+                        size: 40,
+                        color: AppColors.primary,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    const Text(
+                      'Giỏ hàng của bạn đang trống',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    const Text(
+                      'Khám phá ngay các bộ sưu tập bánh trung thu cao cấp',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    CustomButton(
+                      title: 'Khám phá sản phẩm',
+                      onPress: () => context.go('/search'),
+                    ),
+                  ],
+                ),
               ),
             )
           : SingleChildScrollView(
@@ -74,8 +107,10 @@ class _CartScreenState extends ConsumerState<CartScreen> {
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
                         color: AppColors.surface,
-                        borderRadius: BorderRadius.circular(AppTokens.lucianRadiusLg),
-                        border: Border.all(color: AppColors.border, width: 0.8),
+                        borderRadius:
+                            BorderRadius.circular(AppTokens.lucianRadiusLg),
+                        border:
+                            Border.all(color: AppColors.border, width: 0.8),
                         boxShadow: AppTokens.shadowSubtle,
                       ),
                       child: Row(
@@ -83,12 +118,34 @@ class _CartScreenState extends ConsumerState<CartScreen> {
                         children: [
                           ClipRRect(
                             borderRadius: BorderRadius.circular(8),
-                            child: Image.asset(
-                              item.product.coverImage ?? 'assets/products/banh-nuong.jpg',
-                              width: 75,
-                              height: 75,
-                              fit: BoxFit.cover,
-                            ),
+                            child: item.product.coverImage != null &&
+                                    item.product.coverImage!.startsWith('http')
+                                ? Image.network(
+                                    item.product.coverImage!,
+                                    width: 75,
+                                    height: 75,
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (_, __, ___) => Image.asset(
+                                      'assets/products/banh-nuong.jpg',
+                                      width: 75,
+                                      height: 75,
+                                      fit: BoxFit.cover,
+                                    ),
+                                  )
+                                : Image.asset(
+                                    item.product.coverImage ??
+                                        'assets/products/banh-nuong.jpg',
+                                    width: 75,
+                                    height: 75,
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (_, __, ___) => Container(
+                                      width: 75,
+                                      height: 75,
+                                      color: AppColors.background,
+                                      child: const Icon(Icons.cake,
+                                          color: AppColors.primary),
+                                    ),
+                                  ),
                           ),
                           const SizedBox(width: 12),
                           Expanded(
@@ -97,7 +154,9 @@ class _CartScreenState extends ConsumerState<CartScreen> {
                               children: [
                                 Text(
                                   item.product.name,
-                                  style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.bold),
+                                  style: const TextStyle(
+                                      fontSize: 13.5,
+                                      fontWeight: FontWeight.bold),
                                   maxLines: 2,
                                   overflow: TextOverflow.ellipsis,
                                 ),
@@ -106,7 +165,9 @@ class _CartScreenState extends ConsumerState<CartScreen> {
                                     padding: const EdgeInsets.only(top: 2),
                                     child: Text(
                                       'Vị: ${item.variant!.name}',
-                                      style: const TextStyle(fontSize: 11.5, color: AppColors.textSecondary),
+                                      style: const TextStyle(
+                                          fontSize: 11.5,
+                                          color: AppColors.textSecondary),
                                     ),
                                   ),
                                 const SizedBox(height: 6),
@@ -124,44 +185,60 @@ class _CartScreenState extends ConsumerState<CartScreen> {
                                 Row(
                                   children: [
                                     IconButton(
-                                      icon: const Icon(Icons.remove_circle_outline, size: 20, color: AppColors.primary),
+                                      icon: const Icon(
+                                          Icons.remove_circle_outline,
+                                          size: 20,
+                                          color: AppColors.primary),
                                       onPressed: () {
-                                        ref.read(cartProvider.notifier).updateQuantity(
-                                          item.product.id,
-                                          item.variant?.id,
-                                          item.quantity - 1,
-                                        );
+                                        ref
+                                            .read(cartProvider.notifier)
+                                            .updateQuantity(
+                                              item.product.id,
+                                              item.variant?.id,
+                                              item.quantity - 1,
+                                            );
                                       },
                                       padding: EdgeInsets.zero,
                                       constraints: const BoxConstraints(),
                                     ),
                                     Padding(
-                                      padding: const EdgeInsets.symmetric(horizontal: 10),
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 10),
                                       child: Text(
                                         '${item.quantity}',
-                                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                                        style: const TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 13),
                                       ),
                                     ),
                                     IconButton(
-                                      icon: const Icon(Icons.add_circle_outline, size: 20, color: AppColors.primary),
+                                      icon: const Icon(
+                                          Icons.add_circle_outline,
+                                          size: 20,
+                                          color: AppColors.primary),
                                       onPressed: () {
-                                        ref.read(cartProvider.notifier).updateQuantity(
-                                          item.product.id,
-                                          item.variant?.id,
-                                          item.quantity + 1,
-                                        );
+                                        ref
+                                            .read(cartProvider.notifier)
+                                            .updateQuantity(
+                                              item.product.id,
+                                              item.variant?.id,
+                                              item.quantity + 1,
+                                            );
                                       },
                                       padding: EdgeInsets.zero,
                                       constraints: const BoxConstraints(),
                                     ),
                                     const Spacer(),
                                     IconButton(
-                                      icon: const Icon(Icons.delete_outline, size: 20, color: AppColors.error),
+                                      icon: const Icon(Icons.delete_outline,
+                                          size: 20, color: AppColors.error),
                                       onPressed: () {
-                                        ref.read(cartProvider.notifier).removeFromCart(
-                                          item.product.id,
-                                          item.variant?.id,
-                                        );
+                                        ref
+                                            .read(cartProvider.notifier)
+                                            .removeFromCart(
+                                              item.product.id,
+                                              item.variant?.id,
+                                            );
                                       },
                                     ),
                                   ],
@@ -180,7 +257,8 @@ class _CartScreenState extends ConsumerState<CartScreen> {
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
                       color: AppColors.surface,
-                      borderRadius: BorderRadius.circular(AppTokens.radiusDefault),
+                      borderRadius:
+                          BorderRadius.circular(AppTokens.radiusDefault),
                       border: Border.all(color: AppColors.border),
                     ),
                     child: Row(
@@ -189,9 +267,11 @@ class _CartScreenState extends ConsumerState<CartScreen> {
                           child: TextField(
                             controller: _couponController,
                             decoration: const InputDecoration(
-                              hintText: 'Nhập mã giảm giá (ví dụ: B2BMOON2026)',
+                              hintText:
+                                  'Nhập mã giảm giá (ví dụ: B2BMOON2026)',
                               isDense: true,
-                              contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                              contentPadding: EdgeInsets.symmetric(
+                                  horizontal: 10, vertical: 8),
                             ),
                           ),
                         ),
@@ -201,9 +281,13 @@ class _CartScreenState extends ConsumerState<CartScreen> {
                           size: ButtonSize.small,
                           onPress: () {
                             if (_couponController.text.isNotEmpty) {
-                              ref.read(cartProvider.notifier).applyCoupon(_couponController.text.trim());
+                              ref
+                                  .read(cartProvider.notifier)
+                                  .applyCoupon(_couponController.text.trim());
                               ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('Mã giảm giá đã được áp dụng!')),
+                                const SnackBar(
+                                    content:
+                                        Text('Mã giảm giá đã được áp dụng!')),
                               );
                             }
                           },
@@ -218,16 +302,56 @@ class _CartScreenState extends ConsumerState<CartScreen> {
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
                       color: AppColors.surface,
-                      borderRadius: BorderRadius.circular(AppTokens.lucianRadiusLg),
+                      borderRadius:
+                          BorderRadius.circular(AppTokens.lucianRadiusLg),
                       border: Border.all(color: AppColors.border),
                     ),
                     child: Column(
                       children: [
-                        _buildRow('Tạm tính (${totals.totalItems} hộp):', _formatCurrency(totals.subtotal)),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              'Tạm tính (${totals.totalItems} hộp):',
+                              style: const TextStyle(
+                                  fontSize: 13, color: AppColors.textSecondary),
+                            ),
+                            if (cartState.isCalculatingQuote)
+                              const SizedBox(
+                                width: 12,
+                                height: 12,
+                                child: CircularProgressIndicator(
+                                    strokeWidth: 1.8, color: AppColors.primary),
+                              ),
+                            Text(
+                              _formatCurrency(totals.subtotal),
+                              style: const TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.textPrimary),
+                            ),
+                          ],
+                        ),
                         const SizedBox(height: 6),
-                        _buildRow('Chiết khấu bậc thang & mã:', '-${_formatCurrency(totals.discountAmount)}', isHighlight: true),
+                        _buildRow('Chiết khấu bậc thang & mã:',
+                            '-${_formatCurrency(totals.discountAmount)}',
+                            isHighlight: true),
+                        if (totals.taxAmount > 0) ...[
+                          const SizedBox(height: 6),
+                          _buildRow('Thuế VAT (8%):',
+                              '+${_formatCurrency(totals.taxAmount)}'),
+                        ],
+                        if (totals.shippingFee > 0) ...[
+                          const SizedBox(height: 6),
+                          _buildRow('Phí vận chuyển xe lạnh:',
+                              '+${_formatCurrency(totals.shippingFee)}'),
+                        ],
                         const Divider(height: 20, color: AppColors.border),
-                        _buildRow('Tổng thanh toán:', _formatCurrency(totals.finalAmount), isBold: true, color: AppColors.primary),
+                        _buildRow(
+                            'Tổng thanh toán:',
+                            _formatCurrency(totals.finalAmount),
+                            isBold: true,
+                            color: AppColors.primary),
                       ],
                     ),
                   ),
@@ -246,7 +370,8 @@ class _CartScreenState extends ConsumerState<CartScreen> {
     );
   }
 
-  Widget _buildRow(String label, String value, {bool isBold = false, bool isHighlight = false, Color? color}) {
+  Widget _buildRow(String label, String value,
+      {bool isBold = false, bool isHighlight = false, Color? color}) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -263,7 +388,8 @@ class _CartScreenState extends ConsumerState<CartScreen> {
           style: TextStyle(
             fontSize: isBold ? 16 : 13,
             fontWeight: isBold ? FontWeight.bold : FontWeight.w600,
-            color: color ?? (isHighlight ? AppColors.success : AppColors.textPrimary),
+            color: color ??
+                (isHighlight ? AppColors.success : AppColors.textPrimary),
           ),
         ),
       ],

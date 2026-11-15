@@ -149,7 +149,7 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
       backgroundColor: AppColors.background,
       appBar: const AppHeader(title: 'Đặt Lại Mật Khẩu', showBack: true),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -186,7 +186,7 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
             const SizedBox(height: 24),
 
             Container(
-              padding: const EdgeInsets.all(20),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 20),
               decoration: BoxDecoration(
                 color: AppColors.surface,
                 borderRadius: BorderRadius.circular(AppTokens.lucianRadiusLg),
@@ -260,13 +260,16 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
                     ),
                   ),
                   const SizedBox(height: 12),
-                  AntdOtpInput(
-                    length: 6,
-                    countdownSeconds: 60,
-                    onComplete: (otp) {
-                      _otpCode = otp;
-                    },
-                    onResend: _handleResend,
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: AntdOtpInput(
+                      length: 6,
+                      countdownSeconds: 60,
+                      onComplete: (otp) {
+                        _otpCode = otp;
+                      },
+                      onResend: _handleResend,
+                    ),
                   ),
                   const SizedBox(height: 20),
 

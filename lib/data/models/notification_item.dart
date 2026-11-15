@@ -21,12 +21,14 @@ class NotificationItem {
     return NotificationItem(
       id: json['id']?.toString() ?? '',
       title: json['title']?.toString() ?? 'Thông báo',
-      message: json['message']?.toString() ?? '',
-      type: json['type']?.toString() ?? 'System',
+      message: json['message']?.toString() ?? json['content']?.toString() ?? '',
+      type: json['type']?.toString() ?? json['category']?.toString() ?? 'System',
       isRead: json['isRead'] == true,
       createdAt: json['createdAt'] != null
-          ? DateTime.tryParse(json['createdAt']) ?? DateTime.now()
-          : DateTime.now(),
+          ? DateTime.tryParse(json['createdAt'].toString()) ?? DateTime.now()
+          : (json['createdAtUtc'] != null
+              ? DateTime.tryParse(json['createdAtUtc'].toString()) ?? DateTime.now()
+              : DateTime.now()),
       data: json['data'] as Map<String, dynamic>?,
     );
   }
@@ -42,4 +44,14 @@ class NotificationItem {
       data: data,
     );
   }
+
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'title': title,
+    'message': message,
+    'type': type,
+    'isRead': isRead,
+    'createdAt': createdAt.toIso8601String(),
+    if (data != null) 'data': data,
+  };
 }

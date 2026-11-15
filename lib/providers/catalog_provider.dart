@@ -2,24 +2,27 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../core/constants/api_endpoints.dart';
 import '../core/network/api_client.dart';
 import '../data/models/product.dart';
-import 'auth_provider.dart';
 
 class CatalogState {
   final List<Product> products;
   final bool isLoading;
   final String? selectedCategory;
   final String searchQuery;
+  final String? errorMessage;
 
   const CatalogState({
     this.products = const [],
     this.isLoading = false,
     this.selectedCategory,
     this.searchQuery = '',
+    this.errorMessage,
   });
 
   List<Product> get filteredProducts {
     return products.where((p) {
-      final matchesCategory = selectedCategory == null || selectedCategory == 'Tất cả' || p.category == selectedCategory;
+      final matchesCategory = selectedCategory == null ||
+          selectedCategory == 'Tất cả' ||
+          p.category == selectedCategory;
       final matchesSearch = searchQuery.isEmpty ||
           p.name.toLowerCase().contains(searchQuery.toLowerCase()) ||
           p.shopName.toLowerCase().contains(searchQuery.toLowerCase());
@@ -32,12 +35,15 @@ class CatalogState {
     bool? isLoading,
     String? selectedCategory,
     String? searchQuery,
+    String? errorMessage,
+    bool clearError = false,
   }) {
     return CatalogState(
       products: products ?? this.products,
       isLoading: isLoading ?? this.isLoading,
       selectedCategory: selectedCategory ?? this.selectedCategory,
       searchQuery: searchQuery ?? this.searchQuery,
+      errorMessage: clearError ? null : (errorMessage ?? this.errorMessage),
     );
   }
 }
@@ -49,6 +55,7 @@ class CatalogNotifier extends StateNotifier<CatalogState> {
     loadCatalog();
   }
 
+  /// Retained for static router fallback reference
   static final List<Product> mockCatalog = [
     Product(
       id: 'prod-1',
@@ -74,86 +81,38 @@ class CatalogNotifier extends StateNotifier<CatalogState> {
         TierPricing(minQty: 200, discountPercent: 35),
       ],
     ),
-    Product(
-      id: 'prod-2',
-      name: 'Bánh Trung Thu Nướng Thập Cẩm Bát Bửu',
-      shopName: 'Xưởng Bánh Kinh Đô Truyền Thống',
-      category: 'Bánh nướng truyền thống',
-      coverImage: 'assets/products/banh-nuong.jpg',
-      basePrice: 165000,
-      rating: 4.9,
-      reviewCount: 380,
-      soldCount: 4500,
-      isCustomPackagingSupported: true,
-      minOrderQty: 20,
-      description: 'Hương vị cổ truyền đặc trưng với lạp xưởng, mứt bí, hạt sen và 2 trứng muối tuyển chọn đậm vị.',
-      variants: [
-        ProductVariant(id: 'v4', name: 'Thập Cẩm 2 Trứng 210g', priceAdjustment: 15000),
-        ProductVariant(id: 'v5', name: 'Thập Cẩm 1 Trứng 150g'),
-      ],
-      tierPricing: [
-        TierPricing(minQty: 50, maxQty: 199, discountPercent: 15),
-        TierPricing(minQty: 200, discountPercent: 25),
-      ],
-    ),
-    Product(
-      id: 'prod-3',
-      name: 'Bánh Dẻo Hạt Sen Lá Dứa Hoa Bưởi',
-      shopName: 'Xưởng Nghệ Nhân Phố Cổ',
-      category: 'Bánh dẻo truyền thống',
-      coverImage: 'assets/products/banh-deo.jpg',
-      basePrice: 145000,
-      rating: 4.8,
-      reviewCount: 95,
-      soldCount: 850,
-      isCustomPackagingSupported: false,
-      minOrderQty: 10,
-      description: 'Vỏ bánh dẻo mịn thơm hương hoa bưởi tự nhiên, nhân hạt sen nhuyễn ngọt dịu kết hợp lá dứa thanh mát.',
-      variants: [
-        ProductVariant(id: 'v6', name: 'Bánh dẻo Sen Nhuyễn 180g'),
-        ProductVariant(id: 'v7', name: 'Bánh dẻo Đậu Xanh 180g'),
-      ],
-      tierPricing: [
-        TierPricing(minQty: 30, discountPercent: 12),
-      ],
-    ),
-    Product(
-      id: 'prod-4',
-      name: 'Set Bánh Dinh Dưỡng Ít Ngọt Sugar-Free',
-      shopName: 'Healthy Mooncake Lab',
-      category: 'Bánh dinh dưỡng & hạt',
-      coverImage: 'assets/products/banh-dinh-duong.jpg',
-      basePrice: 520000,
-      rating: 4.9,
-      reviewCount: 128,
-      soldCount: 980,
-      isCustomPackagingSupported: true,
-      minOrderQty: 10,
-      description: 'Dành riêng cho đối tác đề cao sức khỏe: đường ăn kiêng Isomalt, hạt chia, óc chó và matcha hữu cơ Nhật Bản.',
-      variants: [
-        ProductVariant(id: 'v8', name: 'Hộp 4 Bánh Sugar-Free'),
-        ProductVariant(id: 'v9', name: 'Hộp 6 Bánh Premium'),
-      ],
-      tierPricing: [
-        TierPricing(minQty: 20, maxQty: 49, discountPercent: 10),
-        TierPricing(minQty: 50, discountPercent: 20),
-      ],
-    ),
   ];
 
   Future<void> loadCatalog() async {
+    state = state.copyWith(isLoading: true, clearError: true);
     try {
       final response = await _apiClient.dio.get(ApiEndpoints.products);
-      final rawList = response.data['data'] as List? ?? response.data as List? ?? [];
-      if (rawList.isNotEmpty) {
-        final products = rawList.map((p) => Product.fromJson(p)).toList();
-        state = state.copyWith(products: products, isLoading: false);
-        return;
-      }
-    } catch (_) {}
+      final rawData = response.data['data'] ?? response.data;
+      final rawList = rawData is Map
+          ? (rawData['items'] as List? ?? [])
+          : (rawData as List? ?? []);
 
-    // Fallback to rich mock catalog
-    state = state.copyWith(products: mockCatalog, isLoading: false);
+      final products = rawList
+          .map((p) => Product.fromJson(
+              p is Map<String, dynamic> ? p : Map<String, dynamic>.from(p as Map)))
+          .toList();
+
+      state = state.copyWith(
+        products: products,
+        isLoading: false,
+        clearError: true,
+      );
+    } catch (e) {
+      final appErr = ApiClient.handleError(e);
+      // Remove mock fallback as per D11: display real error message
+      state = state.copyWith(
+        products: const [],
+        isLoading: false,
+        errorMessage: appErr.message.isNotEmpty
+            ? appErr.message
+            : 'Không thể tải danh sách sản phẩm. Vui lòng thử lại sau.',
+      );
+    }
   }
 
   void setCategory(String? category) {
@@ -162,6 +121,10 @@ class CatalogNotifier extends StateNotifier<CatalogState> {
 
   void setSearchQuery(String query) {
     state = state.copyWith(searchQuery: query);
+  }
+
+  Future<void> refresh() async {
+    await loadCatalog();
   }
 }
 

@@ -19,16 +19,18 @@ class User {
     this.emailConfirmed = true,
   });
 
+  String? get phone => phoneNumber;
+
   factory User.fromJson(Map<String, dynamic> json) {
     return User(
       id: json['id']?.toString() ?? json['userId']?.toString() ?? '',
       email: json['email']?.toString() ?? '',
       fullName: json['fullName']?.toString() ?? json['name']?.toString() ?? 'Khách hàng',
-      phoneNumber: json['phoneNumber']?.toString(),
+      phoneNumber: json['phoneNumber']?.toString() ?? json['phone']?.toString(),
       role: json['role']?.toString() ?? 'Customer',
       companyName: json['companyName']?.toString(),
-      avatarUrl: json['avatarUrl']?.toString(),
-      emailConfirmed: json['emailConfirmed'] == true,
+      avatarUrl: json['avatarUrl']?.toString() ?? json['avatar_url']?.toString(),
+      emailConfirmed: json['emailConfirmed'] == true || json['emailConfirmed'] == 1,
     );
   }
 
@@ -42,4 +44,26 @@ class User {
     'avatarUrl': avatarUrl,
     'emailConfirmed': emailConfirmed,
   };
+
+  User copyWith({
+    String? id,
+    String? email,
+    String? fullName,
+    String? phoneNumber,
+    String? role,
+    String? companyName,
+    String? avatarUrl,
+    bool? emailConfirmed,
+  }) {
+    return User(
+      id: id ?? this.id,
+      email: email ?? this.email,
+      fullName: fullName ?? this.fullName,
+      phoneNumber: phoneNumber ?? this.phoneNumber,
+      role: role ?? this.role,
+      companyName: companyName ?? this.companyName,
+      avatarUrl: avatarUrl ?? this.avatarUrl,
+      emailConfirmed: emailConfirmed ?? this.emailConfirmed,
+    );
+  }
 }

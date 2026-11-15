@@ -6,8 +6,11 @@ import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_tokens.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../shared_widgets/antd/antd_otp_input.dart';
+import '../../shared_widgets/common/app_empty_state.dart';
+import '../../shared_widgets/common/app_error_state.dart';
 import '../../shared_widgets/common/app_header.dart';
-import '../../shared_widgets/common/custom_button.dart';
+import '../../shared_widgets/common/app_skeleton.dart';
+import '../../shared_widgets/common/sticky_bottom_bar.dart';
 
 class VerifyEmailScreen extends ConsumerStatefulWidget {
   final String? identifier;
@@ -23,6 +26,8 @@ class _VerifyEmailScreenState extends ConsumerState<VerifyEmailScreen> {
   late final TextEditingController _emailController;
   String _otpCode = '';
   bool _isLoading = false;
+  bool _isFatalNetworkError = false;
+  bool _showManualEmailInput = false;
   String? _errorMessage;
 
   @override
@@ -30,6 +35,9 @@ class _VerifyEmailScreenState extends ConsumerState<VerifyEmailScreen> {
     super.initState();
     final initialEmail = widget.email ?? widget.identifier ?? '';
     _emailController = TextEditingController(text: initialEmail);
+    if (initialEmail.isEmpty) {
+      _showManualEmailInput = false; // Will display AppEmptyState until user taps action
+    }
   }
 
   @override
@@ -45,17 +53,24 @@ class _VerifyEmailScreenState extends ConsumerState<VerifyEmailScreen> {
     final email = _currentEmail;
 
     if (email.isEmpty) {
-      setState(() => _errorMessage = 'Vui lòng nhập địa chỉ email đã đăng ký.');
+      setState(() {
+        _errorMessage = 'Vui lòng nhập địa chỉ email đã đăng ký.';
+        _isFatalNetworkError = false;
+      });
       return;
     }
     if (otp.length < 6) {
-      setState(() => _errorMessage = 'Vui lòng nhập đầy đủ 6 chữ số mã xác thực OTP.');
+      setState(() {
+        _errorMessage = 'Vui lòng nhập đầy đủ 6 chữ số mã xác thực OTP.';
+        _isFatalNetworkError = false;
+      });
       return;
     }
 
     setState(() {
       _isLoading = true;
       _errorMessage = null;
+      _isFatalNetworkError = false;
     });
 
     try {
@@ -77,8 +92,16 @@ class _VerifyEmailScreenState extends ConsumerState<VerifyEmailScreen> {
     } catch (e) {
       final err = ApiClient.handleError(e);
       if (mounted) {
+        final msg = err.message.toLowerCase();
+        final isNetwork = err.statusCode == 0 ||
+            err.statusCode == 502 ||
+            err.statusCode == 503 ||
+            msg.contains('kết nối') ||
+            msg.contains('socket');
+
         setState(() {
           _errorMessage = err.message;
+          _isFatalNetworkError = isNetwork;
         });
       }
     } finally {
@@ -97,7 +120,10 @@ class _VerifyEmailScreenState extends ConsumerState<VerifyEmailScreen> {
       return;
     }
 
-    setState(() => _errorMessage = null);
+    setState(() {
+      _errorMessage = null;
+      _isFatalNetworkError = false;
+    });
 
     try {
       final authRepo = ref.read(authRepositoryProvider);
@@ -114,8 +140,16 @@ class _VerifyEmailScreenState extends ConsumerState<VerifyEmailScreen> {
     } catch (e) {
       final err = ApiClient.handleError(e);
       if (mounted) {
+        final msg = err.message.toLowerCase();
+        final isNetwork = err.statusCode == 0 ||
+            err.statusCode == 502 ||
+            err.statusCode == 503 ||
+            msg.contains('kết nối') ||
+            msg.contains('socket');
+
         setState(() {
           _errorMessage = err.message;
+          _isFatalNetworkError = isNetwork;
         });
       }
     }
@@ -123,146 +157,255 @@ class _VerifyEmailScreenState extends ConsumerState<VerifyEmailScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final hasNoEmail = _currentEmail.isEmpty && !_showManualEmailInput;
+
     return Scaffold(
       backgroundColor: AppColors.background,
+      resizeToAvoidBottomInset: true,
       appBar: const AppHeader(title: 'Xác Thực Email', showBack: true),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
-        child: Column(
-          children: [
-            const SizedBox(height: 12),
-            Container(
-              width: 68,
-              height: 68,
-              decoration: const BoxDecoration(
-                color: AppColors.primaryTint,
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(Icons.mark_email_read_outlined, color: AppColors.primary, size: 36),
-            ),
-            const SizedBox(height: 18),
-            const Text(
-              'Nhập mã xác thực Email',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: AppColors.textPrimary,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              _currentEmail.isNotEmpty
-                  ? 'Mã OTP 6 chữ số đã được gửi qua email:\n$_currentEmail'
-                  : 'Vui lòng kiểm tra hộp thư đến hoặc thư rác trong email của bạn để lấy mã OTP kích hoạt.',
-              style: const TextStyle(fontSize: 13, height: 1.4, color: AppColors.textSecondary),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 24),
+      body: SafeArea(
+        top: false,
+        child: SingleChildScrollView(
+          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppTokens.spaceLG,
+            vertical: AppTokens.spaceLG,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              if (_isFatalNetworkError)
+                AppErrorState(
+                  title: 'Không thể kết nối máy chủ',
+                  message: _errorMessage ?? 'Đã có lỗi xảy ra khi xác thực mã OTP.',
+                  onRetry: () => _handleVerify(),
+                  retryLabel: 'Thử lại ngay',
+                  secondaryActionLabel: 'Đăng nhập lại',
+                  onSecondaryAction: () => context.go('/login'),
+                )
+              else if (hasNoEmail)
+                AppEmptyState(
+                  icon: Icons.mark_email_unread_outlined,
+                  title: 'Chưa có thông tin xác thực',
+                  message: 'Không tìm thấy địa chỉ email cần kích hoạt. Vui lòng nhập email hoặc đăng ký tài khoản mới.',
+                  actionLabel: 'Nhập email xác thực',
+                  onAction: () {
+                    setState(() {
+                      _showManualEmailInput = true;
+                    });
+                  },
+                  secondaryActionLabel: 'Đăng ký tài khoản',
+                  onSecondaryAction: () => context.push('/register'),
+                )
+              else if (_isLoading)
+                _buildLoadingSkeleton()
+              else
+                _buildVerificationContent(),
 
-            // Card container
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 20),
-              decoration: BoxDecoration(
-                color: AppColors.surface,
-                borderRadius: BorderRadius.circular(AppTokens.lucianRadiusLg),
-                border: Border.all(color: AppColors.border),
-                boxShadow: AppTokens.shadowCard,
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  // Error banner with retry
-                  if (_errorMessage != null) ...[
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                      decoration: BoxDecoration(
-                        color: AppColors.errorBg,
-                        borderRadius: BorderRadius.circular(AppTokens.radiusDefault),
-                        border: Border.all(color: AppColors.error.withValues(alpha: 0.3)),
-                      ),
-                      child: Row(
-                        children: [
-                          const Icon(Icons.error_outline, color: AppColors.error, size: 20),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: Text(
-                              _errorMessage!,
-                              style: const TextStyle(fontSize: 13, color: AppColors.error),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          TextButton(
-                            onPressed: _isLoading ? null : () => _handleVerify(),
-                            style: TextButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                              minimumSize: Size.zero,
-                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                            ),
-                            child: const Text(
-                              'Thử lại',
-                              style: TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.bold,
-                                color: AppColors.primary,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 18),
-                  ],
+              const SizedBox(height: AppTokens.space2XL),
 
-                  // Editable Email if needed
-                  TextField(
-                    controller: _emailController,
-                    keyboardType: TextInputType.emailAddress,
-                    onChanged: (_) => setState(() {}),
-                    decoration: const InputDecoration(
-                      labelText: 'Địa chỉ Email nhận OTP',
-                      prefixIcon: Icon(Icons.email_outlined, color: AppColors.textMuted),
+              // Back to Login (tap target >= 44px)
+              Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(minHeight: AppTokens.minTapTarget),
+                  child: TextButton.icon(
+                    onPressed: () => context.go('/login'),
+                    icon: const Icon(Icons.arrow_back, size: 16, color: AppColors.textSecondary),
+                    label: const Text(
+                      'Quay lại màn hình đăng nhập',
+                      style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
                     ),
                   ),
-                  const SizedBox(height: 24),
-
-                  // 6-digit OTP input
-                  FittedBox(
-                    fit: BoxFit.scaleDown,
-                    child: AntdOtpInput(
-                      length: 6,
-                      countdownSeconds: 60,
-                      onComplete: (otp) {
-                        _otpCode = otp;
-                        _handleVerify(otp);
-                      },
-                      onResend: _handleResend,
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-
-                  CustomButton(
-                    title: 'Xác nhận kích hoạt',
-                    size: ButtonSize.large,
-                    loading: _isLoading,
-                    onPress: () => _handleVerify(),
-                  ),
-                ],
+                ),
               ),
-            ),
-            const SizedBox(height: 24),
-
-            // Back to Login
-            TextButton.icon(
-              onPressed: () => context.go('/login'),
-              icon: const Icon(Icons.arrow_back, size: 16, color: AppColors.textSecondary),
-              label: const Text(
-                'Quay lại màn hình đăng nhập',
-                style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
+      bottomNavigationBar: (hasNoEmail || _isFatalNetworkError)
+          ? null
+          : StickyBottomBar(
+              primaryButtonTitle: 'Xác nhận kích hoạt',
+              primaryButtonLoading: _isLoading,
+              onPrimaryPressed: _isLoading ? null : () => _handleVerify(),
+            ),
+    );
+  }
+
+  Widget _buildLoadingSkeleton() {
+    return Container(
+      padding: const EdgeInsets.all(AppTokens.spaceXL),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppTokens.radiusCard),
+        border: Border.all(color: AppColors.border),
+        boxShadow: AppTokens.shadowCard,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          const AppSkeleton(width: 60, height: 60, shape: BoxShape.circle),
+          const SizedBox(height: AppTokens.spaceLG),
+          const AppSkeleton(width: 200, height: 20),
+          const SizedBox(height: AppTokens.spaceMD),
+          const AppSkeleton(width: 260, height: 14),
+          const SizedBox(height: AppTokens.space2XL),
+          // OTP input shimmer
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: List.generate(6, (i) => Container(
+              margin: const EdgeInsets.symmetric(horizontal: 4),
+              child: const AppSkeleton(
+                width: 38,
+                height: 48,
+                borderRadius: BorderRadius.all(Radius.circular(AppTokens.radiusInput)),
+              ),
+            )),
+          ),
+          const SizedBox(height: AppTokens.space2XL),
+          const AppSkeleton(height: AppTokens.minTapTarget, borderRadius: BorderRadius.all(Radius.circular(AppTokens.radiusDefault))),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildVerificationContent() {
+    return Column(
+      children: [
+        const SizedBox(height: AppTokens.spaceMD),
+        Center(
+          child: Container(
+            width: 72,
+            height: 72,
+            decoration: const BoxDecoration(
+              color: AppColors.primaryTint,
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(Icons.mark_email_read_outlined, color: AppColors.primary, size: 38),
+          ),
+        ),
+        const SizedBox(height: AppTokens.spaceLG),
+        const Text(
+          'Nhập mã xác thực Email',
+          style: TextStyle(
+            fontFamily: 'Roboto',
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+            color: AppColors.textPrimary,
+          ),
+          textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: AppTokens.spaceSM),
+        Text(
+          _currentEmail.isNotEmpty
+              ? 'Mã OTP 6 chữ số đã được gửi qua email:\n$_currentEmail'
+              : 'Vui lòng kiểm tra hộp thư đến hoặc thư rác trong email của bạn để lấy mã OTP kích hoạt.',
+          style: const TextStyle(
+            fontFamily: 'Roboto',
+            fontSize: 13,
+            height: 1.4,
+            color: AppColors.textSecondary,
+          ),
+          textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: AppTokens.space2XL),
+
+        // Card container
+        Container(
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppTokens.spaceMD,
+            vertical: AppTokens.spaceXL,
+          ),
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(AppTokens.radiusCard),
+            border: Border.all(color: AppColors.border),
+            boxShadow: AppTokens.shadowCard,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Error banner with retry
+              if (_errorMessage != null) ...[
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppTokens.spaceMD,
+                    vertical: AppTokens.spaceSM,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppColors.errorBg,
+                    borderRadius: BorderRadius.circular(AppTokens.radiusInput),
+                    border: Border.all(color: AppColors.error.withValues(alpha: 0.3)),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.error_outline, color: AppColors.error, size: 20),
+                      const SizedBox(width: AppTokens.spaceSM),
+                      Expanded(
+                        child: Text(
+                          _errorMessage!,
+                          style: const TextStyle(fontSize: 13, color: AppColors.error),
+                        ),
+                      ),
+                      const SizedBox(width: AppTokens.spaceSM),
+                      ConstrainedBox(
+                        constraints: const BoxConstraints(minHeight: AppTokens.minTapTarget),
+                        child: TextButton(
+                          onPressed: _isLoading ? null : () => _handleVerify(),
+                          style: TextButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            minimumSize: Size.zero,
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          ),
+                          child: const Text(
+                            'Thử lại',
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.primary,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: AppTokens.spaceLG),
+              ],
+
+              // Editable Email if needed
+              TextField(
+                controller: _emailController,
+                keyboardType: TextInputType.emailAddress,
+                textInputAction: TextInputAction.next,
+                onChanged: (_) => setState(() {}),
+                decoration: const InputDecoration(
+                  labelText: 'Địa chỉ Email nhận OTP',
+                  prefixIcon: Icon(Icons.email_outlined, color: AppColors.textMuted),
+                ),
+              ),
+              const SizedBox(height: AppTokens.space2XL),
+
+              // 6-digit OTP input: wrapped with FittedBox + ConstrainedBox to guarantee no overflow at 375px
+              ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 320),
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: AntdOtpInput(
+                    length: 6,
+                    countdownSeconds: 60,
+                    onComplete: (otp) {
+                      _otpCode = otp;
+                      _handleVerify(otp);
+                    },
+                    onResend: _handleResend,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }

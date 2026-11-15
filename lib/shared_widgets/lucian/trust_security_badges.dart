@@ -8,29 +8,30 @@ class TrustSecurityBadges extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      margin: const EdgeInsets.symmetric(horizontal: AppTokens.spaceLG, vertical: AppTokens.spaceSM),
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
         color: AppColors.surface,
-        borderRadius: BorderRadius.circular(AppTokens.lucianRadiusLg),
+        borderRadius: BorderRadius.circular(AppTokens.radiusCard),
         border: Border.all(color: AppColors.border, width: 0.8),
-        boxShadow: AppTokens.shadowSubtle,
+        boxShadow: AppTokens.elevationSubtle,
       ),
-      child: const Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
+      child: const Wrap(
+        spacing: 12,
+        runSpacing: 8,
+        alignment: WrapAlignment.spaceAround,
+        crossAxisAlignment: WrapCrossAlignment.center,
         children: [
           _BadgeItem(
             icon: Icons.verified_user_outlined,
             title: 'Ký quỹ an toàn',
             subtitle: 'Bảo vệ nguồn tiền',
           ),
-          _VerticalDivider(),
           _BadgeItem(
             icon: Icons.ac_unit,
             title: 'Giao xe lạnh',
             subtitle: 'Chuẩn 20-25°C',
           ),
-          _VerticalDivider(),
           _BadgeItem(
             icon: Icons.receipt_long_outlined,
             title: 'Hóa đơn VAT',
@@ -38,19 +39,6 @@ class TrustSecurityBadges extends StatelessWidget {
           ),
         ],
       ),
-    );
-  }
-}
-
-class _VerticalDivider extends StatelessWidget {
-  const _VerticalDivider();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 28,
-      width: 1,
-      color: AppColors.border,
     );
   }
 }
@@ -80,6 +68,7 @@ class _BadgeItem extends StatelessWidget {
             Text(
               title,
               style: const TextStyle(
+                fontFamily: 'Roboto',
                 fontSize: 11.5,
                 fontWeight: FontWeight.w600,
                 color: AppColors.textPrimary,
@@ -88,6 +77,7 @@ class _BadgeItem extends StatelessWidget {
             Text(
               subtitle,
               style: const TextStyle(
+                fontFamily: 'Roboto',
                 fontSize: 10,
                 color: AppColors.textMuted,
               ),

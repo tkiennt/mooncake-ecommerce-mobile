@@ -30,12 +30,19 @@ class AppColors {
   // Semantic Status
   static const Color success = Color(0xFF389E0D); // Xanh lá hoàn thành
   static const Color successBg = Color(0xFFF6FFED);
-  static const Color warning = Color(0xFFD46B08); // Cam cảnh báo
+  static const Color warning = Color(0xFFD46B08); // Cam cảnh báo / Chờ xử lý
   static const Color warningBg = Color(0xFFFFF7E6);
-  static const Color error = Color(0xFFCF1322); // Đỏ lỗi
+  static const Color error = Color(0xFFCF1322); // Đỏ lỗi / Đã huỷ
   static const Color errorBg = Color(0xFFFFF1F0);
-  static const Color info = Color(0xFF0958D9); // Xanh dương thông tin
+  static const Color info = Color(0xFF0958D9); // Xanh dương thông tin / Đang sản xuất
   static const Color infoBg = Color(0xFFE6F4FF);
+  static const Color statusPurple = Color(0xFF722ED1); // Tím đang giao
+  static const Color statusPurpleBg = Color(0xFFF9F0FF);
+
+  // Skeleton & Shimmer (Tông vàng ngà ấm áp hoàng gia)
+  static const Color shimmerBase = Color(0xFFF5EFE6);
+  static const Color shimmerHighlight = Color(0xFFFAF7F0);
+  static const Color skeleton = Color(0xFFF5EFE6);
 
   // Shadows & Glows
   static const Color shadowColor = Color(0xFF1F1F1F);

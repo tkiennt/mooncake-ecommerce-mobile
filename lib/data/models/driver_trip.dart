@@ -23,6 +23,7 @@ class DriverTrip {
   final int proofCount;
   final DateTime? expiresAtUtc;
   final bool canSubmitProof;
+  final bool requiresClaim;
   final String? driverName;
   final String? driverPhone;
   final String? vehiclePlate;
@@ -53,6 +54,7 @@ class DriverTrip {
     this.proofCount = 0,
     this.expiresAtUtc,
     this.canSubmitProof = true,
+    this.requiresClaim = false,
     this.driverName,
     this.driverPhone,
     this.vehiclePlate,
@@ -154,6 +156,7 @@ class DriverTrip {
       expiresAtUtc: parseDate(json['expiresAtUtc'] ?? json['expiresAt']),
       canSubmitProof:
           json['canSubmitProof'] == true || json['canSubmitProof'] == null,
+      requiresClaim: json['requiresClaim'] == true,
       driverName: json['driverName']?.toString() ??
           json['driver']?['driverName']?.toString(),
       driverPhone: json['driverPhone']?.toString() ??
@@ -193,6 +196,7 @@ class DriverTrip {
         if (expiresAtUtc != null)
           'expiresAtUtc': expiresAtUtc!.toIso8601String(),
         'canSubmitProof': canSubmitProof,
+        'requiresClaim': requiresClaim,
         if (driverName != null) 'driverName': driverName,
         if (driverPhone != null) 'driverPhone': driverPhone,
         if (vehiclePlate != null) 'vehiclePlate': vehiclePlate,
@@ -213,6 +217,7 @@ class DriverTrip {
     String? vehiclePlate,
     DateTime? driverClaimedAt,
     bool? canSubmitProof,
+    bool? requiresClaim,
     int? proofCount,
   }) {
     return DriverTrip(
@@ -238,6 +243,7 @@ class DriverTrip {
       proofCount: proofCount ?? this.proofCount,
       expiresAtUtc: expiresAtUtc,
       canSubmitProof: canSubmitProof ?? this.canSubmitProof,
+      requiresClaim: requiresClaim ?? this.requiresClaim,
       driverName: driverName ?? this.driverName,
       driverPhone: driverPhone ?? this.driverPhone,
       vehiclePlate: vehiclePlate ?? this.vehiclePlate,

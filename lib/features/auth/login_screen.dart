@@ -80,6 +80,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
       await ref.read(authProvider.notifier).loadStoredSession();
 
+      // Đăng nhập tài khoản luôn vào luồng khách; chế độ tài xế chỉ bật khi
+      // người dùng chọn "Tôi là tài xế".
+      await DriverStorage.setDriverModeActive(false);
+
       if (mounted) {
         context.go('/');
       }

@@ -41,7 +41,56 @@ class DeliveryRepository {
       final response = await _client.dio.get(ApiEndpoints.deliveriesByOrder(orderId));
       final data = ApiClient.unwrap(response);
       if (data == null) return null;
-      return DeliveryModel.fromJson(data as Map<String, dynamic>);
+
+      List<dynamic> list;
+      if (data is List) {
+        list = data;
+      } else if (data is Map) {
+        if (data['items'] is List) {
+          list = data['items'] as List;
+        } else {
+          return DeliveryModel.fromJson(
+            data is Map<String, dynamic> ? data : Map<String, dynamic>.from(data),
+          );
+        }
+      } else {
+        return null;
+      }
+
+      if (list.isEmpty) return null;
+
+      final models = list.map((item) {
+        final map = item is Map<String, dynamic>
+            ? item
+            : Map<String, dynamic>.from(item as Map);
+        return DeliveryModel.fromJson(map);
+      }).toList();
+
+      bool isTerminalFailed(String status) {
+        final s = status.toLowerCase();
+        return s == 'failed' || s == 'returned';
+      }
+
+      models.sort((a, b) {
+        final aFailed = isTerminalFailed(a.status);
+        final bFailed = isTerminalFailed(b.status);
+        if (aFailed != bFailed) {
+          return aFailed ? 1 : -1;
+        }
+
+        final aDate = a.createdAt;
+        final bDate = b.createdAt;
+        if (aDate != null && bDate != null) {
+          return bDate.compareTo(aDate);
+        } else if (aDate != null) {
+          return -1;
+        } else if (bDate != null) {
+          return 1;
+        }
+        return 0;
+      });
+
+      return models.first;
     } catch (e) {
       final err = ApiClient.handleError(e);
       if (err.statusCode == 404) return null;

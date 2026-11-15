@@ -5,8 +5,11 @@ import '../../core/network/api_client.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_tokens.dart';
 import '../../data/repositories/auth_repository.dart';
+import '../../shared_widgets/common/app_empty_state.dart';
+import '../../shared_widgets/common/app_error_state.dart';
 import '../../shared_widgets/common/app_header.dart';
-import '../../shared_widgets/common/custom_button.dart';
+import '../../shared_widgets/common/app_skeleton.dart';
+import '../../shared_widgets/common/sticky_bottom_bar.dart';
 
 class ForgotPasswordScreen extends ConsumerStatefulWidget {
   const ForgotPasswordScreen({super.key});
@@ -18,6 +21,8 @@ class ForgotPasswordScreen extends ConsumerStatefulWidget {
 class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
   final _emailController = TextEditingController();
   bool _isLoading = false;
+  bool _isFatalNetworkError = false;
+  bool _isAccountNotFound = false;
   String? _errorMessage;
 
   @override
@@ -34,17 +39,27 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
     final email = _emailController.text.trim();
 
     if (email.isEmpty) {
-      setState(() => _errorMessage = 'Vui lòng nhập địa chỉ email đã đăng ký.');
+      setState(() {
+        _errorMessage = 'Vui lòng nhập địa chỉ email đã đăng ký.';
+        _isFatalNetworkError = false;
+        _isAccountNotFound = false;
+      });
       return;
     }
     if (!_isValidEmail(email)) {
-      setState(() => _errorMessage = 'Địa chỉ email không đúng định dạng.');
+      setState(() {
+        _errorMessage = 'Địa chỉ email không đúng định dạng.';
+        _isFatalNetworkError = false;
+        _isAccountNotFound = false;
+      });
       return;
     }
 
     setState(() {
       _isLoading = true;
       _errorMessage = null;
+      _isFatalNetworkError = false;
+      _isAccountNotFound = false;
     });
 
     try {
@@ -63,8 +78,20 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
     } catch (e) {
       final err = ApiClient.handleError(e);
       if (mounted) {
+        final msg = err.message.toLowerCase();
+        final isNotFound = err.statusCode == 404 ||
+            msg.contains('không tìm thấy') ||
+            msg.contains('không tồn tại');
+        final isNetwork = err.statusCode == 0 ||
+            err.statusCode == 502 ||
+            err.statusCode == 503 ||
+            msg.contains('kết nối') ||
+            msg.contains('socket');
+
         setState(() {
           _errorMessage = err.message;
+          _isAccountNotFound = isNotFound;
+          _isFatalNetworkError = isNetwork;
         });
       }
     } finally {
@@ -78,133 +105,224 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
+      resizeToAvoidBottomInset: true,
       appBar: const AppHeader(title: 'Quên Mật Khẩu', showBack: true),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const SizedBox(height: 12),
-            Center(
-              child: Container(
-                width: 68,
-                height: 68,
-                decoration: const BoxDecoration(
-                  color: AppColors.primaryTint,
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(Icons.lock_reset_outlined, color: AppColors.primary, size: 36),
-              ),
-            ),
-            const SizedBox(height: 18),
-            const Text(
-              'Khôi phục mật khẩu',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: AppColors.textPrimary,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 8),
-            const Text(
-              'Nhập địa chỉ email doanh nghiệp hoặc cá nhân đã đăng ký để nhận mã OTP thiết lập mật khẩu mới.',
-              style: TextStyle(fontSize: 13, height: 1.4, color: AppColors.textSecondary),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 24),
+      body: SafeArea(
+        top: false,
+        child: SingleChildScrollView(
+          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppTokens.space2XL,
+            vertical: AppTokens.spaceLG,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              if (_isFatalNetworkError)
+                AppErrorState(
+                  title: 'Không thể kết nối máy chủ',
+                  message: _errorMessage ?? 'Đã có lỗi xảy ra khi gửi yêu cầu khôi phục mật khẩu.',
+                  onRetry: _handleSubmit,
+                  retryLabel: 'Thử lại ngay',
+                  secondaryActionLabel: 'Đăng nhập lại',
+                  onSecondaryAction: () => context.go('/login'),
+                )
+              else if (_isAccountNotFound)
+                AppEmptyState(
+                  icon: Icons.search_off_outlined,
+                  title: 'Không tìm thấy tài khoản',
+                  message: 'Địa chỉ email này chưa được đăng ký trong hệ thống Nguyệt Phố B2B.',
+                  actionLabel: 'Đăng ký tài khoản mới',
+                  onAction: () => context.push('/register'),
+                  secondaryActionLabel: 'Thử lại email khác',
+                  onSecondaryAction: () {
+                    setState(() {
+                      _isAccountNotFound = false;
+                      _errorMessage = null;
+                    });
+                  },
+                )
+              else if (_isLoading)
+                _buildLoadingSkeleton()
+              else
+                _buildForgotPasswordForm(),
 
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: AppColors.surface,
-                borderRadius: BorderRadius.circular(AppTokens.lucianRadiusLg),
-                border: Border.all(color: AppColors.border),
-                boxShadow: AppTokens.shadowCard,
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  // Error banner with retry
-                  if (_errorMessage != null) ...[
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                      decoration: BoxDecoration(
-                        color: AppColors.errorBg,
-                        borderRadius: BorderRadius.circular(AppTokens.radiusDefault),
-                        border: Border.all(color: AppColors.error.withValues(alpha: 0.3)),
-                      ),
-                      child: Row(
-                        children: [
-                          const Icon(Icons.error_outline, color: AppColors.error, size: 20),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: Text(
-                              _errorMessage!,
-                              style: const TextStyle(fontSize: 13, color: AppColors.error),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          TextButton(
-                            onPressed: _isLoading ? null : _handleSubmit,
-                            style: TextButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                              minimumSize: Size.zero,
-                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                            ),
-                            child: const Text(
-                              'Thử lại',
-                              style: TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.bold,
-                                color: AppColors.primary,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                  ],
+              const SizedBox(height: AppTokens.space2XL),
 
-                  // Email input
-                  TextField(
-                    controller: _emailController,
-                    keyboardType: TextInputType.emailAddress,
-                    decoration: const InputDecoration(
-                      labelText: 'Địa chỉ Email *',
-                      hintText: 'Nhập email đã đăng ký',
-                      prefixIcon: Icon(Icons.email_outlined, color: AppColors.textMuted),
+              // Back to Login (tap target >= 44px)
+              Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(minHeight: AppTokens.minTapTarget),
+                  child: TextButton.icon(
+                    onPressed: () => context.go('/login'),
+                    icon: const Icon(Icons.arrow_back, size: 16, color: AppColors.textSecondary),
+                    label: const Text(
+                      'Quay lại màn hình đăng nhập',
+                      style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
                     ),
                   ),
-                  const SizedBox(height: 24),
-
-                  // Submit button
-                  CustomButton(
-                    title: 'Gửi mã khôi phục',
-                    size: ButtonSize.large,
-                    loading: _isLoading,
-                    onPress: _handleSubmit,
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 24),
-
-            // Back to Login
-            Center(
-              child: TextButton.icon(
-                onPressed: () => context.go('/login'),
-                icon: const Icon(Icons.arrow_back, size: 16, color: AppColors.textSecondary),
-                label: const Text(
-                  'Quay lại màn hình đăng nhập',
-                  style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
+      bottomNavigationBar: (_isFatalNetworkError || _isAccountNotFound)
+          ? null
+          : StickyBottomBar(
+              primaryButtonTitle: 'Gửi mã khôi phục',
+              primaryButtonLoading: _isLoading,
+              onPrimaryPressed: _isLoading ? null : _handleSubmit,
+            ),
+    );
+  }
+
+  Widget _buildLoadingSkeleton() {
+    return Container(
+      padding: const EdgeInsets.all(AppTokens.spaceXL),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppTokens.radiusCard),
+        border: Border.all(color: AppColors.border),
+        boxShadow: AppTokens.shadowCard,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          const AppSkeleton(width: 68, height: 68, shape: BoxShape.circle),
+          const SizedBox(height: AppTokens.spaceLG),
+          const AppSkeleton(width: 180, height: 20),
+          const SizedBox(height: AppTokens.spaceSM),
+          const AppSkeleton(width: 260, height: 14),
+          const SizedBox(height: AppTokens.space2XL),
+          const AppSkeleton(
+            height: 48,
+            borderRadius: BorderRadius.all(Radius.circular(AppTokens.radiusInput)),
+          ),
+          const SizedBox(height: AppTokens.space2XL),
+          const AppSkeleton(
+            height: AppTokens.minTapTarget,
+            borderRadius: BorderRadius.all(Radius.circular(AppTokens.radiusDefault)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildForgotPasswordForm() {
+    return Column(
+      children: [
+        const SizedBox(height: AppTokens.spaceMD),
+        Center(
+          child: Container(
+            width: 72,
+            height: 72,
+            decoration: const BoxDecoration(
+              color: AppColors.primaryTint,
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(Icons.lock_reset_outlined, color: AppColors.primary, size: 38),
+          ),
+        ),
+        const SizedBox(height: AppTokens.spaceLG),
+        const Text(
+          'Khôi phục mật khẩu',
+          style: TextStyle(
+            fontFamily: 'Roboto',
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+            color: AppColors.textPrimary,
+          ),
+          textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: AppTokens.spaceSM),
+        const Text(
+          'Nhập địa chỉ email doanh nghiệp hoặc cá nhân đã đăng ký để nhận mã OTP thiết lập mật khẩu mới.',
+          style: TextStyle(
+            fontFamily: 'Roboto',
+            fontSize: 13,
+            height: 1.4,
+            color: AppColors.textSecondary,
+          ),
+          textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: AppTokens.space2XL),
+
+        Container(
+          padding: const EdgeInsets.all(AppTokens.spaceXL),
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(AppTokens.radiusCard),
+            border: Border.all(color: AppColors.border),
+            boxShadow: AppTokens.shadowCard,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Error banner with retry
+              if (_errorMessage != null) ...[
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppTokens.spaceMD,
+                    vertical: AppTokens.spaceSM,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppColors.errorBg,
+                    borderRadius: BorderRadius.circular(AppTokens.radiusInput),
+                    border: Border.all(color: AppColors.error.withValues(alpha: 0.3)),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.error_outline, color: AppColors.error, size: 20),
+                      const SizedBox(width: AppTokens.spaceSM),
+                      Expanded(
+                        child: Text(
+                          _errorMessage!,
+                          style: const TextStyle(fontSize: 13, color: AppColors.error),
+                        ),
+                      ),
+                      const SizedBox(width: AppTokens.spaceSM),
+                      ConstrainedBox(
+                        constraints: const BoxConstraints(minHeight: AppTokens.minTapTarget),
+                        child: TextButton(
+                          onPressed: _isLoading ? null : _handleSubmit,
+                          style: TextButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            minimumSize: Size.zero,
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          ),
+                          child: const Text(
+                            'Thử lại',
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.primary,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: AppTokens.spaceLG),
+              ],
+
+              // Email input
+              TextField(
+                controller: _emailController,
+                keyboardType: TextInputType.emailAddress,
+                textInputAction: TextInputAction.done,
+                onSubmitted: (_) => _handleSubmit(),
+                decoration: const InputDecoration(
+                  labelText: 'Địa chỉ Email *',
+                  hintText: 'Nhập email đã đăng ký',
+                  prefixIcon: Icon(Icons.email_outlined, color: AppColors.textMuted),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }

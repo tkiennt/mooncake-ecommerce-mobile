@@ -116,6 +116,75 @@ class _RfqDetailBiddingScreenState extends ConsumerState<RfqDetailBiddingScreen>
   }
 
   Future<void> _handleAcceptBid(RfqBid bid) async {
+    // D28: Warning modal when awarding RFQ with < 2 bids
+    if (_bids.length < 2) {
+      final proceedFewBids = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppTokens.radiusCard),
+          ),
+          title: const Row(
+            children: [
+              Icon(Icons.warning_amber_rounded, color: AppColors.warning, size: 24),
+              SizedBox(width: 8),
+              Text(
+                'Cảnh báo ít báo giá',
+                style: TextStyle(
+                  fontFamily: 'Roboto',
+                  fontWeight: FontWeight.w700,
+                  fontSize: 16,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Yêu cầu báo giá (RFQ) này hiện chỉ có ${_bids.length} báo giá từ xưởng.',
+                style: const TextStyle(
+                  fontFamily: 'Roboto',
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'Để đảm bảo tính cạnh tranh về giá và chất lượng, hệ thống khuyến nghị nên có từ 2 báo giá trở lên trước khi trao thầu.\n\nBạn có chắc chắn muốn tiếp tục trao thầu cho xưởng này ngay bây giờ?',
+                style: TextStyle(
+                  fontFamily: 'Roboto',
+                  fontSize: 12.5,
+                  color: AppColors.textSecondary,
+                  height: 1.45,
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(false),
+              child: const Text('Xem lại / Chờ thêm', style: TextStyle(color: AppColors.textSecondary)),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.warning,
+                foregroundColor: AppColors.textWhite,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppTokens.radiusSM)),
+              ),
+              onPressed: () => Navigator.of(ctx).pop(true),
+              child: const Text('Vẫn trao thầu', style: TextStyle(fontWeight: FontWeight.w700)),
+            ),
+          ],
+        ),
+      );
+
+      if (proceedFewBids != true) return;
+    }
+
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(

@@ -13,6 +13,7 @@ import '../../shared_widgets/common/app_skeleton.dart';
 import '../../shared_widgets/common/app_empty_state.dart';
 import '../../shared_widgets/common/app_error_state.dart';
 import '../../shared_widgets/common/milestone_timeline.dart';
+import 'widgets/contract_fulfillment_table.dart';
 
 class ContractsScreen extends ConsumerStatefulWidget {
   const ContractsScreen({super.key});
@@ -89,15 +90,23 @@ class _ContractsScreenState extends ConsumerState<ContractsScreen> {
       return contract.milestones.map((m) {
         final mStatus = m.status.toLowerCase();
         MilestoneStepStatus stepStatus = MilestoneStepStatus.upcoming;
-        if (mStatus == 'completed' || mStatus == 'paid') {
+        if (m.isCompleted) {
           stepStatus = MilestoneStepStatus.completed;
+        } else if (m.isOverdue) {
+          stepStatus = MilestoneStepStatus.failed;
         } else if (mStatus == 'current' || mStatus == 'in_progress' || mStatus == 'pending') {
           stepStatus = MilestoneStepStatus.current;
-        } else if (mStatus == 'failed' || mStatus == 'overdue') {
-          stepStatus = MilestoneStepStatus.failed;
         }
+
+        String titleText = m.name;
+        if (m.isOverdue) {
+          titleText = '${m.name} [Quá hạn]';
+        } else if (m.isNearDeadline) {
+          titleText = '${m.name} [${m.dueNoticeTag}]';
+        }
+
         return MilestoneItem(
-          title: m.name,
+          title: titleText,
           subtitle: m.amount > 0 ? _formatCurrency(m.amount) : null,
           timestamp: m.dueDate.isNotEmpty ? m.dueDate : null,
           status: stepStatus,
@@ -312,6 +321,67 @@ class _ContractsScreenState extends ConsumerState<ContractsScreen> {
     );
   }
 
+  void _showFulfillmentModal(ContractModel c) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) {
+        return Container(
+          height: MediaQuery.of(context).size.height * 0.88,
+          padding: const EdgeInsets.all(AppTokens.spaceLG),
+          decoration: const BoxDecoration(
+            color: AppColors.background,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(AppTokens.radiusCard)),
+          ),
+          child: Column(
+            children: [
+              Container(
+                margin: const EdgeInsets.only(bottom: AppTokens.spaceSM),
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: AppColors.borderDark,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Text(
+                      'Đối Soát Giao Hàng · ${c.contractNumber}',
+                      style: const TextStyle(
+                        fontFamily: 'Roboto',
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.primary,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close),
+                    onPressed: () => Navigator.of(ctx).pop(),
+                  ),
+                ],
+              ),
+              const Divider(height: 12, color: AppColors.border),
+              Expanded(
+                child: SingleChildScrollView(
+                  child: ContractFulfillmentTable(
+                    contractId: c.id,
+                    contractNumber: c.contractNumber,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   Widget _buildLoadingSkeleton() {
     return ListView.builder(
       padding: const EdgeInsets.all(AppTokens.spaceLG),
@@ -489,6 +559,74 @@ class _ContractsScreenState extends ConsumerState<ContractsScreen> {
                   ),
                   const SizedBox(height: AppTokens.spaceMD),
 
+                  // Two-Party Signing Status Box (D22)
+                  Container(
+                    margin: const EdgeInsets.only(top: AppTokens.spaceSM),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppTokens.spaceMD,
+                      vertical: AppTokens.spaceSM,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColors.background,
+                      borderRadius: BorderRadius.circular(AppTokens.radiusSM),
+                      border: Border.all(color: AppColors.border),
+                    ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Row(
+                            children: [
+                              Icon(
+                                c.isCustomerSigned ? Icons.check_circle : Icons.schedule,
+                                size: 14,
+                                color: c.isCustomerSigned ? AppColors.success : AppColors.warning,
+                              ),
+                              const SizedBox(width: 4),
+                              Expanded(
+                                child: Text(
+                                  'Khách: ${c.isCustomerSigned ? "Đã ký số" : "Chờ bạn ký"}',
+                                  style: TextStyle(
+                                    fontFamily: 'Roboto',
+                                    fontSize: 11.5,
+                                    fontWeight: FontWeight.w600,
+                                    color: c.isCustomerSigned ? AppColors.success : AppColors.warning,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Container(width: 1, height: 16, color: AppColors.border),
+                        const SizedBox(width: AppTokens.spaceSM),
+                        Expanded(
+                          child: Row(
+                            children: [
+                              Icon(
+                                c.isSupplierSigned ? Icons.check_circle : Icons.schedule,
+                                size: 14,
+                                color: c.isSupplierSigned ? AppColors.success : AppColors.textSecondary,
+                              ),
+                              const SizedBox(width: 4),
+                              Expanded(
+                                child: Text(
+                                  'Xưởng: ${c.isSupplierSigned ? "Đã ký số" : "Chờ xưởng ký"}',
+                                  style: TextStyle(
+                                    fontFamily: 'Roboto',
+                                    fontSize: 11.5,
+                                    fontWeight: FontWeight.w600,
+                                    color: c.isSupplierSigned ? AppColors.success : AppColors.textSecondary,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
                   // Value & Deposit Card
                   Container(
                     padding: const EdgeInsets.all(AppTokens.spaceMD),
@@ -535,6 +673,51 @@ class _ContractsScreenState extends ConsumerState<ContractsScreen> {
                     ),
                   ),
                   const SizedBox(height: AppTokens.spaceMD),
+
+                  // Milestone Alerts (Overdue / Near Deadline)
+                  if (c.milestones.any((m) => m.isOverdue || m.isNearDeadline)) ...[
+                    const SizedBox(height: AppTokens.spaceSM),
+                    Wrap(
+                      spacing: 6,
+                      runSpacing: 4,
+                      children: c.milestones
+                          .where((m) => m.isOverdue || m.isNearDeadline)
+                          .map(
+                            (m) => Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                              decoration: BoxDecoration(
+                                color: m.isOverdue ? AppColors.errorBg : AppColors.warningBg,
+                                borderRadius: BorderRadius.circular(4),
+                                border: Border.all(
+                                  color: m.isOverdue ? AppColors.error : AppColors.warning,
+                                  width: 0.8,
+                                ),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    m.isOverdue ? Icons.error_outline : Icons.access_time,
+                                    size: 13,
+                                    color: m.isOverdue ? AppColors.error : AppColors.warning,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    'Mốc "${m.name}": ${m.dueNoticeTag}',
+                                    style: TextStyle(
+                                      fontFamily: 'Roboto',
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w600,
+                                      color: m.isOverdue ? AppColors.error : AppColors.warning,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          )
+                          .toList(),
+                    ),
+                  ],
 
                   // MilestoneTimeline
                   Container(
@@ -606,7 +789,8 @@ class _ContractsScreenState extends ConsumerState<ContractsScreen> {
                                   ),
                                 ),
                               )
-                            : ElevatedButton(
+                            : ElevatedButton.icon(
+                                icon: const Icon(Icons.inventory_2_outlined, size: 16),
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: AppColors.accentGoldBg,
                                   foregroundColor: AppColors.accent,
@@ -615,9 +799,9 @@ class _ContractsScreenState extends ConsumerState<ContractsScreen> {
                                   minimumSize: const Size(0, AppTokens.minTapTarget),
                                   padding: const EdgeInsets.symmetric(horizontal: 8),
                                 ),
-                                onPressed: () => context.push('/delivery-pod'),
-                                child: const Text(
-                                  'Giám sát PoD',
+                                onPressed: () => _showFulfillmentModal(c),
+                                label: const Text(
+                                  'Đợt giao & PoD',
                                   style: TextStyle(
                                     fontFamily: 'Roboto',
                                     fontSize: 12.5,

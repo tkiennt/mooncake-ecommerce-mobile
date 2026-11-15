@@ -6,13 +6,21 @@ import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_tokens.dart';
 import '../../data/models/order.dart';
 import '../../data/models/product.dart';
+import '../../data/models/custom_packaging.dart';
+import '../../data/models/delivery.dart';
 import '../../data/repositories/order_repository.dart';
+import '../../data/repositories/custom_packaging_repository.dart';
+import '../../data/repositories/delivery_repository.dart';
 import '../../providers/cart_provider.dart';
 import '../../shared_widgets/common/app_error_state.dart';
 import '../../shared_widgets/common/app_header.dart';
 import '../../shared_widgets/common/app_skeleton.dart';
 import '../../shared_widgets/common/app_status_chip.dart';
 import '../../shared_widgets/common/milestone_timeline.dart';
+import 'widgets/auto_confirm_banner.dart';
+import 'widgets/custom_packaging_review_card.dart';
+import 'widgets/delivery_driver_info_card.dart';
+import 'widgets/order_dispute_rebuttal_card.dart';
 
 class OrderDetailScreen extends ConsumerStatefulWidget {
   final Order order;
@@ -28,6 +36,8 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
   bool _isLoading = false;
   bool _isActionInProgress = false;
   String? _errorMessage;
+  CustomPackagingModel? _customPackaging;
+  DeliveryModel? _delivery;
 
   @override
   void initState() {
@@ -59,31 +69,108 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
         });
       }
     }
+
+    // Load custom packaging if applicable
+    try {
+      final packagingRepo = ref.read(customPackagingRepositoryProvider);
+      final pkg = await packagingRepo.getCustomPackaging(_order.id);
+      if (mounted) setState(() => _customPackaging = pkg);
+    } catch (_) {}
+
+    // Load delivery info if applicable
+    try {
+      final deliveryRepo = ref.read(deliveryRepositoryProvider);
+      final d = await deliveryRepo.getByOrder(_order.id);
+      if (mounted) setState(() => _delivery = d);
+    } catch (_) {}
   }
 
   Future<void> _handleCancelOrder() async {
+    final status = _order.status.toLowerCase();
+    final isInProduction = ['processing', 'in_production', 'inproduction'].contains(status);
+    final hasCustom = _customPackaging != null || _order.isBulkOrder;
+    final suggestedPercent = isInProduction ? (hasCustom ? 50 : 100) : 100;
+    final suggestedRefund = _order.finalAmount * (suggestedPercent / 100);
+
+    final reasonController = TextEditingController();
+
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text(
-          'Xác nhận hủy đơn hàng',
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppTokens.radiusCard),
         ),
-        content: Text(
-          'Bạn có chắc chắn muốn hủy đơn hàng ${_order.orderCode} không? Thao tác này không thể hoàn tác.',
+        title: const Row(
+          children: [
+            Icon(Icons.warning_amber_rounded, color: AppColors.error, size: 22),
+            SizedBox(width: 8),
+            Text(
+              'Xác nhận hủy đơn hàng',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+            ),
+          ],
+        ),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Bạn có chắc chắn muốn gửi yêu cầu hủy đơn hàng ${_order.orderCode} không?',
+                style: const TextStyle(fontSize: 13, color: AppColors.textPrimary),
+              ),
+              const SizedBox(height: 10),
+              Container(
+                padding: const EdgeInsets.all(AppTokens.spaceMD),
+                decoration: BoxDecoration(
+                  color: AppColors.warningBg,
+                  borderRadius: BorderRadius.circular(AppTokens.radiusSM),
+                  border: Border.all(color: AppColors.warning, width: 0.8),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Chính sách hoàn tiền (D24):',
+                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.warning),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      isInProduction && hasCustom
+                          ? '• Đơn hàng đang sản xuất & có bao bì/in ấn riêng: Đề xuất hoàn 50% (${_formatCurrency(suggestedRefund)}) do chi phí khuôn in và vật tư đã chuẩn bị.'
+                          : '• Đơn hàng chưa vào khuôn sản xuất riêng: Đề xuất hoàn trả 100% (${_formatCurrency(suggestedRefund)}).',
+                      style: const TextStyle(fontSize: 11.5, color: AppColors.textPrimary, height: 1.4),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: reasonController,
+                maxLines: 2,
+                decoration: InputDecoration(
+                  labelText: 'Lý do hủy đơn *',
+                  hintText: 'Nhập lý do hủy...',
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(AppTokens.radiusSM)),
+                  isDense: true,
+                ),
+              ),
+            ],
+          ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('Quay lại'),
+            child: const Text('Quay lại', style: TextStyle(color: AppColors.textSecondary)),
           ),
           ElevatedButton(
             onPressed: () => Navigator.of(ctx).pop(true),
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.error,
               foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppTokens.radiusSM)),
             ),
-            child: const Text('Hủy đơn hàng'),
+            child: const Text('Xác nhận hủy'),
           ),
         ],
       ),
@@ -91,11 +178,15 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
 
     if (confirmed != true) return;
 
+    final reason = reasonController.text.trim().isNotEmpty
+        ? reasonController.text.trim()
+        : 'Khách hàng yêu cầu hủy trên ứng dụng di động';
+
     setState(() => _isActionInProgress = true);
     try {
       await ref.read(orderRepositoryProvider).cancelOrder(
             _order.id,
-            reason: 'Khách hàng yêu cầu hủy trên ứng dụng di động',
+            reason: reason,
           );
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -285,14 +376,19 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
       );
     }
 
-    final isPending = _order.status.toLowerCase() == 'pending';
+    final statusLower = _order.status.toLowerCase();
+    final isPending = statusLower == 'pending';
+    final isInProduction = ['processing', 'in_production', 'inproduction'].contains(statusLower);
+    final canCancel = (isPending || isInProduction) &&
+        !_order.isCancelled &&
+        _order.pendingCancellationRequest == null;
     final isShipping = [
       'shipping',
       'shipped',
       'delivering',
       'intransit',
       'in_transit'
-    ].contains(_order.status.toLowerCase());
+    ].contains(statusLower);
 
     return Scaffold(
       appBar: AppHeader(
@@ -336,6 +432,97 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
                     ],
                   ),
                 ),
+
+              // Auto Confirm 72h SLA Banner (D23)
+              if (_order.isAutoConfirmActive || _order.autoConfirmAt != null) ...[
+                AutoConfirmBanner(
+                  deadline: _order.autoConfirmAt!,
+                  orderCode: _order.orderCode,
+                  onConfirmReceipt: _handleConfirmReceipt,
+                ),
+                const SizedBox(height: AppTokens.spaceMD),
+              ],
+
+              // Pending Cancellation Request Banner (D24)
+              if (_order.pendingCancellationRequest != null) ...[
+                Container(
+                  margin: const EdgeInsets.only(bottom: AppTokens.spaceMD),
+                  padding: const EdgeInsets.all(AppTokens.spaceMD),
+                  decoration: BoxDecoration(
+                    color: AppColors.warningBg,
+                    borderRadius: BorderRadius.circular(AppTokens.radiusCard),
+                    border: Border.all(color: AppColors.warning, width: 0.8),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          const Icon(Icons.hourglass_top, color: AppColors.warning, size: 18),
+                          const SizedBox(width: 8),
+                          const Expanded(
+                            child: Text(
+                              'Đang xử lý yêu cầu hủy đơn hàng',
+                              style: TextStyle(
+                                fontFamily: 'Roboto',
+                                fontSize: 13.5,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.warning,
+                              ),
+                            ),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: AppColors.surface,
+                              borderRadius: BorderRadius.circular(4),
+                              border: Border.all(color: AppColors.warning),
+                            ),
+                            child: Text(
+                              '${_order.pendingCancellationRequest!.suggestedRefundPercent?.toInt() ?? 100}% Hoàn tiền',
+                              style: const TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.warning,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Đề xuất hoàn trả: ${_formatCurrency(_order.pendingCancellationRequest!.suggestedRefundAmount ?? _order.finalAmount)}',
+                        style: const TextStyle(
+                          fontFamily: 'Roboto',
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                      if (_order.pendingCancellationRequest!.suggestionReason != null) ...[
+                        const SizedBox(height: 2),
+                        Text(
+                          _order.pendingCancellationRequest!.suggestionReason!,
+                          style: const TextStyle(
+                            fontFamily: 'Roboto',
+                            fontSize: 11.5,
+                            color: AppColors.textSecondary,
+                            height: 1.35,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              ],
+
+              // Dispute & Supplier Rebuttal Card (D27)
+              if (_order.activeDispute != null) ...[
+                OrderDisputeRebuttalCard(
+                  dispute: _order.activeDispute!,
+                ),
+                const SizedBox(height: AppTokens.spaceMD),
+              ],
 
               // Header Status Card
               Container(
@@ -420,6 +607,78 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
                 ),
               ),
               const SizedBox(height: AppTokens.spaceLG),
+
+              // Custom Packaging Mockup Review (D25)
+              if (_customPackaging != null) ...[
+                CustomPackagingReviewCard(
+                  packaging: _customPackaging!,
+                  onApprove: (revisionId) async {
+                    setState(() => _isActionInProgress = true);
+                    try {
+                      await ref.read(customPackagingRepositoryProvider).reviewRevision(
+                            _order.id,
+                            revisionId,
+                            action: 'Approve',
+                          );
+                      if (!mounted) return;
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Đã phê duyệt thiết kế bao bì thành công!'),
+                          backgroundColor: AppColors.success,
+                        ),
+                      );
+                      _fetchOrderDetails();
+                    } catch (e) {
+                      if (!mounted) return;
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Lỗi: $e'), backgroundColor: AppColors.error),
+                      );
+                    } finally {
+                      if (mounted) setState(() => _isActionInProgress = false);
+                    }
+                  },
+                  onRequestRevision: (revisionId, notes) async {
+                    setState(() => _isActionInProgress = true);
+                    try {
+                      await ref.read(customPackagingRepositoryProvider).reviewRevision(
+                            _order.id,
+                            revisionId,
+                            action: 'RequestRevision',
+                            notes: notes,
+                          );
+                      if (!mounted) return;
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Đã gửi yêu cầu chỉnh sửa thiết kế tới xưởng.'),
+                          backgroundColor: AppColors.warning,
+                        ),
+                      );
+                      _fetchOrderDetails();
+                    } catch (e) {
+                      if (!mounted) return;
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Lỗi: $e'), backgroundColor: AppColors.error),
+                      );
+                    } finally {
+                      if (mounted) setState(() => _isActionInProgress = false);
+                    }
+                  },
+                ),
+                const SizedBox(height: AppTokens.spaceLG),
+              ],
+
+              // Driver Info Card (D33)
+              if (_delivery != null) ...[
+                DeliveryDriverInfoCard(
+                  driverName: _delivery!.driverName,
+                  driverPhone: _delivery!.driverPhone,
+                  vehiclePlate: _delivery!.vehiclePlate,
+                  driverClaimedAt: _delivery!.driverClaimedAt,
+                  trackingCode: _delivery!.trackingCode,
+                  deliveryNumber: _delivery!.deliveryNumber,
+                ),
+                const SizedBox(height: AppTokens.spaceLG),
+              ],
 
               // Order Items
               Container(
@@ -593,7 +852,7 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
               const SizedBox(height: AppTokens.spaceLG),
 
               // Action Buttons
-              if (isPending)
+              if (canCancel)
                 Padding(
                   padding: const EdgeInsets.only(bottom: AppTokens.spaceMD),
                   child: OutlinedButton.icon(
@@ -601,7 +860,7 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
                     icon: const Icon(Icons.cancel_outlined, size: 18),
                     label: Text(_isActionInProgress
                         ? 'Đang xử lý...'
-                        : 'Hủy đơn hàng này'),
+                        : (isPending ? 'Hủy đơn hàng này' : 'Yêu cầu hủy đơn hàng (hoàn tiền)')),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: AppColors.error,
                       side: const BorderSide(color: AppColors.error),

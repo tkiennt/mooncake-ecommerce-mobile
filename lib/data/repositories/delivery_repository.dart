@@ -49,17 +49,58 @@ class DeliveryRepository {
     }
   }
 
-  /// Gets delivery tracking for a contract
+  /// Gets delivery tracking for a contract (first batch or single)
   Future<DeliveryModel?> getByContract(String contractId) async {
     try {
       final response = await _client.dio.get(ApiEndpoints.deliveriesByContract(contractId));
       final data = ApiClient.unwrap(response);
       if (data == null) return null;
+      if (data is List) {
+        if (data.isEmpty) return null;
+        return DeliveryModel.fromJson(data.first as Map<String, dynamic>);
+      }
+      if (data is Map && data['items'] is List) {
+        final items = data['items'] as List;
+        if (items.isEmpty) return null;
+        return DeliveryModel.fromJson(items.first as Map<String, dynamic>);
+      }
       return DeliveryModel.fromJson(data as Map<String, dynamic>);
     } catch (e) {
       final err = ApiClient.handleError(e);
       if (err.statusCode == 404) return null;
       throw err;
+    }
+  }
+
+  /// Gets all delivery batches for a contract
+  Future<List<DeliveryModel>> getDeliveriesByContract(String contractId) async {
+    try {
+      final response = await _client.dio.get(ApiEndpoints.deliveriesByContract(contractId));
+      final data = ApiClient.unwrap(response);
+      final rawList = data is Map ? (data['items'] as List? ?? []) : (data as List? ?? []);
+
+      return rawList
+          .map((d) => DeliveryModel.fromJson(
+              d is Map<String, dynamic> ? d : Map<String, dynamic>.from(d as Map)))
+          .toList();
+    } catch (e) {
+      throw ApiClient.handleError(e);
+    }
+  }
+
+  /// Gets proofs for a delivery
+  Future<List<DeliveryProof>> getDeliveryProofs(String deliveryId) async {
+    try {
+      final response = await _client.dio.get(ApiEndpoints.deliveryProofs(deliveryId));
+      final data = ApiClient.unwrap(response);
+      final rawList = data is Map ? (data['items'] as List? ?? []) : (data as List? ?? []);
+
+      return rawList
+          .map((p) => DeliveryProof.fromJson(
+              p is Map<String, dynamic> ? p : Map<String, dynamic>.from(p as Map)))
+          .toList();
+    } catch (e) {
+      throw ApiClient.handleError(e);
     }
   }
 

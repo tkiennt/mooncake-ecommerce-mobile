@@ -1,9 +1,11 @@
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:signalr_netcore/signalr_client.dart';
 import '../../core/constants/api_endpoints.dart';
+import '../../core/network/api_client.dart';
 import '../../core/storage/storage_service.dart';
 import '../../core/theme/app_colors.dart';
 import '../../data/models/chat.dart';
@@ -103,29 +105,97 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     }
   }
 
+  String _generateUuid() {
+    final random = Random.secure();
+    final values = List<int>.generate(16, (i) => random.nextInt(256));
+    values[6] = (values[6] & 0x0f) | 0x40; // version 4
+    values[8] = (values[8] & 0x3f) | 0x80; // variant
+    return [
+      values.sublist(0, 4).map((b) => b.toRadixString(16).padLeft(2, '0')).join(),
+      values.sublist(4, 6).map((b) => b.toRadixString(16).padLeft(2, '0')).join(),
+      values.sublist(6, 8).map((b) => b.toRadixString(16).padLeft(2, '0')).join(),
+      values.sublist(8, 10).map((b) => b.toRadixString(16).padLeft(2, '0')).join(),
+      values.sublist(10, 16).map((b) => b.toRadixString(16).padLeft(2, '0')).join(),
+    ].join('-');
+  }
+
+  Future<void> _markRead(String threadId, String messageId) async {
+    if (messageId.isEmpty) return;
+    try {
+      final client = ref.read(apiClientProvider);
+      await client.dio.post(
+        ApiEndpoints.chatRead(threadId),
+        data: {
+          'messageId': messageId,
+        },
+      );
+    } catch (_) {
+      // Non-blocking read receipt update
+    }
+  }
+
   Future<void> _loadMessages(String threadId) async {
-    final repo = ref.read(chatRepositoryProvider);
+    final client = ref.read(apiClientProvider);
     final user = ref.read(authProvider).user;
 
-    final msgs = await repo.getMessages(threadId, currentUserId: user?.id);
-    await repo.markThreadRead(threadId);
+    try {
+      final response = await client.dio.get(
+        ApiEndpoints.chatMessages(threadId),
+        queryParameters: {'pageSize': 50},
+      );
+      final data = ApiClient.unwrap(response);
+      final rawList = data is Map ? (data['items'] as List? ?? []) : (data as List? ?? []);
 
-    if (!mounted) return;
-    setState(() {
-      _messages = msgs;
-      _isLoading = false;
-    });
+      final msgs = rawList.map((m) {
+        final map = m is Map<String, dynamic> ? m : Map<String, dynamic>.from(m as Map);
+        final sId = map['senderId']?.toString() ?? map['userId']?.toString() ?? '';
+        return ChatMessage(
+          id: map['id']?.toString() ?? map['messageId']?.toString() ?? '',
+          threadId: map['threadId']?.toString() ?? threadId,
+          senderId: sId,
+          senderName: map['senderName']?.toString() ?? map['sender']?['fullName']?.toString(),
+          content: map['body']?.toString() ?? map['content']?.toString() ?? map['message']?.toString() ?? '',
+          createdAt: map['createdAt'] != null
+              ? DateTime.tryParse(map['createdAt'].toString()) ?? DateTime.now()
+              : DateTime.now(),
+          isFromMe: user?.id != null && sId == user!.id,
+        );
+      }).toList();
 
-    _scrollToBottom();
+      if (msgs.isNotEmpty) {
+        final lastMsg = msgs.last;
+        if (lastMsg.id.isNotEmpty) {
+          await _markRead(threadId, lastMsg.id);
+        }
+      }
+
+      if (!mounted) return;
+      setState(() {
+        _messages = msgs;
+        _isLoading = false;
+      });
+
+      _scrollToBottom();
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _errorMessage = e.toString();
+        _isLoading = false;
+      });
+    }
   }
 
   Future<void> _connectSignalR() async {
     if (_activeThread == null) return;
 
     try {
+      final hubUrl = ApiEndpoints.chatHubUrl.contains('/api/v1')
+          ? ApiEndpoints.chatHubUrl
+          : '${ApiEndpoints.baseUrl}/hubs/chat';
+
       _hubConnection = HubConnectionBuilder()
           .withUrl(
-            ApiEndpoints.chatHubUrl,
+            hubUrl,
             options: HttpConnectionOptions(
               accessTokenFactory: () async => (await _storage.getAccessToken()) ?? '',
             ),
@@ -138,7 +208,18 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
           final data = arguments.first;
           final jsonMap = data is Map<String, dynamic> ? data : Map<String, dynamic>.from(data as Map);
           final user = ref.read(authProvider).user;
-          final newMsg = ChatMessage.fromJson(jsonMap, currentUserId: user?.id);
+          final sId = jsonMap['senderId']?.toString() ?? jsonMap['userId']?.toString() ?? '';
+          final newMsg = ChatMessage(
+            id: jsonMap['id']?.toString() ?? jsonMap['messageId']?.toString() ?? '',
+            threadId: jsonMap['threadId']?.toString() ?? '',
+            senderId: sId,
+            senderName: jsonMap['senderName']?.toString() ?? jsonMap['sender']?['fullName']?.toString(),
+            content: jsonMap['body']?.toString() ?? jsonMap['content']?.toString() ?? jsonMap['message']?.toString() ?? '',
+            createdAt: jsonMap['createdAt'] != null
+                ? DateTime.tryParse(jsonMap['createdAt'].toString()) ?? DateTime.now()
+                : DateTime.now(),
+            isFromMe: user?.id != null && sId == user!.id,
+          );
 
           if (newMsg.threadId == _activeThread?.id) {
             if (!mounted) return;
@@ -148,6 +229,10 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
               }
             });
             _scrollToBottom();
+
+            if (!newMsg.isFromMe && newMsg.id.isNotEmpty) {
+              _markRead(_activeThread!.id, newMsg.id);
+            }
           }
         }
       });
@@ -190,14 +275,37 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
 
     setState(() => _isSending = true);
 
-    final repo = ref.read(chatRepositoryProvider);
+    final client = ref.read(apiClientProvider);
     final user = ref.read(authProvider).user;
+    final clientMsgId = _generateUuid();
 
     try {
-      final newMsg = await repo.sendMessage(
-        _activeThread!.id,
-        content: text,
-        currentUserId: user?.id,
+      final response = await client.dio.post(
+        ApiEndpoints.chatMessages(_activeThread!.id),
+        data: {
+          'clientMessageId': clientMsgId,
+          'body': text,
+        },
+      );
+
+      final data = ApiClient.unwrap(response);
+      final respMap = data is Map<String, dynamic>
+          ? data
+          : (data is Map ? Map<String, dynamic>.from(data) : null);
+
+      final sId = respMap?['senderId']?.toString() ?? user?.id ?? '';
+      final newMsg = ChatMessage(
+        id: respMap?['id']?.toString() ?? clientMsgId,
+        threadId: _activeThread!.id,
+        senderId: sId,
+        senderName: respMap?['senderName']?.toString() ?? user?.fullName,
+        content: respMap?['body']?.toString() ??
+            respMap?['content']?.toString() ??
+            text,
+        createdAt: respMap?['createdAt'] != null
+            ? DateTime.tryParse(respMap!['createdAt'].toString()) ?? DateTime.now()
+            : DateTime.now(),
+        isFromMe: true,
       );
 
       if (!mounted) return;
@@ -208,12 +316,16 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
         _isSending = false;
       });
       _scrollToBottom();
+
+      if (newMsg.id.isNotEmpty) {
+        _markRead(_activeThread!.id, newMsg.id);
+      }
     } catch (e) {
       if (!mounted) return;
       setState(() => _isSending = false);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Không gửi được tin nhắn: $e'),
+          content: Text('Không gửi được tin nhắn: ${ApiClient.handleError(e)}'),
           backgroundColor: AppColors.error,
         ),
       );
@@ -332,57 +444,60 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                               ? DateFormat('HH:mm dd/MM').format(t.lastMessageAt!)
                               : '';
 
-                          return ListTile(
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-                            leading: CircleAvatar(
-                              radius: 24,
-                              backgroundColor: AppColors.accentGoldBg,
-                              child: const Icon(Icons.storefront, color: AppColors.accent, size: 24),
-                            ),
-                            title: Row(
-                              children: [
-                                Expanded(
-                                  child: Text(
-                                    t.shopName,
-                                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
+                          return Material(
+                            type: MaterialType.transparency,
+                            child: ListTile(
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                              leading: CircleAvatar(
+                                radius: 24,
+                                backgroundColor: AppColors.accentGoldBg,
+                                child: const Icon(Icons.storefront, color: AppColors.accent, size: 24),
+                              ),
+                              title: Row(
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      t.shopName,
+                                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
                                   ),
-                                ),
-                                if (timeStr.isNotEmpty)
-                                  Text(
-                                    timeStr,
-                                    style: const TextStyle(fontSize: 11, color: AppColors.textMuted),
+                                  if (timeStr.isNotEmpty)
+                                    Text(
+                                      timeStr,
+                                      style: const TextStyle(fontSize: 11, color: AppColors.textMuted),
+                                    ),
+                                ],
+                              ),
+                              subtitle: Padding(
+                                padding: const EdgeInsets.only(top: 4),
+                                child: Text(
+                                  t.lastMessage ?? 'Nhấn để bắt đầu trao đổi với xưởng...',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    fontSize: 12.5,
+                                    color: t.unreadCount > 0 ? AppColors.textPrimary : AppColors.textSecondary,
+                                    fontWeight: t.unreadCount > 0 ? FontWeight.bold : FontWeight.normal,
                                   ),
-                              ],
-                            ),
-                            subtitle: Padding(
-                              padding: const EdgeInsets.only(top: 4),
-                              child: Text(
-                                t.lastMessage ?? 'Nhấn để bắt đầu trao đổi với xưởng...',
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(
-                                  fontSize: 12.5,
-                                  color: t.unreadCount > 0 ? AppColors.textPrimary : AppColors.textSecondary,
-                                  fontWeight: t.unreadCount > 0 ? FontWeight.bold : FontWeight.normal,
                                 ),
                               ),
+                              trailing: t.unreadCount > 0
+                                  ? Container(
+                                      padding: const EdgeInsets.all(6),
+                                      decoration: const BoxDecoration(
+                                        color: AppColors.primary,
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: Text(
+                                        '${t.unreadCount}',
+                                        style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                                      ),
+                                    )
+                                  : null,
+                              onTap: () => _selectThread(t),
                             ),
-                            trailing: t.unreadCount > 0
-                                ? Container(
-                                    padding: const EdgeInsets.all(6),
-                                    decoration: const BoxDecoration(
-                                      color: AppColors.primary,
-                                      shape: BoxShape.circle,
-                                    ),
-                                    child: Text(
-                                      '${t.unreadCount}',
-                                      style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
-                                    ),
-                                  )
-                                : null,
-                            onTap: () => _selectThread(t),
                           );
                         },
                       ),

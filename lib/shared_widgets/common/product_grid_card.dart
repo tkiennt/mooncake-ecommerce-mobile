@@ -29,27 +29,26 @@ class ProductGridCard extends StatelessWidget {
     return '$count';
   }
 
+  Widget _buildPlaceholder({IconData icon = Icons.cake_outlined}) {
+    return Container(
+      color: AppColors.surfaceHover,
+      child: Center(
+        child: Icon(icon, color: AppColors.textMuted, size: 36),
+      ),
+    );
+  }
+
   Widget _buildProductImage() {
     final image = product.coverImage;
     if (image == null || image.isEmpty) {
-      return Image.asset(
-        'assets/products/banh-nuong.jpg',
-        fit: BoxFit.cover,
-        errorBuilder: (_, __, ___) => Container(
-          color: AppColors.surfaceHover,
-          child: const Icon(Icons.cake_outlined, color: AppColors.textMuted, size: 36),
-        ),
-      );
+      return _buildPlaceholder();
     }
 
     if (image.startsWith('assets/')) {
       return Image.asset(
         image,
         fit: BoxFit.cover,
-        errorBuilder: (_, __, ___) => Container(
-          color: AppColors.surfaceHover,
-          child: const Icon(Icons.cake_outlined, color: AppColors.textMuted, size: 36),
-        ),
+        errorBuilder: (_, __, ___) => _buildPlaceholder(),
       );
     }
 
@@ -66,7 +65,7 @@ class ProductGridCard extends StatelessWidget {
           ),
         ),
       ),
-      errorWidget: (_, __, ___) => Image.asset('assets/products/banh-nuong.jpg', fit: BoxFit.cover),
+      errorWidget: (_, __, ___) => _buildPlaceholder(),
     );
   }
 
@@ -205,14 +204,20 @@ class ProductGridCard extends StatelessWidget {
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),
-                        if (product.soldCount > 0)
-                          Text(
-                            'Đã bán ${_formatSold(product.soldCount)}',
-                            style: const TextStyle(
-                              fontSize: 10.5,
-                              color: AppColors.textMuted,
+                        if (product.soldCount > 0) ...[
+                          const SizedBox(width: 4),
+                          Flexible(
+                            child: Text(
+                              'Đã bán ${_formatSold(product.soldCount)}',
+                              style: const TextStyle(
+                                fontSize: 10.5,
+                                color: AppColors.textMuted,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                             ),
                           ),
+                        ],
                       ],
                     ),
                     const SizedBox(height: 6),
@@ -220,11 +225,15 @@ class ProductGridCard extends StatelessWidget {
                       children: [
                         const Icon(Icons.inventory_2_outlined, size: 12, color: AppColors.textMuted),
                         const SizedBox(width: 4),
-                        Text(
-                          'Từ ${product.minOrderQty} ${product.unit}',
-                          style: const TextStyle(
-                            fontSize: 11,
-                            color: AppColors.textSecondary,
+                        Expanded(
+                          child: Text(
+                            'Từ ${product.minOrderQty} ${product.unit.isNotEmpty ? product.unit : 'hộp'}',
+                            style: const TextStyle(
+                              fontSize: 11,
+                              color: AppColors.textSecondary,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
                       ],

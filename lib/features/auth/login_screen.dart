@@ -1,10 +1,13 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../core/network/api_client.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_tokens.dart';
-import '../../shared_widgets/common/custom_button.dart';
+import '../../data/repositories/auth_repository.dart';
 import '../../providers/auth_provider.dart';
+import '../../shared_widgets/common/custom_button.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -14,10 +17,11 @@ class LoginScreen extends ConsumerStatefulWidget {
 }
 
 class _LoginScreenState extends ConsumerState<LoginScreen> {
-  final _phoneController = TextEditingController(text: '0901234567');
-  final _passwordController = TextEditingController(text: 'Mooncake@2026');
+  final _phoneController = TextEditingController();
+  final _passwordController = TextEditingController();
   bool _showPassword = false;
   bool _isLoading = false;
+  String? _errorMessage;
 
   @override
   void dispose() {
@@ -30,19 +34,50 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     final phone = _phoneController.text.trim();
     final pass = _passwordController.text;
 
-    if (phone.isEmpty || pass.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Vui lòng nhập đầy đủ số điện thoại và mật khẩu.')),
-      );
+    if (phone.isEmpty) {
+      setState(() => _errorMessage = 'Vui lòng nhập số điện thoại.');
+      return;
+    }
+    if (pass.isEmpty) {
+      setState(() => _errorMessage = 'Vui lòng nhập mật khẩu.');
       return;
     }
 
-    setState(() => _isLoading = true);
-    final success = await ref.read(authProvider.notifier).login(phone, pass);
-    setState(() => _isLoading = false);
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
 
-    if (success && mounted) {
-      context.go('/');
+    try {
+      final authRepo = ref.read(authRepositoryProvider);
+      final result = await authRepo.login(
+        phoneNumber: phone,
+        password: pass,
+      );
+
+      final storage = ref.read(storageServiceProvider);
+      await storage.saveTokens(
+        accessToken: result.accessToken,
+        refreshToken: result.refreshToken,
+      );
+      await storage.saveUserJson(jsonEncode(result.user.toJson()));
+
+      await ref.read(authProvider.notifier).loadStoredSession();
+
+      if (mounted) {
+        context.go('/');
+      }
+    } catch (e) {
+      final err = ApiClient.handleError(e);
+      if (mounted) {
+        setState(() {
+          _errorMessage = err.message;
+        });
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 
@@ -88,7 +123,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
                   textAlign: TextAlign.center,
                 ),
-                const SizedBox(height: 32),
+                const SizedBox(height: 28),
 
                 // Card Form
                 Container(
@@ -112,12 +147,55 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       ),
                       const SizedBox(height: 16),
 
+                      // Error banner with retry button (D11 - no mock fallback)
+                      if (_errorMessage != null) ...[
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                          decoration: BoxDecoration(
+                            color: AppColors.errorBg,
+                            borderRadius: BorderRadius.circular(AppTokens.radiusDefault),
+                            border: Border.all(color: AppColors.error.withValues(alpha: 0.3)),
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.error_outline, color: AppColors.error, size: 20),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Text(
+                                  _errorMessage!,
+                                  style: const TextStyle(fontSize: 13, color: AppColors.error),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              TextButton(
+                                onPressed: _isLoading ? null : _handleLogin,
+                                style: TextButton.styleFrom(
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                  minimumSize: Size.zero,
+                                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                ),
+                                child: const Text(
+                                  'Thử lại',
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.bold,
+                                    color: AppColors.primary,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 14),
+                      ],
+
                       // Phone input
                       TextField(
                         controller: _phoneController,
                         keyboardType: TextInputType.phone,
                         decoration: const InputDecoration(
                           labelText: 'Số điện thoại',
+                          hintText: 'Nhập số điện thoại đã đăng ký',
                           prefixIcon: Icon(Icons.phone_outlined, color: AppColors.textMuted),
                         ),
                       ),
@@ -129,6 +207,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         obscureText: !_showPassword,
                         decoration: InputDecoration(
                           labelText: 'Mật khẩu',
+                          hintText: 'Nhập mật khẩu của bạn',
                           prefixIcon: const Icon(Icons.lock_outline, color: AppColors.textMuted),
                           suffixIcon: IconButton(
                             icon: Icon(
@@ -161,7 +240,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         loading: _isLoading,
                         onPress: _handleLogin,
                       ),
-                      const SizedBox(height: 14),
+                      const SizedBox(height: 16),
 
                       // Register link
                       Row(

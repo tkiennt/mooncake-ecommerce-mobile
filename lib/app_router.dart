@@ -34,6 +34,11 @@ import 'features/notification/notification_screen.dart';
 import 'features/notification/notification_settings_screen.dart';
 import 'features/dev/ui_catalog_screen.dart';
 
+import 'features/reviews/review_form_screen.dart';
+import 'features/wishlist/wishlist_screen.dart';
+import 'features/shop/public_shop_screen.dart';
+import 'features/chat/chat_screen.dart';
+
 import 'data/models/product.dart';
 import 'data/models/order.dart';
 import 'data/models/rfq.dart';
@@ -229,6 +234,60 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/notification-settings',
         parentNavigatorKey: _rootNavigatorKey,
         builder: (context, state) => const NotificationSettingsScreen(),
+      ),
+
+      // Reviews, Wishlist, Public Shop, B2B Chat
+      GoRoute(
+        path: '/review-form',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) {
+          final extra = state.extra as Map<String, dynamic>?;
+          return ReviewFormScreen(
+            orderId: extra?['orderId']?.toString() ?? state.uri.queryParameters['orderId'],
+            orderNumber: extra?['orderNumber']?.toString() ?? state.uri.queryParameters['orderNumber'] ?? 'Đơn mẫu',
+            shopName: extra?['shopName']?.toString() ?? state.uri.queryParameters['shopName'] ?? 'Xưởng bánh',
+          );
+        },
+      ),
+      GoRoute(
+        path: '/reviews/transaction',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) {
+          final extra = state.extra as Map<String, dynamic>?;
+          return ReviewFormScreen(
+            orderId: extra?['orderId']?.toString() ?? state.uri.queryParameters['orderId'],
+            orderNumber: extra?['orderNumber']?.toString() ?? state.uri.queryParameters['orderNumber'] ?? 'Đơn mẫu',
+            shopName: extra?['shopName']?.toString() ?? state.uri.queryParameters['shopName'] ?? 'Xưởng bánh',
+          );
+        },
+      ),
+      GoRoute(
+        path: '/wishlist',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) => const WishlistScreen(),
+      ),
+      GoRoute(
+        path: '/shop/:slug',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) {
+          final slug = state.pathParameters['slug'] ?? '';
+          return PublicShopScreen(slug: slug);
+        },
+      ),
+      GoRoute(
+        path: '/chat',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) {
+          final extra = state.extra as Map<String, dynamic>?;
+          final threadId = state.uri.queryParameters['threadId'] ?? extra?['threadId']?.toString();
+          final shopId = state.uri.queryParameters['shopId'] ?? extra?['shopId']?.toString();
+          final shopName = state.uri.queryParameters['shopName'] ?? extra?['shopName']?.toString();
+          return ChatScreen(
+            threadId: threadId,
+            shopId: shopId,
+            shopName: shopName,
+          );
+        },
       ),
 
       // UI Showcase

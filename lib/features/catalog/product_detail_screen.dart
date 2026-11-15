@@ -3,14 +3,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../core/theme/app_colors.dart';
-import '../../core/theme/app_tokens.dart';
+import '../../data/models/product.dart';
+import '../../data/repositories/wishlist_repository.dart';
+import '../../providers/cart_provider.dart';
 import '../../shared_widgets/common/app_header.dart';
 import '../../shared_widgets/common/custom_button.dart';
 import '../../shared_widgets/lucian/b2b_price_calculator.dart';
 import '../../shared_widgets/lucian/tear_off_coupon.dart';
 import '../../shared_widgets/lucian/trust_security_badges.dart';
-import '../../data/models/product.dart';
-import '../../providers/cart_provider.dart';
 
 class ProductDetailScreen extends ConsumerStatefulWidget {
   final Product product;
@@ -24,6 +24,7 @@ class ProductDetailScreen extends ConsumerStatefulWidget {
 class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
   ProductVariant? _selectedVariant;
   int _quantity = 1;
+  bool _isWishlisted = false;
 
   @override
   void initState() {
@@ -32,6 +33,43 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
       _selectedVariant = widget.product.variants.first;
     }
     _quantity = widget.product.minOrderQty;
+    _checkWishlist();
+  }
+
+  Future<void> _checkWishlist() async {
+    try {
+      final map = await ref.read(wishlistRepositoryProvider).checkWishlist([widget.product.id]);
+      if (mounted && map.containsKey(widget.product.id)) {
+        setState(() {
+          _isWishlisted = map[widget.product.id] == true;
+        });
+      }
+    } catch (_) {}
+  }
+
+  Future<void> _toggleWishlist() async {
+    try {
+      final isSaved = await ref.read(wishlistRepositoryProvider).toggleWishlist(widget.product.id);
+      if (!mounted) return;
+      setState(() {
+        _isWishlisted = isSaved;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            isSaved
+                ? 'Đã thêm vào danh sách yêu thích'
+                : 'Đã bỏ khỏi danh sách yêu thích',
+          ),
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Lỗi: $e')),
+      );
+    }
   }
 
   String _formatCurrency(double amount) {
@@ -45,7 +83,6 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
   @override
   Widget build(BuildContext context) {
     final p = widget.product;
-    final cartTotals = ref.watch(cartProvider).totals;
 
     return Scaffold(
       appBar: AppHeader(
@@ -58,17 +95,46 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Hero Image
-            AspectRatio(
-              aspectRatio: 1.1,
-              child: Image.asset(
-                p.coverImage ?? 'assets/products/banh-nuong.jpg',
-                fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => Container(
-                  color: AppColors.surfaceHover,
-                  child: const Icon(Icons.cake_outlined, size: 64, color: AppColors.textMuted),
+            // Hero Image Stack with Wishlist Button
+            Stack(
+              children: [
+                AspectRatio(
+                  aspectRatio: 1.1,
+                  child: Image.asset(
+                    p.coverImage ?? 'assets/products/banh-nuong.jpg',
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => Container(
+                      color: AppColors.surfaceHover,
+                      child: const Icon(Icons.cake_outlined, size: 64, color: AppColors.textMuted),
+                    ),
+                  ),
                 ),
-              ),
+                Positioned(
+                  top: 12,
+                  right: 12,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.9),
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.1),
+                          blurRadius: 6,
+                        ),
+                      ],
+                    ),
+                    child: IconButton(
+                      icon: Icon(
+                        _isWishlisted ? Icons.favorite : Icons.favorite_border,
+                        color: _isWishlisted ? AppColors.error : AppColors.textSecondary,
+                        size: 24,
+                      ),
+                      tooltip: _isWishlisted ? 'Bỏ yêu thích' : 'Thêm yêu thích',
+                      onPressed: _toggleWishlist,
+                    ),
+                  ),
+                ),
+              ],
             ),
 
             // Main Details Card
@@ -142,6 +208,91 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
                         style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
                       ),
                     ],
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 8),
+
+            // Workshop / Shop Link Card
+            Container(
+              padding: const EdgeInsets.all(14),
+              color: AppColors.surface,
+              child: Row(
+                children: [
+                  Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: AppColors.accentGoldBg,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: AppColors.accent),
+                    ),
+                    child: const Icon(Icons.storefront, color: AppColors.accent, size: 22),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Flexible(
+                              child: Text(
+                                p.shopName,
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.primaryDark,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            if (p.shopVerified) ...[
+                              const SizedBox(width: 4),
+                              const Icon(Icons.verified, size: 16, color: AppColors.primary),
+                            ],
+                          ],
+                        ),
+                        const SizedBox(height: 2),
+                        const Text(
+                          'Xưởng sản xuất đối tác chính thức',
+                          style: TextStyle(fontSize: 11, color: AppColors.textSecondary),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  OutlinedButton.icon(
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                      minimumSize: Size.zero,
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      side: const BorderSide(color: AppColors.primary),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    ),
+                    icon: const Icon(Icons.store, size: 14, color: AppColors.primary),
+                    label: const Text(
+                      'Xem Shop',
+                      style: TextStyle(fontSize: 12, color: AppColors.primary, fontWeight: FontWeight.bold),
+                    ),
+                    onPressed: () {
+                      final slug = p.shopSlug ?? (p.shopId != null && p.shopId!.isNotEmpty ? p.shopId! : 'nguyet-pho');
+                      context.push('/shop/$slug');
+                    },
+                  ),
+                  const SizedBox(width: 6),
+                  IconButton(
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                    icon: const Icon(Icons.chat_bubble_outline, color: AppColors.primary, size: 20),
+                    tooltip: 'Nhắn tin với xưởng',
+                    onPressed: () {
+                      context.push(
+                        '/chat?shopId=${p.shopId ?? ''}&shopName=${Uri.encodeComponent(p.shopName)}',
+                      );
+                    },
                   ),
                 ],
               ),

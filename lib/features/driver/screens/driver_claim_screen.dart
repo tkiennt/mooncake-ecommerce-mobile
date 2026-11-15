@@ -86,7 +86,7 @@ class _DriverClaimScreenState extends ConsumerState<DriverClaimScreen> {
 
     try {
       final repo = ref.read(driverTripRepositoryProvider);
-      final updatedTrip = await repo.claimTrip(
+      final claimedTrip = await repo.claimTrip(
         token,
         ClaimTripPayload(
           driverName: name,
@@ -103,6 +103,16 @@ class _DriverClaimScreenState extends ConsumerState<DriverClaimScreen> {
       );
 
       // Cập nhật trip vào storage
+      // Đảm bảo trạng thái "đã nhận" ngay cả khi BE không trả driverClaimedAt
+      final updatedTrip = claimedTrip.isClaimed
+          ? claimedTrip
+          : claimedTrip.copyWith(
+              driverClaimedAt: DateTime.now(),
+              requiresClaim: false,
+              driverName: name,
+              driverPhone: phone,
+              vehiclePlate: plate,
+            );
       await ref.read(savedTripsProvider.notifier).saveTrip(updatedTrip);
       ref.read(currentTripProvider.notifier).state = updatedTrip;
 

@@ -63,12 +63,7 @@ class DriverTrip {
     this.actualDeliveryDate,
   });
 
-  bool get isClaimed =>
-      driverClaimedAt != null ||
-      (driverName != null &&
-          driverName!.trim().isNotEmpty &&
-          driverPhone != null &&
-          driverPhone!.trim().isNotEmpty);
+  bool get isClaimed => !requiresClaim && driverClaimedAt != null;
 
   bool get isExpired =>
       expiresAtUtc != null && expiresAtUtc!.isBefore(DateTime.now());

@@ -16,8 +16,8 @@ class _AnnouncementPillState extends State<AnnouncementPill> {
   static const List<String> _announcements = [
     'Mở cổng phân phối vụ mùa 2026 · Chiết khấu tới 35%',
     'Miễn phí in logo & thiệp thương hiệu từ 30 hộp',
-    'Hỗ trợ gửi 01 hộp mẫu thử nguyên seal tận nơi 24h',
-    'Tiền cọc giữ trong ký quỹ · xuất hóa đơn VAT',
+    'Gửi hộp bánh mẫu tận nơi để bạn dùng thử',
+    'Thanh toán an toàn · Có hoá đơn VAT',
   ];
 
   int _currentIndex = 0;
@@ -71,7 +71,7 @@ class _AnnouncementPillState extends State<AnnouncementPill> {
                 Icon(Icons.campaign, color: AppColors.accent, size: 22),
                 SizedBox(width: 8),
                 Text(
-                  'Thông Báo Vụ Mùa 2026',
+                  'Thông báo mùa vụ 2026',
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
@@ -126,7 +126,7 @@ class _AnnouncementPillState extends State<AnnouncementPill> {
                 borderRadius: BorderRadius.circular(10),
               ),
               child: const Text(
-                'TIN MỚI',
+                'Tin mới',
                 style: TextStyle(
                   color: AppColors.textWhite,
                   fontSize: 10,

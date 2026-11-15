@@ -16,8 +16,8 @@ class AppErrorState extends StatelessWidget {
   const AppErrorState({
     super.key,
     this.icon,
-    this.title = 'Không thể tải dữ liệu',
-    this.message = 'Đã có lỗi xảy ra trong quá trình kết nối. Vui lòng kiểm tra lại mạng và thử lại.',
+    this.title = 'Chưa tải được dữ liệu',
+    this.message = 'Không kết nối được, bạn kiểm tra lại mạng rồi thử lại nhé.',
     this.onRetry,
     this.retryLabel = 'Thử lại',
     this.onSecondaryAction,

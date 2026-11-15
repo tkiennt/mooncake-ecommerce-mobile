@@ -247,7 +247,7 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
                               Icon(Icons.palette_outlined, size: 12, color: AppColors.accent),
                               SizedBox(width: 4),
                               Text(
-                                'Hỗ trợ in Logo',
+                                'In logo theo yêu cầu',
                                 style: TextStyle(
                                   fontFamily: 'Roboto',
                                   fontSize: 11,
@@ -344,7 +344,7 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
                         ),
                         const SizedBox(height: 2),
                         const Text(
-                          'Xưởng sản xuất đối tác chính thức',
+                          'Xưởng làm bánh uy tín',
                           style: TextStyle(
                             fontFamily: 'Roboto',
                             fontSize: 11,
@@ -368,7 +368,7 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
                       ),
                       icon: const Icon(Icons.store, size: 15, color: AppColors.primary),
                       label: const Text(
-                        'Xem Shop',
+                        'Xem xưởng',
                         style: TextStyle(
                           fontFamily: 'Roboto',
                           fontSize: 12,
@@ -412,7 +412,7 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Text(
-                      'Chọn Hương Vị / Biến Thể:',
+                      'Chọn hương vị:',
                       style: TextStyle(
                         fontFamily: 'Roboto',
                         fontSize: 14,
@@ -462,7 +462,7 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text(
-                    'Mô Tả Sản Phẩm',
+                    'Mô tả sản phẩm',
                     style: TextStyle(
                       fontFamily: 'Roboto',
                       fontSize: 14,
@@ -474,7 +474,7 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
                   Text(
                     p.description.isNotEmpty
                         ? p.description
-                        : 'Bánh trung thu truyền thống thượng hạng của Nguyệt Phố.',
+                        : 'Bánh trung thu truyền thống chất lượng cao từ Nguyệt Phố.',
                     style: const TextStyle(
                       fontFamily: 'Roboto',
                       fontSize: 13.5,
@@ -586,7 +586,7 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
               // Add to Cart Button (tap target >= 44px)
               Expanded(
                 child: CustomButton(
-                  title: 'Thêm giỏ',
+                  title: 'Thêm vào giỏ',
                   variant: ButtonVariant.outline,
                   onPress: () {
                     ref.read(cartProvider.notifier).addToCart(p, _selectedVariant, _quantity);
@@ -635,7 +635,7 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
               Icon(Icons.table_chart_outlined, color: AppColors.primary, size: 20),
               SizedBox(width: AppTokens.spaceSM),
               Text(
-                'Bảng Giá Sỉ Theo Bậc Số Lượng',
+                'Bảng giá sỉ theo số lượng',
                 style: TextStyle(
                   fontFamily: 'Roboto',
                   fontSize: 15,
@@ -647,7 +647,7 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
           ),
           const SizedBox(height: 4),
           const Text(
-            'Giá sỉ chiết khấu trực tiếp từ xưởng theo số lượng đặt hàng',
+            'Chiết khấu trực tiếp từ xưởng khi đặt số lượng lớn',
             style: TextStyle(
               fontFamily: 'Roboto',
               fontSize: 12,
@@ -818,7 +818,7 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
               Icon(Icons.business_center_outlined, color: AppColors.accent, size: 20),
               SizedBox(width: AppTokens.spaceSM),
               Text(
-                'Đặt Hàng Doanh Nghiệp & In Logo',
+                'Đặt bánh doanh nghiệp & in logo',
                 style: TextStyle(
                   fontFamily: 'Roboto',
                   fontSize: 15,
@@ -830,7 +830,7 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
           ),
           const SizedBox(height: 4),
           const Text(
-            'Nhận báo giá chiết khấu ưu đãi và làm mẫu in ấn bao bì miễn phí.',
+            'Nhận bảng giá ưu đãi và hỗ trợ thiết kế bao bì cho doanh nghiệp.',
             style: TextStyle(
               fontFamily: 'Roboto',
               fontSize: 12,
@@ -860,7 +860,7 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
         ),
         icon: const Icon(Icons.request_quote_outlined, size: 20, color: AppColors.accent),
         label: const Text(
-          'Nhận báo giá sỉ / in logo (Tạo RFQ)',
+          'Yêu cầu báo giá sỉ',
           style: TextStyle(
             fontFamily: 'Roboto',
             fontSize: 13.5,
@@ -903,13 +903,13 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
         children: [
           _TrustBadgeItem(
             icon: Icons.verified_user_outlined,
-            title: 'Ký quỹ an toàn',
-            subtitle: 'Bảo vệ nguồn tiền',
+            title: 'Đặt hàng an toàn',
+            subtitle: 'Đảm bảo chất lượng',
           ),
           _TrustBadgeItem(
             icon: Icons.ac_unit,
-            title: 'Giao xe lạnh',
-            subtitle: 'Chuẩn 20-25°C',
+            title: 'Giao tận nơi',
+            subtitle: 'Bảo quản tiêu chuẩn',
           ),
           _TrustBadgeItem(
             icon: Icons.receipt_long_outlined,

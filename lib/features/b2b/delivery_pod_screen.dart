@@ -98,7 +98,7 @@ class _DeliveryPoDScreenState extends ConsumerState<DeliveryPoDScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Xác nhận nhận hàng thành công! Đơn hàng đã hoàn tất biên bản bàn giao.'),
+          content: Text('Xác nhận nhận hàng thành công!'),
           backgroundColor: AppColors.success,
         ),
       );
@@ -107,7 +107,7 @@ class _DeliveryPoDScreenState extends ConsumerState<DeliveryPoDScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Xác nhận nhận hàng thất bại: ${e.toString().replaceFirst('Exception: ', '')}'),
+          content: Text('Chưa xác nhận được, bạn thử lại sau nhé: ${e.toString().replaceFirst('Exception: ', '')}'),
           backgroundColor: AppColors.error,
         ),
       );
@@ -144,7 +144,7 @@ class _DeliveryPoDScreenState extends ConsumerState<DeliveryPoDScreen> {
                   Icon(Icons.report_problem_outlined, color: AppColors.warning, size: 24),
                   SizedBox(width: 8),
                   Text(
-                    'Khiếu Nại Kiện Hàng',
+                    'Khiếu nại đơn hàng',
                     style: TextStyle(
                       fontFamily: 'Roboto',
                       fontSize: 16,
@@ -159,7 +159,7 @@ class _DeliveryPoDScreenState extends ConsumerState<DeliveryPoDScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Text(
-                      'Vui lòng chọn lý do phát sinh sự cố giao nhận:',
+                      'Vui lòng chọn lý do khiếu nại:',
                       style: TextStyle(fontFamily: 'Roboto', fontSize: 12.5, color: AppColors.textSecondary),
                     ),
                     const SizedBox(height: 10),
@@ -199,8 +199,8 @@ class _DeliveryPoDScreenState extends ConsumerState<DeliveryPoDScreen> {
                       controller: notesController,
                       maxLines: 3,
                       decoration: InputDecoration(
-                        labelText: 'Mô tả chi tiết sự cố kiện hàng *',
-                        hintText: 'Nhập mã số kiện hoặc tình trạng hư hại...',
+                        labelText: 'Mô tả chi tiết vấn đề *',
+                        hintText: 'Nhập tình trạng hàng nhận được...',
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(AppTokens.radiusInput)),
                         isDense: true,
                       ),
@@ -211,7 +211,7 @@ class _DeliveryPoDScreenState extends ConsumerState<DeliveryPoDScreen> {
               actions: [
                 TextButton(
                   onPressed: () => Navigator.of(dialogCtx).pop(),
-                  child: const Text('Hủy bỏ', style: TextStyle(color: AppColors.textSecondary)),
+                  child: const Text('Huỷ', style: TextStyle(color: AppColors.textSecondary)),
                 ),
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
@@ -234,7 +234,7 @@ class _DeliveryPoDScreenState extends ConsumerState<DeliveryPoDScreen> {
                       if (!mounted) return;
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
-                          content: Text('Đã gửi khiếu nại tới xưởng và bộ phận CSKH để đối soát hoàn tiền.'),
+                          content: Text('Đã gửi khiếu nại tới xưởng bánh để hỗ trợ bạn.'),
                           backgroundColor: AppColors.warning,
                         ),
                       );
@@ -243,7 +243,7 @@ class _DeliveryPoDScreenState extends ConsumerState<DeliveryPoDScreen> {
                       if (!mounted) return;
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
-                          content: Text('Gửi khiếu nại thất bại: ${e.toString().replaceFirst('Exception: ', '')}'),
+                          content: Text('Chưa gửi được khiếu nại, bạn thử lại sau nhé: ${e.toString().replaceFirst('Exception: ', '')}'),
                           backgroundColor: AppColors.error,
                         ),
                       );
@@ -361,7 +361,7 @@ class _DeliveryPoDScreenState extends ConsumerState<DeliveryPoDScreen> {
                       Icon(Icons.pinch_outlined, size: 14, color: AppColors.textMuted),
                       SizedBox(width: 4),
                       Text(
-                        'Dùng 2 ngón tay chạm để phóng to chi tiết tem niêm phong / chữ ký',
+                        'Dùng 2 ngón tay để phóng to xem chi tiết ảnh',
                         style: TextStyle(fontFamily: 'Roboto', fontSize: 11, color: AppColors.textMuted),
                       ),
                     ],
@@ -395,12 +395,12 @@ class _DeliveryPoDScreenState extends ConsumerState<DeliveryPoDScreen> {
     return [
       MilestoneItem(
         title: 'Xuất xưởng',
-        subtitle: 'Đóng gói xe lạnh',
+        subtitle: 'Đóng gói bảo quản',
         status: isDispatched ? MilestoneStepStatus.completed : MilestoneStepStatus.current,
       ),
       MilestoneItem(
         title: 'Đang giao',
-        subtitle: 'Kiểm soát 18-25°C',
+        subtitle: 'Bảo quản tiêu chuẩn',
         status: isInTransit
             ? (isDelivered ? MilestoneStepStatus.completed : MilestoneStepStatus.current)
             : MilestoneStepStatus.upcoming,
@@ -413,8 +413,8 @@ class _DeliveryPoDScreenState extends ConsumerState<DeliveryPoDScreen> {
             : MilestoneStepStatus.upcoming,
       ),
       MilestoneItem(
-        title: 'Xác nhận PoD',
-        subtitle: isCompleted ? 'Đã nghiệm thu' : 'Chờ khách duyệt',
+        title: 'Xác nhận nhận hàng',
+        subtitle: isCompleted ? 'Đã nhận đủ' : 'Chờ bạn xác nhận',
         status: isCompleted ? MilestoneStepStatus.completed : MilestoneStepStatus.upcoming,
       ),
     ];
@@ -455,7 +455,7 @@ class _DeliveryPoDScreenState extends ConsumerState<DeliveryPoDScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: const AppHeader(title: 'Giám Sát Vận Chuyển & PoD', showBack: true),
+      appBar: const AppHeader(title: 'Theo dõi giao hàng', showBack: true),
       body: _buildBody(),
     );
   }
@@ -467,7 +467,7 @@ class _DeliveryPoDScreenState extends ConsumerState<DeliveryPoDScreen> {
 
     if (_errorMessage != null) {
       return AppErrorState(
-        title: 'Không thể tải dữ liệu vận chuyển',
+        title: 'Chưa tải được thông tin giao hàng',
         message: _errorMessage!,
         onRetry: _loadDelivery,
         retryLabel: 'Thử lại ngay',
@@ -478,7 +478,7 @@ class _DeliveryPoDScreenState extends ConsumerState<DeliveryPoDScreen> {
       return AppEmptyState(
         icon: Icons.local_shipping_outlined,
         title: 'Chưa có chuyến giao hàng',
-        message: 'Hiện tại Quý Doanh Nghiệp chưa có chuyến vận chuyển xe lạnh nào đang thực hiện hoặc chờ xác nhận biên bản PoD.',
+        message: 'Hiện tại bạn chưa có đơn hàng nào đang giao.',
         actionLabel: 'Tải lại',
         onAction: _loadDelivery,
       );
@@ -514,7 +514,7 @@ class _DeliveryPoDScreenState extends ConsumerState<DeliveryPoDScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text(
-                    'Mã vận đơn vận chuyển xe lạnh',
+                    'Mã vận đơn',
                     style: TextStyle(
                       fontFamily: 'Roboto',
                       fontSize: 12,
@@ -566,7 +566,7 @@ class _DeliveryPoDScreenState extends ConsumerState<DeliveryPoDScreen> {
                       Icon(Icons.timeline_outlined, size: 18, color: AppColors.primary),
                       SizedBox(width: 6),
                       Text(
-                        'Tiến Độ Vận Chuyển',
+                        'Tiến độ giao hàng',
                         style: TextStyle(fontFamily: 'Roboto', fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
                       ),
                     ],
@@ -605,7 +605,7 @@ class _DeliveryPoDScreenState extends ConsumerState<DeliveryPoDScreen> {
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
-                          'Cảm Biến Xe Lạnh Thời Gian Thực',
+                          'Theo dõi bảo quản bánh',
                           style: TextStyle(
                             fontFamily: 'Roboto',
                             fontWeight: FontWeight.w700,
@@ -629,7 +629,7 @@ class _DeliveryPoDScreenState extends ConsumerState<DeliveryPoDScreen> {
                       const _ColdChainMetric(
                         label: 'Độ ẩm thùng hàng',
                         value: '55%',
-                        status: 'Tối ưu bánh tươi',
+                        status: 'Đạt chuẩn bánh tươi',
                         isSafe: true,
                       ),
                     ],
@@ -643,7 +643,7 @@ class _DeliveryPoDScreenState extends ConsumerState<DeliveryPoDScreen> {
                       const SizedBox(width: 6),
                       Expanded(
                         child: Text(
-                          'Đơn vị: ${d.carrierName ?? "Đội Xe Lạnh Chuyên Dụng Nguyệt Phố"}',
+                          'Đơn vị giao: ${d.carrierName ?? "Đội giao hàng Nguyệt Phố"}',
                           style: const TextStyle(fontFamily: 'Roboto', fontSize: 12, color: AppColors.textPrimary),
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -657,7 +657,7 @@ class _DeliveryPoDScreenState extends ConsumerState<DeliveryPoDScreen> {
                       const SizedBox(width: 6),
                       Expanded(
                         child: Text(
-                          'Điểm giao: ${d.deliveryAddress ?? "Kho nhận hàng doanh nghiệp"}',
+                          'Điểm giao: ${d.deliveryAddress ?? "Địa chỉ nhận hàng"}',
                           style: const TextStyle(fontFamily: 'Roboto', fontSize: 12, color: AppColors.textSecondary),
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -687,7 +687,7 @@ class _DeliveryPoDScreenState extends ConsumerState<DeliveryPoDScreen> {
                       SizedBox(width: 8),
                       Expanded(
                         child: Text(
-                          'Chứng Từ & Ảnh Bàn Giao (PoD)',
+                          'Hình ảnh giao nhận hàng',
                           style: TextStyle(fontFamily: 'Roboto', fontWeight: FontWeight.w700, fontSize: 14),
                         ),
                       ),
@@ -695,7 +695,7 @@ class _DeliveryPoDScreenState extends ConsumerState<DeliveryPoDScreen> {
                   ),
                   const SizedBox(height: 6),
                   const Text(
-                    'Chạm vào ảnh để phóng to chi tiết tem niêm phong và chữ ký biên bản giao nhận của tài xế.',
+                    'Chạm vào ảnh để xem chi tiết kiện hàng và biên nhận của tài xế.',
                     style: TextStyle(fontFamily: 'Roboto', fontSize: 12, color: AppColors.textSecondary, height: 1.4),
                   ),
                   const SizedBox(height: AppTokens.spaceMD),
@@ -804,12 +804,12 @@ class _DeliveryPoDScreenState extends ConsumerState<DeliveryPoDScreen> {
                             Icon(Icons.inventory_2_outlined, size: 34, color: AppColors.textMuted),
                             SizedBox(height: 8),
                             Text(
-                              'Đang Chờ Tài Xế Tải Lên Chứng Từ',
+                              'Đang chờ tài xế tải ảnh lên',
                               style: TextStyle(fontFamily: 'Roboto', fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
                             ),
                             SizedBox(height: 4),
                             Text(
-                              'Biên bản bàn giao và ảnh niêm phong kiện hàng sẽ xuất hiện tại đây khi tài xế hoàn tất chặng giao.',
+                              'Hình ảnh kiện hàng và biên nhận sẽ xuất hiện tại đây khi tài xế giao tới bạn.',
                               textAlign: TextAlign.center,
                               style: TextStyle(fontFamily: 'Roboto', fontSize: 11.5, color: AppColors.textSecondary),
                             ),
@@ -836,7 +836,7 @@ class _DeliveryPoDScreenState extends ConsumerState<DeliveryPoDScreen> {
                           SizedBox(width: 8),
                           Expanded(
                             child: Text(
-                              'Đã hoàn tất xác nhận nhận hàng PoD. Biên bản bàn giao đã lưu trữ an toàn.',
+                              'Đã xác nhận nhận hàng thành công. Thông tin giao nhận đã được lưu trữ.',
                               style: TextStyle(fontFamily: 'Roboto', fontSize: 12.5, fontWeight: FontWeight.w600, color: AppColors.success),
                             ),
                           ),
@@ -854,7 +854,7 @@ class _DeliveryPoDScreenState extends ConsumerState<DeliveryPoDScreen> {
                     ),
                     const SizedBox(height: AppTokens.spaceMD),
                     CustomButton(
-                      title: 'Khiếu nại / Báo cáo sự cố',
+                      title: 'Khiếu nại đơn hàng',
                       variant: ButtonVariant.outline,
                       size: ButtonSize.medium,
                       width: double.infinity,

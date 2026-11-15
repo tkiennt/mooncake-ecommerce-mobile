@@ -141,28 +141,28 @@ class _OrderHistoryScreenState extends ConsumerState<OrderHistoryScreen>
 
     switch (tabIndex) {
       case 1:
-        title = 'Không có đơn hàng chờ duyệt';
-        desc = 'Các đơn hàng mới đặt sẽ xuất hiện tại đây khi chờ xác nhận.';
+        title = 'Chưa có đơn chờ duyệt';
+        desc = 'Các đơn hàng mới đặt sẽ xuất hiện tại đây khi chờ xưởng xác nhận.';
         icon = Icons.pending_actions_outlined;
         break;
       case 2:
-        title = 'Không có đơn hàng đang sản xuất';
+        title = 'Chưa có đơn đang làm bánh';
         desc = 'Xưởng bánh sẽ cập nhật tiến độ khi bắt đầu làm bánh.';
         icon = Icons.precision_manufacturing_outlined;
         break;
       case 3:
-        title = 'Không có đơn hàng đang giao';
-        desc = 'Đơn hàng đang trên xe lạnh vận chuyển sẽ hiển thị tại đây.';
+        title = 'Chưa có đơn đang giao';
+        desc = 'Đơn hàng đang giao sẽ hiển thị tại đây.';
         icon = Icons.local_shipping_outlined;
         break;
       case 4:
-        title = 'Chưa có đơn hàng hoàn thành';
-        desc = 'Đơn hàng đã giao thành công và nghiệm thu PoD sẽ lưu tại đây.';
+        title = 'Chưa có đơn hoàn thành';
+        desc = 'Đơn hàng giao thành công sẽ được lưu tại đây.';
         icon = Icons.task_alt_outlined;
         break;
       default:
         title = 'Bạn chưa có đơn hàng nào';
-        desc = 'Khám phá các bộ sưu tập bánh trung thu doanh nghiệp cao cấp ngay!';
+        desc = 'Khám phá các mẫu bánh trung thu mới nhất để chọn món quà phù hợp nhé.';
         icon = Icons.receipt_long_outlined;
     }
 
@@ -186,8 +186,8 @@ class _OrderHistoryScreenState extends ConsumerState<OrderHistoryScreen>
 
   Widget _buildErrorState() {
     return AppErrorState(
-      title: 'Không thể tải danh sách đơn hàng',
-      message: _errorMessage ?? 'Đã có lỗi xảy ra trong quá trình kết nối máy chủ.',
+      title: 'Chưa tải được danh sách đơn hàng',
+      message: _errorMessage ?? 'Không kết nối được, bạn kiểm tra mạng rồi thử lại nhé.',
       retryLabel: 'Thử lại',
       onRetry: _loadOrders,
     );
@@ -375,7 +375,7 @@ class _OrderHistoryScreenState extends ConsumerState<OrderHistoryScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: const AppHeader(
-        title: 'Đơn Hàng Doanh Nghiệp',
+        title: 'Đơn hàng của bạn',
         showBack: false,
       ),
       body: Column(
@@ -394,7 +394,7 @@ class _OrderHistoryScreenState extends ConsumerState<OrderHistoryScreen>
               tabs: const [
                 Tab(text: 'Tất cả'),
                 Tab(text: 'Chờ duyệt'),
-                Tab(text: 'Đang sản xuất'),
+                Tab(text: 'Đang làm bánh'),
                 Tab(text: 'Đang giao'),
                 Tab(text: 'Hoàn thành'),
               ],

@@ -247,7 +247,7 @@ class _B2BPriceCalculatorState extends State<B2BPriceCalculator> {
                 totalSavings: _totalSavings,
               ));
             },
-            child: const Text('Áp Dụng Mức Giá Này'),
+            child: const Text('Áp dụng mức giá này'),
           ),
         ],
       ),

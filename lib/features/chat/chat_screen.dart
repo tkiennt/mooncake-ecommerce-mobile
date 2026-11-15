@@ -20,8 +20,8 @@ import '../../shared_widgets/common/app_skeleton.dart';
 enum _ChatContextCategory {
   order('Đơn hàng', Icons.local_shipping_outlined),
   pricing('Báo giá sỉ', Icons.sell_outlined),
-  packaging('In ấn bao bì', Icons.card_giftcard_outlined),
-  contract('Hợp đồng & VAT', Icons.assignment_outlined);
+  packaging('In logo & bao bì', Icons.card_giftcard_outlined),
+  contract('Hợp đồng & hoá đơn', Icons.assignment_outlined);
 
   final String label;
   final IconData icon;
@@ -67,8 +67,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     _ChatContextCategory.order: [
       'Tiến độ sản xuất đơn hàng của tôi đến đâu rồi?',
       'Đơn hàng khi nào xuất kho và giao đến nơi?',
-      'Xưởng gửi giúp ảnh chụp kiện hàng thực tế và tem niêm phong',
-      'Đơn hàng vận chuyển bằng xe lạnh hay xe thường?',
+      'Xưởng gửi giúp mình ảnh chụp kiện hàng thực tế nhé',
+      'Đơn hàng vận chuyển theo hình thức nào vậy xưởng?',
       'Tôi muốn cập nhật thông tin nhận hàng của đơn này',
     ],
     _ChatContextCategory.pricing: [
@@ -78,15 +78,15 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
       'Chính sách thanh toán và đặt cọc chia 3 đợt',
     ],
     _ChatContextCategory.packaging: [
-      'Yêu cầu quy cách in logo ép kim nhũ vàng lên hộp',
-      'Thời gian duyệt maket thiết kế bao bì là bao lâu?',
+      'Tư vấn quy cách in logo lên hộp bánh',
+      'Thời gian duyệt mẫu thiết kế bao bì là bao lâu?',
       'Có hỗ trợ làm thiệp chúc mừng riêng từng hộp không?',
       'Xưởng có mẫu hộp 4 bánh và 6 bánh sẵn không?',
     ],
     _ChatContextCategory.contract: [
-      'Yêu cầu lập hợp đồng mua bán pháp nhân',
-      'Cung cấp thông tin để xuất hóa đơn điện tử VAT',
-      'Giấy chứng nhận an toàn thực phẩm ISO 22000 / HACCP',
+      'Tư vấn ký hợp đồng mua bán cho doanh nghiệp',
+      'Cung cấp thông tin xuất hoá đơn điện tử (VAT)',
+      'Giấy chứng nhận an toàn thực phẩm của xưởng',
     ],
   };
 
@@ -361,8 +361,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
       if (!mounted) return;
       setState(() => _isSending = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Không gửi được tin nhắn: ${ApiClient.handleError(e)}'),
+        const SnackBar(
+          content: Text('Chưa gửi được tin nhắn, bạn thử lại sau nhé.'),
           backgroundColor: AppColors.error,
         ),
       );
@@ -402,7 +402,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppHeader(
-        title: 'Tin Nhắn Với Xưởng Bánh',
+        title: 'Tin nhắn với xưởng',
         showBack: true,
         onBack: () => context.pop(),
       ),
@@ -418,7 +418,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     if (_errorMessage != null) {
       return Center(
         child: AppErrorState(
-          title: 'Không thể tải cuộc trò chuyện',
+          title: 'Chưa tải được cuộc trò chuyện',
           message: _errorMessage,
           retryLabel: 'Thử lại',
           onRetry: _initChat,
@@ -432,7 +432,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
           icon: Icons.chat_bubble_outline,
           title: 'Chưa có cuộc trò chuyện nào',
           message:
-              'Bạn có thể vào trang chi tiết sản phẩm hoặc gian hàng xưởng bánh để bắt đầu trao đổi, hỏi giá sỉ và mẫu hộp quà.',
+              'Bạn có thể chọn xưởng bánh hoặc sản phẩm để bắt đầu trao đổi nhé.',
           actionLabel: 'Khám phá sản phẩm',
           onAction: () => context.go('/search'),
         ),
@@ -576,7 +576,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
       backgroundColor: AppColors.background,
       appBar: AppHeader(
         title: shopName,
-        subtitle: 'Xưởng sản xuất đối tác · Trực tuyến',
+        subtitle: 'Xưởng làm bánh · Đang hoạt động',
         showBack: true,
         onBack: () {
           if (widget.shopId != null || widget.threadId != null) {
@@ -614,7 +614,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     if (_errorMessage != null && _messages.isEmpty) {
       return Center(
         child: AppErrorState(
-          title: 'Không thể tải tin nhắn',
+          title: 'Chưa tải được tin nhắn',
           message: _errorMessage,
           retryLabel: 'Thử lại',
           onRetry: () => _activeThread != null ? _loadMessages(_activeThread!.id) : _initChat(),
@@ -628,7 +628,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
           icon: Icons.chat_outlined,
           title: 'Bắt đầu cuộc trò chuyện với $shopName',
           message:
-              'Gửi câu hỏi về tiến độ đơn hàng, chiết khấu sỉ, quy cách bao bì hoặc thời gian sản xuất bánh.',
+              'Bạn có thể hỏi về tiến độ đơn, chiết khấu sỉ, in ấn bao bì hoặc ngày giao bánh.',
         ),
       );
     }
@@ -785,7 +785,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
               child: TextField(
                 controller: _textController,
                 decoration: InputDecoration(
-                  hintText: 'Nhập tin nhắn trao đổi với xưởng...',
+                  hintText: 'Nhập tin nhắn gửi xưởng bánh...',
                   hintStyle: const TextStyle(
                     fontFamily: 'Roboto',
                     fontSize: 12.5,

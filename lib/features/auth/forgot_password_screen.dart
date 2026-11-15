@@ -40,7 +40,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
 
     if (email.isEmpty) {
       setState(() {
-        _errorMessage = 'Vui lòng nhập địa chỉ email đã đăng ký.';
+        _errorMessage = 'Bạn hãy nhập email đã đăng ký nhé.';
         _isFatalNetworkError = false;
         _isAccountNotFound = false;
       });
@@ -48,7 +48,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
     }
     if (!_isValidEmail(email)) {
       setState(() {
-        _errorMessage = 'Địa chỉ email không đúng định dạng.';
+        _errorMessage = 'Email chưa đúng định dạng.';
         _isFatalNetworkError = false;
         _isAccountNotFound = false;
       });
@@ -69,7 +69,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Mã OTP khôi phục mật khẩu đã được gửi tới email của bạn.'),
+            content: Text('Mã xác nhận khôi phục mật khẩu đã gửi tới email của bạn.'),
             backgroundColor: AppColors.success,
           ),
         );
@@ -106,7 +106,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       resizeToAvoidBottomInset: true,
-      appBar: const AppHeader(title: 'Quên Mật Khẩu', showBack: true),
+      appBar: const AppHeader(title: 'Quên mật khẩu', showBack: true),
       body: SafeArea(
         top: false,
         child: SingleChildScrollView(
@@ -120,8 +120,8 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
             children: [
               if (_isFatalNetworkError)
                 AppErrorState(
-                  title: 'Không thể kết nối máy chủ',
-                  message: _errorMessage ?? 'Đã có lỗi xảy ra khi gửi yêu cầu khôi phục mật khẩu.',
+                  title: 'Không kết nối được',
+                  message: _errorMessage ?? 'Không gửi được yêu cầu, bạn kiểm tra lại mạng rồi thử lại nhé.',
                   onRetry: _handleSubmit,
                   retryLabel: 'Thử lại ngay',
                   secondaryActionLabel: 'Đăng nhập lại',
@@ -131,7 +131,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                 AppEmptyState(
                   icon: Icons.search_off_outlined,
                   title: 'Không tìm thấy tài khoản',
-                  message: 'Địa chỉ email này chưa được đăng ký trong hệ thống Nguyệt Phố B2B.',
+                  message: 'Email này chưa được đăng ký trên Nguyệt Phố.',
                   actionLabel: 'Đăng ký tài khoản mới',
                   onAction: () => context.push('/register'),
                   secondaryActionLabel: 'Thử lại email khác',
@@ -157,7 +157,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                     onPressed: () => context.go('/login'),
                     icon: const Icon(Icons.arrow_back, size: 16, color: AppColors.textSecondary),
                     label: const Text(
-                      'Quay lại màn hình đăng nhập',
+                      'Quay lại đăng nhập',
                       style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
                     ),
                   ),
@@ -237,7 +237,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
         ),
         const SizedBox(height: AppTokens.spaceSM),
         const Text(
-          'Nhập địa chỉ email doanh nghiệp hoặc cá nhân đã đăng ký để nhận mã OTP thiết lập mật khẩu mới.',
+          'Nhập địa chỉ email đã đăng ký để nhận mã xác nhận đặt lại mật khẩu mới.',
           style: TextStyle(
             fontFamily: 'Roboto',
             fontSize: 13,
@@ -314,7 +314,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                 textInputAction: TextInputAction.done,
                 onSubmitted: (_) => _handleSubmit(),
                 decoration: const InputDecoration(
-                  labelText: 'Địa chỉ Email *',
+                  labelText: 'Địa chỉ email *',
                   hintText: 'Nhập email đã đăng ký',
                   prefixIcon: Icon(Icons.email_outlined, color: AppColors.textMuted),
                 ),

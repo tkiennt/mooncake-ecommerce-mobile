@@ -112,7 +112,7 @@ class _PublicShopScreenState extends ConsumerState<PublicShopScreen>
         _isLoading = false;
       });
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Lỗi tải danh mục: $e')),
+        const SnackBar(content: Text('Chưa tải được danh mục, bạn thử lại sau nhé.')),
       );
     }
   }
@@ -122,7 +122,7 @@ class _PublicShopScreenState extends ConsumerState<PublicShopScreen>
     if (_isLoading && _shop == null) {
       return Scaffold(
         appBar: const AppHeader(
-          title: 'Gian Hàng Doanh Nghiệp',
+          title: 'Xưởng bánh',
           showBack: true,
         ),
         body: ListView(
@@ -147,12 +147,12 @@ class _PublicShopScreenState extends ConsumerState<PublicShopScreen>
     if (_errorMessage != null && _shop == null) {
       return Scaffold(
         appBar: const AppHeader(
-          title: 'Gian Hàng Doanh Nghiệp',
+          title: 'Xưởng bánh',
           showBack: true,
         ),
         body: AppErrorState(
           icon: Icons.storefront_outlined,
-          title: 'Không tìm thấy gian hàng',
+          title: 'Chưa tìm thấy xưởng bánh',
           message: _errorMessage,
           retryLabel: 'Thử lại',
           onRetry: _fetchShopData,
@@ -170,7 +170,7 @@ class _PublicShopScreenState extends ConsumerState<PublicShopScreen>
         rightIcon: Icons.share_outlined,
         onRightPress: () {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Đã sao chép liên kết gian hàng chính thức!')),
+            const SnackBar(content: Text('Đã sao chép liên kết xưởng bánh!')),
           );
         },
       ),
@@ -193,7 +193,7 @@ class _PublicShopScreenState extends ConsumerState<PublicShopScreen>
                   unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.normal, fontSize: 13),
                   tabs: [
                     Tab(text: 'Sản phẩm (${_products.length})'),
-                    const Tab(text: 'Chứng nhận & ATTP'),
+                    const Tab(text: 'Chứng nhận chất lượng'),
                     Tab(text: 'Đánh giá (${_reviews.length})'),
                   ],
                 ),
@@ -261,7 +261,7 @@ class _PublicShopScreenState extends ConsumerState<PublicShopScreen>
                       Icon(Icons.verified, size: 14, color: AppColors.accentGoldLight),
                       SizedBox(width: 6),
                       Text(
-                        'OFFICIAL STORE • XƯỞNG BÁNH CHÍNH THỨC',
+                        'XƯỞNG BÁNH ĐỐI TÁC',
                         style: TextStyle(
                           color: Colors.white,
                           fontSize: 10.5,
@@ -572,9 +572,9 @@ class _PublicShopScreenState extends ConsumerState<PublicShopScreen>
                 runSpacing: 8,
                 children: [
                   _buildBadge(Icons.check_circle_outline, 'Đạt chuẩn ISO 22000:2018'),
-                  _buildBadge(Icons.ac_unit, 'Kiểm soát Cold-Chain 18-22°C'),
-                  _buildBadge(Icons.verified_user_outlined, 'Quy trình chuẩn HACCP'),
-                  _buildBadge(Icons.assignment_turned_in_outlined, 'Hóa đơn VAT & Hợp đồng B2B'),
+                  _buildBadge(Icons.ac_unit, 'Bảo quản nhiệt độ tiêu chuẩn'),
+                  _buildBadge(Icons.verified_user_outlined, 'Quy trình an toàn vệ sinh'),
+                  _buildBadge(Icons.assignment_turned_in_outlined, 'Hoá đơn VAT & Hợp đồng đầy đủ'),
                 ],
               ),
             ],
@@ -595,7 +595,7 @@ class _PublicShopScreenState extends ConsumerState<PublicShopScreen>
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Text(
-                'Năng lực sản xuất & Thu mua sỉ',
+                'Năng lực sản xuất & Cung ứng',
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.bold,

@@ -162,7 +162,7 @@ class _RfqListScreenState extends ConsumerState<RfqListScreen> {
 
     if (_errorMessage != null) {
       return AppErrorState(
-        title: 'Không thể tải danh sách RFQ',
+        title: 'Chưa tải được danh sách yêu cầu',
         message: _errorMessage!,
         onRetry: _loadRfqs,
         retryLabel: 'Thử lại ngay',
@@ -173,8 +173,8 @@ class _RfqListScreenState extends ConsumerState<RfqListScreen> {
       return AppEmptyState(
         icon: Icons.assignment_outlined,
         title: 'Chưa có yêu cầu báo giá nào',
-        message: 'Tạo yêu cầu báo giá (RFQ) để nhận báo giá sỉ cạnh tranh và ưu đãi thiết kế hộp từ các xưởng sản xuất uy tín.',
-        actionLabel: 'Tạo RFQ ngay',
+        message: 'Tạo yêu cầu để nhận báo giá từ các xưởng bánh uy tín.',
+        actionLabel: 'Tạo yêu cầu ngay',
         onAction: () => context.push('/create-rfq').then((res) {
           if (res == true) _loadRfqs();
         }),
@@ -377,10 +377,10 @@ class _RfqListScreenState extends ConsumerState<RfqListScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppHeader(
-        title: 'Yêu Cầu Báo Giá B2B',
+        title: 'Yêu cầu báo giá',
         showBack: true,
         rightIcon: Icons.add_circle_outline,
-        rightLabel: 'Tạo RFQ',
+        rightLabel: 'Tạo yêu cầu',
         onRightPress: () => context.push('/create-rfq').then((res) {
           if (res == true) _loadRfqs();
         }),

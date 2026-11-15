@@ -119,7 +119,7 @@ class _ContractSignScreenState extends ConsumerState<ContractSignScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           backgroundColor: AppColors.info,
-          content: Text('Mã OTP mẫu: 123456 (hoặc kiểm tra hộp thư email của bạn).'),
+          content: Text('Mã xác nhận mẫu: 123456 (hoặc bạn kiểm tra hộp thư email nhé).'),
         ),
       );
       setState(() => _otpSent = true);
@@ -136,16 +136,16 @@ class _ContractSignScreenState extends ConsumerState<ContractSignScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             backgroundColor: AppColors.success,
-            content: Text('Mã OTP xác thực ký số đã được gửi tới email của bạn.'),
+            content: Text('Mã xác nhận đã gửi tới email của bạn.'),
           ),
         );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
+          const SnackBar(
             backgroundColor: AppColors.error,
-            content: Text('Lỗi gửi OTP: ${e.toString().replaceFirst('Exception: ', '')}'),
+            content: Text('Chưa gửi được mã xác nhận, bạn thử lại sau nhé.'),
           ),
         );
       }
@@ -159,21 +159,21 @@ class _ContractSignScreenState extends ConsumerState<ContractSignScreen> {
   Future<void> _handleSignContract() async {
     if (_signatureController.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Vui lòng ký tên vào khung chữ ký điện tử.')),
+        const SnackBar(content: Text('Bạn hãy ký tên vào khung chữ ký nhé.')),
       );
       return;
     }
 
     if (!_agreeTerms) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Vui lòng đồng ý với các điều khoản hợp đồng trước khi ký.')),
+        const SnackBar(content: Text('Bạn hãy đồng ý với điều khoản hợp đồng trước khi ký nhé.')),
       );
       return;
     }
 
     if (_otpCode.trim().length < 6) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Vui lòng nhập đầy đủ mã OTP 6 chữ số.')),
+        const SnackBar(content: Text('Bạn hãy nhập đủ 6 chữ số của mã xác nhận nhé.')),
       );
       return;
     }
@@ -196,16 +196,16 @@ class _ContractSignScreenState extends ConsumerState<ContractSignScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             backgroundColor: AppColors.success,
-            content: Text('Hợp đồng đã được ký số thành công và chuyển sang xưởng sản xuất!'),
+            content: Text('Hợp đồng đã ký thành công và đã gửi sang xưởng bánh!'),
           ),
         );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
+          const SnackBar(
             backgroundColor: AppColors.error,
-            content: Text('Lỗi ký hợp đồng: ${e.toString().replaceFirst('Exception: ', '')}'),
+            content: Text('Chưa hoàn tất ký hợp đồng, bạn thử lại sau nhé.'),
           ),
         );
       }
@@ -220,7 +220,7 @@ class _ContractSignScreenState extends ConsumerState<ContractSignScreen> {
     final supplier = _loadedContract?.supplierName ??
         widget.contractData?['supplierName'] ??
         widget.contractData?['bid']?.supplierName ??
-        'Xưởng sản xuất B2B';
+        'Xưởng bánh';
 
     final totalVal = _loadedContract?.totalValue ??
         (widget.contractData?['totalValue'] as num?)?.toDouble() ??
@@ -259,7 +259,7 @@ class _ContractSignScreenState extends ConsumerState<ContractSignScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Văn Bản Hợp Đồng $_contractNumber',
+                            'Văn bản hợp đồng $_contractNumber',
                             style: const TextStyle(
                               fontFamily: 'Roboto',
                               fontSize: 16,
@@ -269,7 +269,7 @@ class _ContractSignScreenState extends ConsumerState<ContractSignScreen> {
                           ),
                           const SizedBox(height: 2),
                           const Text(
-                            'Điều khoản kinh tế điện tử & cam kết bảo lãnh',
+                            'Điều khoản mua bán & cam kết giao hàng',
                             style: TextStyle(fontFamily: 'Roboto', fontSize: 11.5, color: AppColors.textSecondary),
                           ),
                         ],
@@ -298,7 +298,7 @@ class _ContractSignScreenState extends ConsumerState<ContractSignScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text('BÊN A (BÊN MUA): Quý Khách hàng Doanh Nghiệp', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12.5)),
+                            const Text('BÊN A (BÊN MUA): Khách hàng', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12.5)),
                             const SizedBox(height: 4),
                             Text('BÊN B (BÊN CUNG CẤP): $supplier', style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12.5, color: AppColors.primary)),
                             const SizedBox(height: 4),
@@ -313,28 +313,28 @@ class _ContractSignScreenState extends ConsumerState<ContractSignScreen> {
                       ),
                       const SizedBox(height: 4),
                       const Text(
-                        'Bên B cam kết sản xuất và đóng gói bánh trung thu thủ công đúng tiêu chuẩn vệ sinh an toàn thực phẩm, bao bì in laser logo độc quyền Bên A đã duyệt. Mọi kiện hàng đều có tem seal nguyên bản.',
+                        'Bên B cam kết làm bánh và đóng gói đúng tiêu chuẩn vệ sinh an toàn thực phẩm, bao bì và in logo đúng yêu cầu.',
                         style: TextStyle(fontSize: 12.5, height: 1.45),
                       ),
                       const SizedBox(height: AppTokens.spaceMD),
                       const Text(
-                        'ĐIỀU 2. ĐẶT CỌC KÝ QUỸ VÀ QUYẾT TOÁN',
+                        'ĐIỀU 2. ĐẶT CỌC VÀ THANH TOÁN',
                         style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: AppColors.primary),
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        '• Đợt 1: Bên A nộp khoản đặt cọc 30% (${_formatCurrency(totalVal * 0.3)}) vào tài khoản ký quỹ trung gian sau khi ký số hợp đồng.\n'
-                        '• Đợt 2: Bên A thanh toán 70% giá trị còn lại sau khi đối soát đầy đủ biên bản giao nhận PoD và cảm biến xe lạnh.',
+                        '• Đợt 1: Bên A thanh toán đặt cọc 30% (${_formatCurrency(totalVal * 0.3)}) sau khi ký hợp đồng.\n'
+                        '• Đợt 2: Bên A thanh toán 70% còn lại sau khi nhận hàng và kiểm tra đủ số lượng.',
                         style: const TextStyle(fontSize: 12.5, height: 1.45),
                       ),
                       const SizedBox(height: AppTokens.spaceMD),
                       const Text(
-                        'ĐIỀU 3. BẢO VẬN XE LẠNH VÀ HOÀN TIỀN 100%',
+                        'ĐIỀU 3. BẢO QUẢN, VẬN CHUYỂN VÀ ĐỔI TRẢ',
                         style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: AppColors.primary),
                       ),
                       const SizedBox(height: 4),
                       const Text(
-                        'Kiện hàng bắt buộc duy trì nhiệt độ thùng xe từ 18-25°C. Nếu phát hiện móp méo, rách seal hoặc nhiệt độ sai lệch, Bên B chịu trách nhiệm đổi mới hoặc hoàn tiền ngay trong vòng 24 giờ.',
+                        'Bánh được bảo quản và vận chuyển đúng nhiệt độ tiêu chuẩn. Nếu phát hiện hư hỏng, Bên B chịu trách nhiệm đổi mới hoặc hoàn tiền cho Bên A.',
                         style: TextStyle(fontSize: 12.5, height: 1.45),
                       ),
                       const SizedBox(height: AppTokens.space2XL),
@@ -345,7 +345,7 @@ class _ContractSignScreenState extends ConsumerState<ContractSignScreen> {
               Padding(
                 padding: const EdgeInsets.all(AppTokens.spaceLG),
                 child: CustomButton(
-                  title: 'Đã đọc và đồng ý nội dung',
+                  title: 'Đồng ý nội dung',
                   size: ButtonSize.large,
                   width: double.infinity,
                   onPress: () {
@@ -385,7 +385,7 @@ class _ContractSignScreenState extends ConsumerState<ContractSignScreen> {
                 ),
                 const SizedBox(height: AppTokens.spaceXL),
                 const Text(
-                  'Ký Số Hợp Đồng Thành Công!',
+                  'Ký hợp đồng thành công!',
                   style: TextStyle(
                     fontFamily: 'Roboto',
                     fontSize: 18,
@@ -395,7 +395,7 @@ class _ContractSignScreenState extends ConsumerState<ContractSignScreen> {
                 ),
                 const SizedBox(height: AppTokens.spaceMD),
                 Text(
-                  'Hợp đồng $contractNumber đã được xác thực an toàn bằng chữ ký điện tử và mã OTP Email. Đối tác sản xuất đã nhận thông báo để tiến hành gia công đơn hàng.',
+                  'Hợp đồng $contractNumber đã được ký thành công. Xưởng bánh đã nhận được thông báo để bắt đầu làm bánh cho bạn.',
                   textAlign: TextAlign.center,
                   style: const TextStyle(
                     fontFamily: 'Roboto',
@@ -461,9 +461,9 @@ class _ContractSignScreenState extends ConsumerState<ContractSignScreen> {
     if (_contractError != null) {
       return Scaffold(
         backgroundColor: AppColors.background,
-        appBar: AppHeader(title: 'Ký Hợp Đồng $contractNumber', showBack: true),
+        appBar: AppHeader(title: 'Ký hợp đồng $contractNumber', showBack: true),
         body: AppErrorState(
-          title: 'Không thể tải thông tin hợp đồng',
+          title: 'Chưa tải được thông tin hợp đồng',
           message: _contractError!,
           onRetry: _initContractData,
         ),
@@ -472,7 +472,7 @@ class _ContractSignScreenState extends ConsumerState<ContractSignScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppHeader(title: 'Ký Hợp Đồng $contractNumber', showBack: true),
+      appBar: AppHeader(title: 'Ký hợp đồng $contractNumber', showBack: true),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(AppTokens.spaceLG),
         child: Column(
@@ -485,8 +485,8 @@ class _ContractSignScreenState extends ConsumerState<ContractSignScreen> {
                 current: 2,
                 items: [
                   StepItemData(title: 'Kiểm tra', desc: 'Điều khoản HĐ'),
-                  StepItemData(title: 'Ký số', desc: 'Chữ ký tay'),
-                  StepItemData(title: 'Xác thực', desc: 'OTP Email'),
+                  StepItemData(title: 'Ký tên', desc: 'Chữ ký'),
+                  StepItemData(title: 'Xác thực', desc: 'Xác nhận email'),
                 ],
               ),
             ),
@@ -508,7 +508,7 @@ class _ContractSignScreenState extends ConsumerState<ContractSignScreen> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       const Text(
-                        'Tóm Tắt Hợp Đồng Kinh Tế',
+                        'Tóm tắt hợp đồng',
                         style: TextStyle(
                           fontFamily: 'Roboto',
                           fontWeight: FontWeight.w700,
@@ -537,8 +537,8 @@ class _ContractSignScreenState extends ConsumerState<ContractSignScreen> {
                   ),
                   const SizedBox(height: AppTokens.spaceSM),
                   const Text('• Xưởng cam kết đúng chuẩn nguyên liệu, quy cách đóng gói và in logo thương hiệu.', style: TextStyle(fontSize: 12, height: 1.45, color: AppColors.textSecondary)),
-                  const Text('• Bảo quản & vận chuyển bằng xe lạnh chuyên dụng 18-25°C. Đổi mới 100% nếu phát sinh lỗi.', style: TextStyle(fontSize: 12, height: 1.45, color: AppColors.textSecondary)),
-                  const Text('• Khoản đặt cọc 30% được giữ trong tài khoản ký quỹ an toàn cho tới khi nghiệm thu PoD.', style: TextStyle(fontSize: 12, height: 1.45, color: AppColors.textSecondary)),
+                  const Text('• Bảo quản & vận chuyển tiêu chuẩn 18-25°C. Đổi mới 100% nếu phát sinh lỗi.', style: TextStyle(fontSize: 12, height: 1.45, color: AppColors.textSecondary)),
+                  const Text('• Khoản đặt cọc 30% được đảm bảo an toàn cho tới khi nhận hàng thành công.', style: TextStyle(fontSize: 12, height: 1.45, color: AppColors.textSecondary)),
                 ],
               ),
             ),
@@ -560,7 +560,7 @@ class _ContractSignScreenState extends ConsumerState<ContractSignScreen> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       const Text(
-                        'Chữ ký tay người đại diện *',
+                        'Chữ ký người đại diện *',
                         style: TextStyle(
                           fontFamily: 'Roboto',
                           fontWeight: FontWeight.w700,
@@ -595,7 +595,7 @@ class _ContractSignScreenState extends ConsumerState<ContractSignScreen> {
                   ),
                   const SizedBox(height: 6),
                   const Text(
-                    'Vui lòng ký tay trực tiếp bằng ngón tay hoặc bút cảm ứng vào khung phía trên.',
+                    'Bạn hãy ký trực tiếp vào khung phía trên nhé.',
                     style: TextStyle(fontFamily: 'Roboto', fontSize: 11, color: AppColors.textMuted),
                   ),
                 ],
@@ -619,7 +619,7 @@ class _ContractSignScreenState extends ConsumerState<ContractSignScreen> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       const Text(
-                        'Mã OTP xác thực ký số *',
+                        'Mã xác nhận *',
                         style: TextStyle(
                           fontFamily: 'Roboto',
                           fontWeight: FontWeight.w700,
@@ -640,7 +640,7 @@ class _ContractSignScreenState extends ConsumerState<ContractSignScreen> {
                               )
                             : const Icon(Icons.send_outlined, size: 14, color: AppColors.primary),
                         label: Text(
-                          _otpSent ? 'Gửi lại OTP' : 'Lấy mã OTP',
+                          _otpSent ? 'Gửi lại mã' : 'Lấy mã',
                           style: const TextStyle(fontSize: 12, color: AppColors.primary, fontWeight: FontWeight.w700),
                         ),
                         onPressed: _isSendingOtp ? null : _handleRequestOtp,
@@ -649,7 +649,7 @@ class _ContractSignScreenState extends ConsumerState<ContractSignScreen> {
                   ),
                   const SizedBox(height: 2),
                   const Text(
-                    'Mã OTP 6 số được gửi tới email tài khoản của bạn để đảm bảo tính pháp lý theo Luật Giao dịch điện tử.',
+                    'Mã xác nhận 6 số đã được gửi tới email tài khoản của bạn.',
                     style: TextStyle(fontFamily: 'Roboto', fontSize: 11.5, color: AppColors.textSecondary, height: 1.35),
                   ),
                   const SizedBox(height: AppTokens.spaceMD),
@@ -685,7 +685,7 @@ class _ContractSignScreenState extends ConsumerState<ContractSignScreen> {
                     const SizedBox(width: 8),
                     const Expanded(
                       child: Text(
-                        'Tôi đã đọc, hiểu rõ và đồng ý toàn bộ điều khoản hợp đồng kinh tế và cam kết ký quỹ bảo đảm.',
+                        'Tôi đã đọc, hiểu rõ và đồng ý toàn bộ điều khoản hợp đồng.',
                         style: TextStyle(fontFamily: 'Roboto', fontSize: 12, height: 1.4, color: AppColors.textPrimary),
                       ),
                     ),
@@ -697,7 +697,7 @@ class _ContractSignScreenState extends ConsumerState<ContractSignScreen> {
 
             // 6. Submit Button
             CustomButton(
-              title: 'Xác nhận ký số hợp đồng',
+              title: 'Xác nhận ký hợp đồng',
               size: ButtonSize.large,
               loading: _isSubmitting,
               disabled: !_agreeTerms || _isSubmitting,

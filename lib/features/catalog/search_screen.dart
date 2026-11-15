@@ -52,11 +52,11 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
   String? _errorMessage;
 
   static const List<String> _popularSuggestions = [
-    'Hộp Hoàng Triều VIP',
+    'Hộp quà Trăng Rằm',
     'Bánh nướng thập cẩm',
     'Bánh Lava trứng chảy',
     'Hộp quà doanh nghiệp',
-    'In ép kim logo',
+    'In logo doanh nghiệp',
     'Bánh dẻo hạt sen',
   ];
 
@@ -155,7 +155,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
       if (mounted) {
         setState(() {
           _isLoading = false;
-          _errorMessage = 'Không thể tải danh sách sản phẩm. Vui lòng thử lại sau.';
+          _errorMessage = 'Chưa tải được danh sách bánh, bạn thử lại sau nhé.';
         });
       }
     }
@@ -261,7 +261,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         const Text(
-                          'Bộ Lọc Tìm Kiếm',
+                          'Bộ lọc tìm kiếm',
                           style: TextStyle(
                             fontFamily: 'Roboto',
                             fontSize: 17,
@@ -534,7 +534,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: const AppHeader(
-        title: 'Khám Phá Danh Mục',
+        title: 'Danh mục sản phẩm',
         showBack: false,
       ),
       body: Column(
@@ -552,7 +552,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                   child: TextField(
                     controller: _searchController,
                     decoration: InputDecoration(
-                      hintText: 'Tìm kiếm bánh, xưởng, vị bánh...',
+                      hintText: 'Tìm bánh trung thu, xưởng bánh...',
                       hintStyle: const TextStyle(
                         fontFamily: 'Roboto',
                         fontSize: 13,
@@ -799,7 +799,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
           SizedBox(
             height: MediaQuery.of(context).size.height * 0.6,
             child: AppErrorState(
-              title: 'Không thể tải danh sách sản phẩm',
+              title: 'Chưa tải được danh sách bánh',
               message: _errorMessage,
               onRetry: () => _loadProducts(isRefresh: true),
             ),
@@ -816,9 +816,9 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
             height: MediaQuery.of(context).size.height * 0.6,
             child: AppEmptyState(
               icon: Icons.search_off_outlined,
-              title: 'Không tìm thấy sản phẩm phù hợp',
-              message: 'Hãy thử điều chỉnh từ khoá, mức giá hoặc loại bỏ các tiêu chí lọc.',
-              actionLabel: 'Xoá tất cả bộ lọc',
+              title: 'Chưa tìm thấy bánh phù hợp',
+              message: 'Bạn thử đổi từ khoá tìm kiếm hoặc đặt lại bộ lọc nhé.',
+              actionLabel: 'Đặt lại bộ lọc',
               onAction: _resetAllFilters,
             ),
           ),
@@ -864,7 +864,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
               padding: EdgeInsets.symmetric(vertical: 20),
               child: Center(
                 child: Text(
-                  'Đã hiển thị tất cả sản phẩm',
+                  'Đã hiển thị tất cả',
                   style: TextStyle(
                     fontFamily: 'Roboto',
                     fontSize: 12,

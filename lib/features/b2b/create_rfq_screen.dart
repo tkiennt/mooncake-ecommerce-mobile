@@ -116,7 +116,7 @@ class _CreateRfqScreenState extends ConsumerState<CreateRfqScreen> {
       final unitTargetPrice = (budget / qty).roundToDouble();
       final packagingReq = [
         if (_customPackaging) 'Thiết kế bao bì riêng & in logo thương hiệu',
-        if (_sampleBoxNeeded) 'Cung cấp 01 hộp mẫu thử nguyên seal trước khi ký hợp đồng',
+        if (_sampleBoxNeeded) 'Gửi hộp bánh mẫu dùng thử trước khi ký hợp đồng',
       ].join('; ');
 
       final payload = <String, dynamic>{
@@ -151,9 +151,9 @@ class _CreateRfqScreenState extends ConsumerState<CreateRfqScreen> {
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
+          const SnackBar(
             backgroundColor: AppColors.success,
-            content: Text('Yêu cầu báo giá ${rfq.rfqNumber.isNotEmpty ? rfq.rfqNumber : ""} đã được tạo thành công!'),
+            content: Text('Đã gửi yêu cầu báo giá thành công!'),
           ),
         );
         Navigator.of(context).pop(true);
@@ -161,9 +161,9 @@ class _CreateRfqScreenState extends ConsumerState<CreateRfqScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
+          const SnackBar(
             backgroundColor: AppColors.error,
-            content: Text('Lỗi tạo RFQ: ${e.toString().replaceFirst('Exception: ', '')}'),
+            content: Text('Không tạo được yêu cầu báo giá, bạn thử lại sau nhé.'),
           ),
         );
       }
@@ -179,7 +179,7 @@ class _CreateRfqScreenState extends ConsumerState<CreateRfqScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: const AppHeader(
-        title: 'Tạo Yêu Cầu Báo Giá (RFQ)',
+        title: 'Tạo yêu cầu báo giá',
         showBack: true,
       ),
       body: SingleChildScrollView(
@@ -201,7 +201,7 @@ class _CreateRfqScreenState extends ConsumerState<CreateRfqScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Text(
-                      'Thông Tin Đơn Hàng Doanh Nghiệp',
+                      'Thông tin đặt bánh',
                       style: TextStyle(
                         fontFamily: 'Roboto',
                         fontWeight: FontWeight.w700,
@@ -214,7 +214,7 @@ class _CreateRfqScreenState extends ConsumerState<CreateRfqScreen> {
                       controller: _titleController,
                       decoration: InputDecoration(
                         labelText: 'Tiêu đề yêu cầu báo giá *',
-                        hintText: 'VD: Đặt 500 hộp quà trung thu doanh nghiệp',
+                        hintText: 'VD: Đặt 500 hộp bánh trung thu',
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(AppTokens.radiusInput)),
                       ),
                     ),
@@ -301,7 +301,7 @@ class _CreateRfqScreenState extends ConsumerState<CreateRfqScreen> {
                       maxLines: 3,
                       decoration: InputDecoration(
                         labelText: 'Yêu cầu quy cách, hương vị & in ấn',
-                        hintText: 'Chi tiết các vị bánh, bao bì, xe lạnh...',
+                        hintText: 'Chi tiết về vị bánh, bao bì, vận chuyển...',
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(AppTokens.radiusInput)),
                       ),
                     ),
@@ -317,7 +317,7 @@ class _CreateRfqScreenState extends ConsumerState<CreateRfqScreen> {
                       value: _sampleBoxNeeded,
                       activeColor: AppColors.primary,
                       contentPadding: EdgeInsets.zero,
-                      title: const Text('Gửi 01 hộp mẫu thử nguyên seal tận nơi trước khi ký HĐ', style: TextStyle(fontFamily: 'Roboto', fontSize: 13)),
+                      title: const Text('Gửi hộp bánh mẫu dùng thử trước khi ký hợp đồng', style: TextStyle(fontFamily: 'Roboto', fontSize: 13)),
                       onChanged: (val) => setState(() => _sampleBoxNeeded = val ?? false),
                     ),
                   ],
@@ -325,7 +325,7 @@ class _CreateRfqScreenState extends ConsumerState<CreateRfqScreen> {
               ),
               const SizedBox(height: AppTokens.space2XL),
               CustomButton(
-                title: 'Gửi yêu cầu nhận báo giá xưởng',
+                title: 'Gửi yêu cầu báo giá',
                 size: ButtonSize.large,
                 loading: _isSubmitting,
                 disabled: _isSubmitting,

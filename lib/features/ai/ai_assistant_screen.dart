@@ -46,7 +46,7 @@ class _AiAssistantScreenState extends ConsumerState<AiAssistantScreen> {
     'Tặng đối tác Nhật Bản',
     'Bánh ăn kiêng ít ngọt',
     'In logo ép kim từ 50 hộp',
-    'Chính sách chiết khấu B2B',
+    'Chính sách chiết khấu',
     'Bánh thập cẩm bào ngư vi cá',
   ];
 
@@ -82,7 +82,7 @@ class _AiAssistantScreenState extends ConsumerState<AiAssistantScreen> {
         if (_messages.isEmpty) {
           _messages.add(
             ChatMessage(
-              text: 'Kính chào Quý Doanh Nghiệp! Tôi là Trợ Lý Tư Vấn Quà Hoàng Gia Nguyệt Phố. Bạn cần tư vấn set quà trung thu theo ngân sách, đối tượng đối tác hay quy chuẩn đóng gói nào?',
+              text: 'Chào bạn! Mình là Trợ lý Nguyệt Phố. Bạn cần tư vấn chọn set bánh trung thu theo ngân sách, khẩu vị hay đóng gói thế nào?',
               isUser: false,
               time: DateTime.now(),
             ),
@@ -147,7 +147,7 @@ class _AiAssistantScreenState extends ConsumerState<AiAssistantScreen> {
       if (!mounted) return;
       setState(() {
         _messages.add(ChatMessage(
-          text: 'Xin lỗi Quý khách, không thể kết nối tới máy chủ AI tư vấn: ${e.toString().replaceFirst('Exception: ', '')}. Vui lòng thử lại.',
+          text: 'Không kết nối được trợ lý tư vấn, bạn thử lại sau nhé.',
           isUser: false,
           time: DateTime.now(),
           isError: true,
@@ -165,7 +165,7 @@ class _AiAssistantScreenState extends ConsumerState<AiAssistantScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: const AppHeader(title: 'Trợ Lý Tư Vấn Quà AI', showBack: true),
+      appBar: const AppHeader(title: 'Tư vấn chọn quà', showBack: true),
       body: _buildContent(),
     );
   }
@@ -178,7 +178,7 @@ class _AiAssistantScreenState extends ConsumerState<AiAssistantScreen> {
     if (_initError != null && _messages.isEmpty) {
       return Center(
         child: AppErrorState(
-          title: 'Không thể kết nối trợ lý AI',
+          title: 'Chưa kết nối được trợ lý',
           message: _initError,
           retryLabel: 'Thử lại',
           onRetry: _initSession,
@@ -201,7 +201,7 @@ class _AiAssistantScreenState extends ConsumerState<AiAssistantScreen> {
                 const SizedBox(width: AppTokens.spaceSM),
                 Expanded(
                   child: Text(
-                    'Kết nối AI gặp gián đoạn: $_initError',
+                    'Kết nối bị gián đoạn, bạn thử lại nhé',
                     style: const TextStyle(
                       fontFamily: 'Roboto',
                       fontSize: 11.5,
@@ -285,8 +285,8 @@ class _AiAssistantScreenState extends ConsumerState<AiAssistantScreen> {
               ? Center(
                   child: AppEmptyState(
                     icon: Icons.smart_toy_outlined,
-                    title: 'Trợ Lý AI Sẵn Sàng Hỗ Trợ',
-                    message: 'Hỏi về set quà trung thu, ngân sách doanh nghiệp hoặc chiết khấu số lượng lớn.',
+                    title: 'Trợ lý Nguyệt Phố',
+                    message: 'Hỏi về set quà trung thu, ngân sách hoặc chiết khấu số lượng lớn.',
                   ),
                 )
               : ListView.builder(
@@ -322,7 +322,7 @@ class _AiAssistantScreenState extends ConsumerState<AiAssistantScreen> {
                               ),
                               SizedBox(width: AppTokens.spaceSM),
                               Text(
-                                'Trợ lý AI đang soạn câu trả lời...',
+                                'Đang tìm gợi ý phù hợp cho bạn...',
                                 style: TextStyle(
                                   fontFamily: 'Roboto',
                                   fontSize: 12,
@@ -420,7 +420,7 @@ class _AiAssistantScreenState extends ConsumerState<AiAssistantScreen> {
                     controller: _textController,
                     enabled: !_isSending,
                     decoration: InputDecoration(
-                      hintText: 'Hỏi AI về vị bánh, chiết khấu, mẫu hộp...',
+                      hintText: 'Nhập câu hỏi về vị bánh, chiết khấu, mẫu hộp...',
                       hintStyle: const TextStyle(
                         fontFamily: 'Roboto',
                         fontSize: 12.5,

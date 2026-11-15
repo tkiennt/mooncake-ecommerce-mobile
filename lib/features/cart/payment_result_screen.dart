@@ -108,7 +108,7 @@ class _PaymentResultScreenState extends ConsumerState<PaymentResultScreen> {
     } catch (e) {
       if (mounted) {
         setState(() {
-          _error = 'Không thể đồng bộ chi tiết đơn hàng: ${e.toString()}';
+          _error = 'Chưa tải được chi tiết đơn hàng, bạn thử lại sau nhé.';
           _isLoading = false;
         });
       }
@@ -119,7 +119,7 @@ class _PaymentResultScreenState extends ConsumerState<PaymentResultScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: const AppHeader(
-        title: 'Kết Quả Thanh Toán',
+        title: 'Kết quả thanh toán',
         showBack: false,
       ),
       body: _buildBody(),
@@ -153,7 +153,7 @@ class _PaymentResultScreenState extends ConsumerState<PaymentResultScreen> {
     // 2. Error state with AppErrorState
     if (_error != null && _order == null) {
       return AppErrorState(
-        title: 'Lỗi đồng bộ kết quả',
+        title: 'Chưa tải được kết quả',
         message: _error,
         onRetry: _loadOrderDetails,
         retryLabel: 'Thử lại',
@@ -166,9 +166,9 @@ class _PaymentResultScreenState extends ConsumerState<PaymentResultScreen> {
     if (widget.orderCode.isEmpty && _order == null) {
       return AppEmptyState(
         icon: Icons.receipt_long_outlined,
-        title: 'Không tìm thấy thông tin đơn hàng',
+        title: 'Chưa tìm thấy đơn hàng',
         message:
-            'Mã đơn hàng không hợp lệ hoặc thông tin giao dịch chưa được lưu lại trong hệ thống.',
+            'Không tìm thấy mã đơn hàng này hoặc đơn hàng chưa được lưu.',
         actionLabel: 'Xem danh sách đơn',
         onAction: () => context.go('/orders'),
         secondaryActionLabel: 'Về trang chủ',
@@ -213,8 +213,8 @@ class _PaymentResultScreenState extends ConsumerState<PaymentResultScreen> {
             // Status Title
             Text(
               isSuccess
-                  ? 'Đặt Cọc / Thanh Toán Thành Công!'
-                  : 'Giao Dịch Chưa Thành Công',
+                  ? 'Đặt hàng thành công!'
+                  : 'Thanh toán chưa hoàn tất',
               style: const TextStyle(
                 fontFamily: 'Roboto',
                 fontSize: 18,
@@ -230,8 +230,8 @@ class _PaymentResultScreenState extends ConsumerState<PaymentResultScreen> {
               padding: const EdgeInsets.symmetric(horizontal: AppTokens.spaceMD),
               child: Text(
                 isSuccess
-                    ? 'Đơn hàng mã $displayOrderCode đã được ghi nhận vào hệ thống sản xuất. Xưởng sẽ chuẩn bị nguyên liệu và giao theo tiến độ thỏa thuận.'
-                    : 'Giao dịch thanh toán chưa thể hoàn tất. Đơn hàng mã $displayOrderCode của bạn vẫn được lưu lại để có thể tiếp tục thanh toán.',
+                    ? 'Đơn hàng $displayOrderCode đã được ghi nhận. Xưởng bánh sẽ chuẩn bị và giao hàng theo đúng hẹn cho bạn.'
+                    : 'Thanh toán chưa hoàn tất. Đơn hàng $displayOrderCode của bạn vẫn được lưu để bạn có thể thanh toán lại bất cứ lúc nào.',
                 style: const TextStyle(
                   fontFamily: 'Roboto',
                   fontSize: 13,
@@ -394,7 +394,7 @@ class _PaymentResultScreenState extends ConsumerState<PaymentResultScreen> {
             // Next Actions (Hành động tiếp theo, CTA >= 48px)
             if (isSuccess) ...[
               CustomButton(
-                title: 'Theo dõi tiến độ đơn hàng',
+                title: 'Theo dõi đơn hàng',
                 icon: const Icon(Icons.local_shipping_outlined,
                     size: 20, color: AppColors.textWhite),
                 size: ButtonSize.large, // >= 48px

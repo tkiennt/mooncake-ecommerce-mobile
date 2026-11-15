@@ -11,6 +11,7 @@ import '../../shared_widgets/common/app_empty_state.dart';
 import '../../shared_widgets/common/app_error_state.dart';
 import '../../shared_widgets/common/app_skeleton.dart';
 import '../../shared_widgets/common/custom_button.dart';
+import '../driver/storage/driver_storage.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -409,6 +410,58 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     ),
                   ),
                 ],
+              ),
+            ),
+          ),
+          const SizedBox(height: AppTokens.spaceLG),
+
+          // Divider
+          Row(
+            children: [
+              const Expanded(child: Divider()),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: AppTokens.spaceMD),
+                child: Text(
+                  'HOẶC',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.textMuted.withValues(alpha: 0.8),
+                  ),
+                ),
+              ),
+              const Expanded(child: Divider()),
+            ],
+          ),
+          const SizedBox(height: AppTokens.spaceLG),
+
+          // Nút phụ: Tôi là tài xế – nhập mã chuyến
+          OutlinedButton.icon(
+            onPressed: () async {
+              final trips = await DriverStorage.getSavedTrips();
+              if (context.mounted) {
+                if (trips.isNotEmpty) {
+                  context.push('/driver/trips');
+                } else {
+                  context.push('/driver/entry');
+                }
+              }
+            },
+            style: OutlinedButton.styleFrom(
+              minimumSize: const Size.fromHeight(50),
+              side: const BorderSide(color: AppColors.accent, width: 1.2),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(AppTokens.radiusDefault),
+              ),
+              backgroundColor: AppColors.accentGoldBg,
+            ),
+            icon: const Icon(Icons.local_shipping_outlined, color: AppColors.accent),
+            label: const Text(
+              'Tôi là tài xế – nhập mã chuyến',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+                color: AppColors.accent,
               ),
             ),
           ),

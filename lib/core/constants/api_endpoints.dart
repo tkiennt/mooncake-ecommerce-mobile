@@ -93,6 +93,10 @@ class ApiEndpoints {
   static String deliveryShareCode(String code) => '/deliveries/public/code/$code';
   static String deliveryClaim(String token) => '/deliveries/public/$token/claim';
   static String deliveryPublic(String token) => '/deliveries/public/$token';
+  static String deliveryPublicUploadPhoto(String token) =>
+      '/deliveries/public/$token/proofs/upload-photo';
+  static String deliveryPublicProofs(String token) =>
+      '/deliveries/public/$token/proofs';
 
   // Custom Packaging
   static String customPackaging(String orderId) =>

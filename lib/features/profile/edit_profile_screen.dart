@@ -3,10 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_tokens.dart';
+import '../../data/repositories/profile_repository.dart';
+import '../../providers/auth_provider.dart';
 import '../../shared_widgets/common/app_header.dart';
 import '../../shared_widgets/common/custom_button.dart';
-import '../../providers/auth_provider.dart';
-import '../../data/repositories/profile_repository.dart';
 
 class EditProfileScreen extends ConsumerStatefulWidget {
   const EditProfileScreen({super.key});
@@ -92,7 +92,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     return Scaffold(
       appBar: const AppHeader(title: 'Chỉnh Sửa Hồ Sơ', showBack: true),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(AppTokens.spaceLG),
         child: Form(
           key: _formKey,
           child: Column(
@@ -100,8 +100,8 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
             children: [
               if (_errorMessage != null) ...[
                 Container(
-                  padding: const EdgeInsets.all(12),
-                  margin: const EdgeInsets.only(bottom: 16),
+                  padding: const EdgeInsets.all(AppTokens.spaceMD),
+                  margin: const EdgeInsets.only(bottom: AppTokens.spaceLG),
                   decoration: BoxDecoration(
                     color: AppColors.errorBg,
                     borderRadius: BorderRadius.circular(AppTokens.radiusDefault),
@@ -110,7 +110,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                   child: Row(
                     children: [
                       const Icon(Icons.error_outline, color: AppColors.error, size: 20),
-                      const SizedBox(width: 8),
+                      const SizedBox(width: AppTokens.spaceSM),
                       Expanded(
                         child: Text(
                           _errorMessage!,
@@ -122,10 +122,10 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                 ),
               ],
               Container(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(AppTokens.spaceLG),
                 decoration: BoxDecoration(
                   color: AppColors.surface,
-                  borderRadius: BorderRadius.circular(AppTokens.lucianRadiusLg),
+                  borderRadius: BorderRadius.circular(AppTokens.radiusCard),
                   border: Border.all(color: AppColors.border),
                   boxShadow: AppTokens.shadowSubtle,
                 ),
@@ -136,6 +136,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                       decoration: const InputDecoration(
                         labelText: 'Họ và tên người đại diện *',
                         prefixIcon: Icon(Icons.person_outline, size: 20, color: AppColors.primary),
+                        contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 14),
                       ),
                       validator: (val) {
                         if (val == null || val.trim().isEmpty) {
@@ -144,13 +145,14 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                         return null;
                       },
                     ),
-                    const SizedBox(height: 14),
+                    const SizedBox(height: AppTokens.spaceLG),
                     TextFormField(
                       controller: _phoneController,
                       keyboardType: TextInputType.phone,
                       decoration: const InputDecoration(
                         labelText: 'Số điện thoại liên hệ *',
                         prefixIcon: Icon(Icons.phone_outlined, size: 20, color: AppColors.primary),
+                        contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 14),
                       ),
                       validator: (val) {
                         if (val == null || val.trim().isEmpty) {
@@ -162,15 +164,16 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                         return null;
                       },
                     ),
-                    const SizedBox(height: 14),
+                    const SizedBox(height: AppTokens.spaceLG),
                     TextFormField(
                       controller: _companyController,
                       decoration: const InputDecoration(
                         labelText: 'Tên công ty / Doanh nghiệp',
                         prefixIcon: Icon(Icons.business_outlined, size: 20, color: AppColors.textSecondary),
+                        contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 14),
                       ),
                     ),
-                    const SizedBox(height: 14),
+                    const SizedBox(height: AppTokens.spaceLG),
                     TextFormField(
                       controller: _emailController,
                       readOnly: true,
@@ -179,9 +182,10 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                         prefixIcon: Icon(Icons.email_outlined, size: 20, color: AppColors.textMuted),
                         filled: true,
                         fillColor: AppColors.surfaceHover,
+                        contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 14),
                       ),
                     ),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: AppTokens.space2XL),
                     CustomButton(
                       title: _isSaving ? 'Đang lưu thông tin...' : 'Lưu thay đổi',
                       size: ButtonSize.large,

@@ -1,12 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_tokens.dart';
-import '../../shared_widgets/common/app_header.dart';
-import '../../shared_widgets/antd/antd_steps.dart';
 import '../../data/models/order.dart';
+import '../../data/models/product.dart';
 import '../../data/repositories/order_repository.dart';
+import '../../providers/cart_provider.dart';
+import '../../shared_widgets/common/app_error_state.dart';
+import '../../shared_widgets/common/app_header.dart';
+import '../../shared_widgets/common/app_skeleton.dart';
+import '../../shared_widgets/common/app_status_chip.dart';
+import '../../shared_widgets/common/milestone_timeline.dart';
 
 class OrderDetailScreen extends ConsumerStatefulWidget {
   final Order order;
@@ -147,38 +153,145 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
     }
   }
 
+  void _handleReorder() {
+    if (_order.items.isEmpty) return;
+    for (final item in _order.items) {
+      final prod = Product(
+        id: item.productId.isNotEmpty ? item.productId : item.id,
+        name: item.productName,
+        basePrice: item.unitPrice,
+        coverImage: item.imageUrl,
+        shopId: _order.shopId,
+        shopName: _order.shopName ?? 'Nguyệt Phố B2B',
+      );
+      final variant = item.variantId != null && item.variantId!.isNotEmpty
+          ? ProductVariant(id: item.variantId!, name: item.variantName ?? '')
+          : null;
+      ref.read(cartProvider.notifier).addToCart(prod, variant, item.quantity);
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Đã thêm ${_order.items.length} món từ đơn ${_order.orderCode} vào giỏ hàng.'),
+        backgroundColor: AppColors.success,
+        action: SnackBarAction(
+          label: 'Xem giỏ hàng',
+          textColor: Colors.white,
+          onPressed: () => context.push('/cart'),
+        ),
+      ),
+    );
+  }
+
   String _formatCurrency(double amount) {
     return '${NumberFormat('#,###', 'vi_VN').format(amount)} ₫';
   }
 
-  int _calculateStep(String status) {
-    switch (status.toLowerCase()) {
-      case 'confirmed':
-      case 'processing':
-      case 'in_production':
-      case 'inproduction':
-        return 1;
-      case 'shipping':
-      case 'shipped':
-      case 'delivering':
-        return 2;
-      case 'delivered':
-      case 'completed':
-        return 3;
-      case 'pending':
-      default:
-        return 0;
+  List<MilestoneItem> _buildMilestones() {
+    final status = _order.status.toLowerCase();
+    final isCancelled = status == 'cancelled';
+
+    if (isCancelled) {
+      return const [
+        MilestoneItem(
+          title: 'Đặt hàng',
+          subtitle: 'Đã gửi yêu cầu',
+          status: MilestoneStepStatus.completed,
+          icon: Icons.receipt_long,
+        ),
+        MilestoneItem(
+          title: 'Đã hủy',
+          subtitle: 'Đã kết thúc',
+          status: MilestoneStepStatus.failed,
+          icon: Icons.cancel_outlined,
+        ),
+      ];
     }
+
+    int currentStep = 0;
+    if (['confirmed', 'processing', 'in_production', 'inproduction'].contains(status)) {
+      currentStep = 1;
+    } else if (['shipping', 'shipped', 'delivering', 'intransit', 'in_transit'].contains(status)) {
+      currentStep = 2;
+    } else if (['delivered', 'completed'].contains(status)) {
+      currentStep = 3;
+    }
+
+    MilestoneStepStatus getStatus(int stepIndex) {
+      if (stepIndex < currentStep) return MilestoneStepStatus.completed;
+      if (stepIndex == currentStep) return MilestoneStepStatus.current;
+      return MilestoneStepStatus.upcoming;
+    }
+
+    return [
+      MilestoneItem(
+        title: 'Đặt hàng',
+        subtitle: 'Đã xác nhận',
+        status: getStatus(0),
+        icon: Icons.receipt_long,
+      ),
+      MilestoneItem(
+        title: 'Sản xuất',
+        subtitle: 'Xưởng làm bánh',
+        status: getStatus(1),
+        icon: Icons.precision_manufacturing,
+      ),
+      MilestoneItem(
+        title: 'Giao hàng',
+        subtitle: 'Xe lạnh 18-22°C',
+        status: getStatus(2),
+        icon: Icons.local_shipping,
+      ),
+      MilestoneItem(
+        title: 'Nghiệm thu',
+        subtitle: 'Ký nhận PoD',
+        status: getStatus(3),
+        icon: Icons.task_alt,
+      ),
+    ];
   }
 
   @override
   Widget build(BuildContext context) {
-    final isCancelled = _order.status.toLowerCase() == 'cancelled';
+    if (_isLoading && _order.items.isEmpty) {
+      return Scaffold(
+        appBar: AppHeader(
+          title: 'Chi Tiết ${_order.orderCode}',
+          showBack: true,
+        ),
+        body: ListView(
+          padding: const EdgeInsets.all(AppTokens.spaceLG),
+          children: [
+            AppSkeleton.orderCard(),
+            const SizedBox(height: AppTokens.spaceLG),
+            AppSkeleton.orderCard(),
+          ],
+        ),
+      );
+    }
+
+    if (_errorMessage != null && _order.items.isEmpty) {
+      return Scaffold(
+        appBar: AppHeader(
+          title: 'Chi Tiết ${_order.orderCode}',
+          showBack: true,
+        ),
+        body: AppErrorState(
+          title: 'Không thể tải chi tiết đơn hàng',
+          message: _errorMessage,
+          retryLabel: 'Thử lại',
+          onRetry: _fetchOrderDetails,
+        ),
+      );
+    }
+
     final isPending = _order.status.toLowerCase() == 'pending';
     final isShipping = [
       'shipping',
       'shipped',
-      'delivering'
+      'delivering',
+      'intransit',
+      'in_transit'
     ].contains(_order.status.toLowerCase());
 
     return Scaffold(
@@ -191,14 +304,14 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
         onRefresh: _fetchOrderDetails,
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(AppTokens.spaceLG),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               if (_errorMessage != null)
                 Container(
-                  padding: const EdgeInsets.all(12),
-                  margin: const EdgeInsets.only(bottom: 16),
+                  padding: const EdgeInsets.all(AppTokens.spaceMD),
+                  margin: const EdgeInsets.only(bottom: AppTokens.spaceLG),
                   decoration: BoxDecoration(
                     color: AppColors.errorBg,
                     borderRadius: BorderRadius.circular(AppTokens.radiusDefault),
@@ -207,7 +320,7 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
                   child: Row(
                     children: [
                       const Icon(Icons.info_outline, color: AppColors.error, size: 20),
-                      const SizedBox(width: 8),
+                      const SizedBox(width: AppTokens.spaceSM),
                       Expanded(
                         child: Text(
                           'Không thể đồng bộ dữ liệu mới nhất: $_errorMessage',
@@ -218,45 +331,61 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
                         icon: const Icon(Icons.refresh, size: 18, color: AppColors.error),
                         onPressed: _fetchOrderDetails,
                         padding: EdgeInsets.zero,
-                        constraints: const BoxConstraints(),
+                        constraints: const BoxConstraints(minWidth: AppTokens.minTapTarget, minHeight: AppTokens.minTapTarget),
                       ),
                     ],
                   ),
                 ),
 
-              if (isCancelled)
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  margin: const EdgeInsets.only(bottom: 16),
-                  decoration: BoxDecoration(
-                    color: AppColors.errorBg,
-                    borderRadius: BorderRadius.circular(AppTokens.radiusDefault),
-                    border: Border.all(color: AppColors.error),
-                  ),
-                  child: const Row(
-                    children: [
-                      Icon(Icons.cancel_outlined, color: AppColors.error, size: 20),
-                      SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          'Đơn hàng này đã bị hủy.',
-                          style: TextStyle(
-                            color: AppColors.error,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 13,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-              // Status Timeline Card
+              // Header Status Card
               Container(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(AppTokens.spaceLG),
+                margin: const EdgeInsets.only(bottom: AppTokens.spaceLG),
                 decoration: BoxDecoration(
                   color: AppColors.surface,
-                  borderRadius: BorderRadius.circular(AppTokens.lucianRadiusLg),
+                  borderRadius: BorderRadius.circular(AppTokens.radiusCard),
+                  border: Border.all(color: AppColors.border),
+                  boxShadow: AppTokens.shadowSubtle,
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            _order.orderCode,
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.textPrimary,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Ngày tạo: ${DateFormat('dd/MM/yyyy HH:mm').format(_order.createdAt)}',
+                            style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: AppTokens.spaceSM),
+                    AppStatusChip(
+                      status: _order.status,
+                      type: AppStatusType.order,
+                    ),
+                  ],
+                ),
+              ),
+
+              // Milestone Timeline Card (Theo yêu cầu task)
+              Container(
+                padding: const EdgeInsets.all(AppTokens.spaceLG),
+                decoration: BoxDecoration(
+                  color: AppColors.surface,
+                  borderRadius: BorderRadius.circular(AppTokens.radiusCard),
                   border: Border.all(color: AppColors.border),
                   boxShadow: AppTokens.shadowSubtle,
                 ),
@@ -281,27 +410,23 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
                           ),
                       ],
                     ),
-                    const SizedBox(height: 14),
-                    AntdSteps(
-                      current: _calculateStep(_order.status),
-                      items: const [
-                        StepItemData(title: 'Đặt hàng', desc: 'Đã xác nhận'),
-                        StepItemData(title: 'Sản xuất', desc: 'Đang làm bánh'),
-                        StepItemData(title: 'Giao hàng', desc: 'Xe lạnh 20-25°C'),
-                        StepItemData(title: 'Nghiệm thu', desc: 'Ký biên bản PoD'),
-                      ],
+                    const SizedBox(height: AppTokens.spaceMD),
+                    MilestoneTimeline(
+                      items: _buildMilestones(),
+                      orientation: Axis.horizontal,
+                      padding: const EdgeInsets.symmetric(vertical: AppTokens.spaceSM),
                     ),
                   ],
                 ),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: AppTokens.spaceLG),
 
               // Order Items
               Container(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(AppTokens.spaceLG),
                 decoration: BoxDecoration(
                   color: AppColors.surface,
-                  borderRadius: BorderRadius.circular(AppTokens.lucianRadiusLg),
+                  borderRadius: BorderRadius.circular(AppTokens.radiusCard),
                   border: Border.all(color: AppColors.border),
                 ),
                 child: Column(
@@ -311,43 +436,43 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
                       'Danh Sách Sản Phẩm',
                       style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: AppTokens.spaceMD),
                     ..._order.items.map((item) => Padding(
-                          padding: const EdgeInsets.only(bottom: 12),
+                          padding: const EdgeInsets.only(bottom: AppTokens.spaceMD),
                           child: Row(
                             children: [
                               ClipRRect(
-                                borderRadius: BorderRadius.circular(6),
+                                borderRadius: BorderRadius.circular(AppTokens.radiusInput),
                                 child: item.imageUrl != null &&
                                         item.imageUrl!.startsWith('http')
                                     ? Image.network(
                                         item.imageUrl!,
-                                        width: 60,
-                                        height: 60,
+                                        width: 56,
+                                        height: 56,
                                         fit: BoxFit.cover,
                                         errorBuilder: (_, __, ___) => Image.asset(
                                           'assets/products/banh-nuong.jpg',
-                                          width: 60,
-                                          height: 60,
+                                          width: 56,
+                                          height: 56,
                                           fit: BoxFit.cover,
                                         ),
                                       )
                                     : Image.asset(
                                         item.imageUrl ??
                                             'assets/products/banh-nuong.jpg',
-                                        width: 60,
-                                        height: 60,
+                                        width: 56,
+                                        height: 56,
                                         fit: BoxFit.cover,
                                         errorBuilder: (_, __, ___) => Container(
-                                          width: 60,
-                                          height: 60,
+                                          width: 56,
+                                          height: 56,
                                           color: AppColors.background,
                                           child: const Icon(Icons.cake,
                                               color: AppColors.primary),
                                         ),
                                       ),
                               ),
-                              const SizedBox(width: 12),
+                              const SizedBox(width: AppTokens.spaceMD),
                               Expanded(
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -358,9 +483,12 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
                                         fontWeight: FontWeight.bold,
                                         fontSize: 13.5,
                                       ),
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
                                     ),
                                     if (item.variantName != null &&
-                                        item.variantName!.isNotEmpty)
+                                        item.variantName!.isNotEmpty) ...[
+                                      const SizedBox(height: 2),
                                       Text(
                                         'Biến thể: ${item.variantName}',
                                         style: const TextStyle(
@@ -368,6 +496,8 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
                                           color: AppColors.textSecondary,
                                         ),
                                       ),
+                                    ],
+                                    const SizedBox(height: 2),
                                     Text(
                                       'Số lượng: ${item.quantity} hộp',
                                       style: const TextStyle(
@@ -378,11 +508,12 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
                                   ],
                                 ),
                               ),
+                              const SizedBox(width: AppTokens.spaceSM),
                               Text(
                                 _formatCurrency(item.totalPrice),
                                 style: const TextStyle(
                                   fontWeight: FontWeight.bold,
-                                  fontSize: 14,
+                                  fontSize: 13.5,
                                   color: AppColors.primary,
                                 ),
                               ),
@@ -392,14 +523,14 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
                   ],
                 ),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: AppTokens.spaceLG),
 
               // Shipping & Recipient Details
               Container(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(AppTokens.spaceLG),
                 decoration: BoxDecoration(
                   color: AppColors.surface,
-                  borderRadius: BorderRadius.circular(AppTokens.lucianRadiusLg),
+                  borderRadius: BorderRadius.circular(AppTokens.radiusCard),
                   border: Border.all(color: AppColors.border),
                 ),
                 child: Column(
@@ -409,7 +540,7 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
                       'Thông Tin Nhận Hàng',
                       style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
                     ),
-                    const SizedBox(height: 10),
+                    const SizedBox(height: AppTokens.spaceSM),
                     Text(
                       'Người nhận: ${_order.recipientName} (${_order.recipientPhone})',
                       style: const TextStyle(fontSize: 13),
@@ -430,14 +561,14 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
                   ],
                 ),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: AppTokens.spaceLG),
 
               // Financial Summary
               Container(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(AppTokens.spaceLG),
                 decoration: BoxDecoration(
                   color: AppColors.surface,
-                  borderRadius: BorderRadius.circular(AppTokens.lucianRadiusLg),
+                  borderRadius: BorderRadius.circular(AppTokens.radiusCard),
                   border: Border.all(color: AppColors.border),
                 ),
                 child: Column(
@@ -459,43 +590,67 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
                   ],
                 ),
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: AppTokens.spaceLG),
 
               // Action Buttons
               if (isPending)
-                OutlinedButton.icon(
-                  onPressed: _isActionInProgress ? null : _handleCancelOrder,
-                  icon: const Icon(Icons.cancel_outlined, size: 18),
-                  label: Text(_isActionInProgress
-                      ? 'Đang xử lý...'
-                      : 'Hủy đơn hàng này'),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: AppColors.error,
-                    side: const BorderSide(color: AppColors.error),
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(AppTokens.radiusDefault),
+                Padding(
+                  padding: const EdgeInsets.only(bottom: AppTokens.spaceMD),
+                  child: OutlinedButton.icon(
+                    onPressed: _isActionInProgress ? null : _handleCancelOrder,
+                    icon: const Icon(Icons.cancel_outlined, size: 18),
+                    label: Text(_isActionInProgress
+                        ? 'Đang xử lý...'
+                        : 'Hủy đơn hàng này'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppColors.error,
+                      side: const BorderSide(color: AppColors.error),
+                      minimumSize: const Size(double.infinity, AppTokens.minTapTarget),
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(AppTokens.radiusDefault),
+                      ),
                     ),
                   ),
                 ),
 
               if (isShipping)
-                ElevatedButton.icon(
-                  onPressed: _isActionInProgress ? null : _handleConfirmReceipt,
-                  icon: const Icon(Icons.check_circle_outline, size: 18),
-                  label: Text(_isActionInProgress
-                      ? 'Đang xác nhận...'
-                      : 'Xác nhận đã nhận hàng (PoD)'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(AppTokens.radiusDefault),
+                Padding(
+                  padding: const EdgeInsets.only(bottom: AppTokens.spaceMD),
+                  child: ElevatedButton.icon(
+                    onPressed: _isActionInProgress ? null : _handleConfirmReceipt,
+                    icon: const Icon(Icons.check_circle_outline, size: 18),
+                    label: Text(_isActionInProgress
+                        ? 'Đang xác nhận...'
+                        : 'Xác nhận đã nhận hàng (PoD)'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: Colors.white,
+                      minimumSize: const Size(double.infinity, AppTokens.minTapTarget),
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(AppTokens.radiusDefault),
+                      ),
                     ),
                   ),
                 ),
-              const SizedBox(height: 16),
+
+              // Nút đặt lại đơn cũ (thêm vào giỏ hàng)
+              ElevatedButton.icon(
+                onPressed: _handleReorder,
+                icon: const Icon(Icons.replay_outlined, size: 18),
+                label: const Text('Đặt lại đơn hàng này'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: Colors.white,
+                  minimumSize: const Size(double.infinity, AppTokens.minTapTarget),
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(AppTokens.radiusDefault),
+                  ),
+                ),
+              ),
+              const SizedBox(height: AppTokens.space2XL),
             ],
           ),
         ),

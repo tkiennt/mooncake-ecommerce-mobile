@@ -96,63 +96,84 @@ class _AntdOtpInputState extends State<AntdOtpInput> {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: List.generate(widget.length, (index) {
-            return Container(
-              width: 44,
-              height: 50,
-              margin: const EdgeInsets.symmetric(horizontal: 4),
-              child: TextField(
-                controller: _controllers[index],
-                focusNode: _focusNodes[index],
-                keyboardType: TextInputType.number,
-                textAlign: TextAlign.center,
-                maxLength: 1,
-                style: const TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.primary,
-                ),
-                decoration: InputDecoration(
-                  counterText: '',
-                  contentPadding: EdgeInsets.zero,
-                  filled: true,
-                  fillColor: AppColors.surface,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(AppTokens.radiusDefault),
-                    borderSide: const BorderSide(color: AppColors.border),
+        ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 320),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: List.generate(widget.length, (index) {
+              return Flexible(
+                child: Container(
+                  height: 48,
+                  constraints: const BoxConstraints(maxWidth: 42),
+                  margin: const EdgeInsets.symmetric(horizontal: 3),
+                  child: TextField(
+                    controller: _controllers[index],
+                    focusNode: _focusNodes[index],
+                    keyboardType: TextInputType.number,
+                    textAlign: TextAlign.center,
+                    maxLength: 1,
+                    style: const TextStyle(
+                      fontFamily: 'Roboto',
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.primary,
+                    ),
+                    decoration: InputDecoration(
+                      counterText: '',
+                      contentPadding: EdgeInsets.zero,
+                      filled: true,
+                      fillColor: AppColors.surface,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(AppTokens.radiusInput),
+                        borderSide: const BorderSide(color: AppColors.border),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(AppTokens.radiusInput),
+                        borderSide: const BorderSide(color: AppColors.primary, width: 2),
+                      ),
+                    ),
+                    onChanged: (val) => _onChanged(val, index),
                   ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(AppTokens.radiusDefault),
-                    borderSide: const BorderSide(color: AppColors.primary, width: 2),
-                  ),
                 ),
-                onChanged: (val) => _onChanged(val, index),
-              ),
-            );
-          }),
+              );
+            }),
+          ),
         ),
-        const SizedBox(height: 16),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Text(
-              'Chưa nhận được mã? ',
-              style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
-            ),
-            GestureDetector(
-              onTap: _timeLeft == 0 ? _handleResend : null,
-              child: Text(
-                _timeLeft > 0 ? 'Gửi lại sau ${_timeLeft}s' : 'Gửi lại ngay',
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.bold,
-                  color: _timeLeft > 0 ? AppColors.textMuted : AppColors.primary,
+        const SizedBox(height: AppTokens.spaceLG),
+        ConstrainedBox(
+          constraints: const BoxConstraints(minHeight: AppTokens.minTapTarget),
+          child: Center(
+            child: Wrap(
+              crossAxisAlignment: WrapCrossAlignment.center,
+              alignment: WrapAlignment.center,
+              children: [
+                const Text(
+                  'Chưa nhận được mã? ',
+                  style: TextStyle(
+                    fontFamily: 'Roboto',
+                    fontSize: 13,
+                    color: AppColors.textSecondary,
+                  ),
                 ),
-              ),
+                GestureDetector(
+                  onTap: _timeLeft == 0 ? _handleResend : null,
+                  behavior: HitTestBehavior.opaque,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+                    child: Text(
+                      _timeLeft > 0 ? 'Gửi lại sau ${_timeLeft}s' : 'Gửi lại ngay',
+                      style: TextStyle(
+                        fontFamily: 'Roboto',
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold,
+                        color: _timeLeft > 0 ? AppColors.textMuted : AppColors.primary,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       ],
     );

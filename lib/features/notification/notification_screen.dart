@@ -4,9 +4,25 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_tokens.dart';
-import '../../shared_widgets/common/app_header.dart';
-import '../../providers/notification_provider.dart';
 import '../../data/models/notification_item.dart';
+import '../../providers/auth_provider.dart';
+import '../../providers/notification_provider.dart';
+import '../../shared_widgets/common/app_empty_state.dart';
+import '../../shared_widgets/common/app_error_state.dart';
+import '../../shared_widgets/common/app_header.dart';
+import '../../shared_widgets/common/app_skeleton.dart';
+
+sealed class _NotificationListItem {}
+
+class _DateHeaderItem extends _NotificationListItem {
+  final String dateText;
+  _DateHeaderItem(this.dateText);
+}
+
+class _NotificationEntryItem extends _NotificationListItem {
+  final NotificationItem item;
+  _NotificationEntryItem(this.item);
+}
 
 class NotificationScreen extends ConsumerWidget {
   const NotificationScreen({super.key});
@@ -49,23 +65,81 @@ class NotificationScreen extends ConsumerWidget {
     return Icons.campaign_outlined;
   }
 
+  List<_NotificationListItem> _buildGroupedList(List<NotificationItem> notifications) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final yesterday = today.subtract(const Duration(days: 1));
+
+    final Map<String, List<NotificationItem>> groups = {};
+    for (final notif in notifications) {
+      final d = notif.createdAt;
+      final itemDate = DateTime(d.year, d.month, d.day);
+      String groupKey;
+      if (itemDate == today) {
+        groupKey = 'Hôm nay';
+      } else if (itemDate == yesterday) {
+        groupKey = 'Hôm qua';
+      } else {
+        groupKey = DateFormat('dd/MM/yyyy').format(d);
+      }
+      groups.putIfAbsent(groupKey, () => []).add(notif);
+    }
+
+    final List<_NotificationListItem> result = [];
+    groups.forEach((key, items) {
+      result.add(_DateHeaderItem(key));
+      for (final item in items) {
+        result.add(_NotificationEntryItem(item));
+      }
+    });
+    return result;
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final authState = ref.watch(authProvider);
+
+    // Unauthenticated state: show empty state prompting to login
+    if (!authState.isAuthenticated) {
+      return Scaffold(
+        backgroundColor: AppColors.background,
+        appBar: const AppHeader(
+          title: 'Thông Báo',
+          showBack: true,
+        ),
+        body: SafeArea(
+          child: AppEmptyState(
+            icon: Icons.lock_outline,
+            title: 'Đăng nhập để xem thông báo',
+            message: 'Vui lòng đăng nhập để nhận cập nhật tiến độ đơn hàng, báo giá xưởng và hợp đồng mua bán B2B.',
+            actionLabel: 'Đăng nhập ngay',
+            onAction: () => context.push('/login'),
+          ),
+        ),
+      );
+    }
+
     final notifState = ref.watch(notificationProvider);
+    final unreadCount = notifState.unreadCount;
 
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppHeader(
         title: 'Thông Báo',
         showBack: true,
-        rightIcon: Icons.done_all,
-        rightLabel: 'Đọc tất cả',
-        onRightPress: () {
-          ref.read(notificationProvider.notifier).markAllAsRead();
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Đã đánh dấu tất cả là đã đọc.')),
-          );
-        },
+        rightIcon: unreadCount > 0 ? Icons.done_all : null,
+        rightLabel: unreadCount > 0 ? 'Đọc tất cả' : null,
+        onRightPress: unreadCount > 0
+            ? () {
+                ref.read(notificationProvider.notifier).markAllAsRead();
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Đã đánh dấu tất cả thông báo là đã đọc.'),
+                    backgroundColor: AppColors.primary,
+                  ),
+                );
+              }
+            : null,
       ),
       body: RefreshIndicator(
         color: AppColors.primary,
@@ -85,33 +159,12 @@ class NotificationScreen extends ConsumerWidget {
         physics: const AlwaysScrollableScrollPhysics(),
         children: [
           SizedBox(
-            height: MediaQuery.of(context).size.height * 0.6,
-            child: Center(
-              child: Padding(
-                padding: const EdgeInsets.all(24.0),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(Icons.cloud_off_outlined, size: 56, color: AppColors.textMuted),
-                    const SizedBox(height: 16),
-                    Text(
-                      notifState.errorMessage!,
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(fontSize: 14, color: AppColors.textSecondary),
-                    ),
-                    const SizedBox(height: 16),
-                    ElevatedButton.icon(
-                      onPressed: () => ref.read(notificationProvider.notifier).refresh(),
-                      icon: const Icon(Icons.refresh, size: 18),
-                      label: const Text('Thử lại'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primary,
-                        foregroundColor: AppColors.textWhite,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+            height: MediaQuery.of(context).size.height * 0.7,
+            child: AppErrorState(
+              title: 'Không thể tải thông báo',
+              message: notifState.errorMessage,
+              retryLabel: 'Thử lại',
+              onRetry: () => ref.read(notificationProvider.notifier).refresh(),
             ),
           ),
         ],
@@ -123,196 +176,219 @@ class NotificationScreen extends ConsumerWidget {
         physics: const AlwaysScrollableScrollPhysics(),
         children: [
           SizedBox(
-            height: MediaQuery.of(context).size.height * 0.6,
-            child: const Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.notifications_none_outlined, size: 56, color: AppColors.textMuted),
-                  SizedBox(height: 16),
-                  Text(
-                    'Không có thông báo nào',
-                    style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.textPrimary,
-                    ),
-                  ),
-                  SizedBox(height: 6),
-                  Text(
-                    'Các cập nhật về đơn hàng, báo giá và hợp đồng sẽ xuất hiện tại đây.',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 12.5, color: AppColors.textSecondary),
-                  ),
-                ],
-              ),
+            height: MediaQuery.of(context).size.height * 0.7,
+            child: AppEmptyState(
+              icon: Icons.notifications_none_outlined,
+              title: 'Chưa có thông báo nào',
+              message: 'Các cập nhật về đơn hàng, báo giá và hợp đồng sẽ xuất hiện tại đây.',
+              actionLabel: 'Khám phá sản phẩm',
+              onAction: () => context.go('/search'),
             ),
           ),
         ],
       );
     }
 
+    final groupedItems = _buildGroupedList(notifState.notifications);
+
     return ListView.builder(
       physics: const AlwaysScrollableScrollPhysics(),
-      padding: const EdgeInsets.all(16),
-      itemCount: notifState.notifications.length,
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppTokens.spaceLG,
+        vertical: AppTokens.spaceSM,
+      ),
+      itemCount: groupedItems.length,
       itemBuilder: (context, index) {
-        final notif = notifState.notifications[index];
-        final icon = _getNotificationIcon(notif.type);
-
-        return Container(
-          margin: const EdgeInsets.only(bottom: 10),
-          decoration: BoxDecoration(
-            color: notif.isRead ? AppColors.surface : AppColors.primaryTint,
-            borderRadius: BorderRadius.circular(AppTokens.radiusDefault),
-            border: Border.all(
-              color: notif.isRead
-                  ? AppColors.border
-                  : AppColors.primaryLight.withValues(alpha: 0.3),
-            ),
-            boxShadow: AppTokens.shadowSubtle,
-          ),
-          child: Material(
-            color: Colors.transparent,
-            child: InkWell(
-              borderRadius: BorderRadius.circular(AppTokens.radiusDefault),
-              onTap: () => _handleNotificationTap(context, ref, notif),
-              child: Padding(
-                padding: const EdgeInsets.all(14),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: notif.isRead ? AppColors.surfaceHover : AppColors.primary,
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(
-                        icon,
-                        size: 16,
-                        color: notif.isRead ? AppColors.textSecondary : AppColors.textWhite,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  notif.title,
-                                  style: TextStyle(
-                                    fontWeight: notif.isRead ? FontWeight.w600 : FontWeight.bold,
-                                    fontSize: 13.5,
-                                    color: AppColors.textPrimary,
-                                  ),
-                                ),
-                              ),
-                              if (!notif.isRead)
-                                Container(
-                                  width: 8,
-                                  height: 8,
-                                  margin: const EdgeInsets.only(left: 6),
-                                  decoration: const BoxDecoration(
-                                    color: AppColors.primary,
-                                    shape: BoxShape.circle,
-                                  ),
-                                ),
-                            ],
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            notif.message,
-                            style: const TextStyle(
-                              fontSize: 12,
-                              color: AppColors.textSecondary,
-                              height: 1.35,
-                            ),
-                          ),
-                          const SizedBox(height: 6),
-                          Text(
-                            DateFormat('HH:mm · dd/MM/yyyy').format(notif.createdAt),
-                            style: const TextStyle(fontSize: 10.5, color: AppColors.textMuted),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        );
+        final item = groupedItems[index];
+        if (item is _DateHeaderItem) {
+          return _buildDateHeader(item.dateText);
+        } else if (item is _NotificationEntryItem) {
+          return _buildNotificationCard(context, ref, item.item);
+        }
+        return const SizedBox.shrink();
       },
     );
   }
 
+  Widget _buildDateHeader(String text) {
+    return Padding(
+      padding: const EdgeInsets.only(
+        top: AppTokens.spaceLG,
+        bottom: AppTokens.spaceSM,
+        left: AppTokens.spaceXS,
+        right: AppTokens.spaceXS,
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 3.5,
+            height: 14,
+            decoration: BoxDecoration(
+              color: AppColors.accent,
+              borderRadius: BorderRadius.circular(AppTokens.radiusXS),
+            ),
+          ),
+          const SizedBox(width: AppTokens.spaceSM),
+          Text(
+            text,
+            style: const TextStyle(
+              fontFamily: 'Roboto',
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+              color: AppColors.textPrimary,
+              letterSpacing: 0.2,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildNotificationCard(BuildContext context, WidgetRef ref, NotificationItem notif) {
+    final icon = _getNotificationIcon(notif.type);
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: AppTokens.spaceSM),
+      decoration: BoxDecoration(
+        color: notif.isRead ? AppColors.surface : AppColors.primaryTint,
+        borderRadius: BorderRadius.circular(AppTokens.radiusCard),
+        border: Border.all(
+          color: notif.isRead
+              ? AppColors.border
+              : AppColors.primaryLight.withValues(alpha: 0.35),
+        ),
+        boxShadow: AppTokens.elevationSubtle,
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(AppTokens.radiusCard),
+          onTap: () => _handleNotificationTap(context, ref, notif),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(minHeight: AppTokens.minTapTarget),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppTokens.spaceMD,
+                vertical: AppTokens.spaceMD,
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    width: 38,
+                    height: 38,
+                    decoration: BoxDecoration(
+                      color: notif.isRead ? AppColors.surfaceHover : AppColors.primary,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Center(
+                      child: Icon(
+                        icon,
+                        size: 18,
+                        color: notif.isRead ? AppColors.textSecondary : AppColors.textWhite,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: AppTokens.spaceMD),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                notif.title,
+                                style: TextStyle(
+                                  fontFamily: 'Roboto',
+                                  fontWeight: notif.isRead ? FontWeight.w600 : FontWeight.bold,
+                                  fontSize: 13.5,
+                                  color: AppColors.textPrimary,
+                                ),
+                              ),
+                            ),
+                            if (!notif.isRead)
+                              Container(
+                                width: 8,
+                                height: 8,
+                                margin: const EdgeInsets.only(left: AppTokens.spaceSM),
+                                decoration: const BoxDecoration(
+                                  color: AppColors.primary,
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                          ],
+                        ),
+                        const SizedBox(height: AppTokens.spaceXS),
+                        Text(
+                          notif.message,
+                          style: const TextStyle(
+                            fontFamily: 'Roboto',
+                            fontSize: 12,
+                            color: AppColors.textSecondary,
+                            height: 1.35,
+                          ),
+                        ),
+                        const SizedBox(height: AppTokens.spaceSM),
+                        Text(
+                          DateFormat('HH:mm · dd/MM/yyyy').format(notif.createdAt),
+                          style: const TextStyle(
+                            fontFamily: 'Roboto',
+                            fontSize: 10.5,
+                            color: AppColors.textMuted,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildSkeletonList() {
-    return ListView.builder(
-      physics: const NeverScrollableScrollPhysics(),
-      padding: const EdgeInsets.all(16),
-      itemCount: 6,
-      itemBuilder: (context, index) {
-        return Container(
-          margin: const EdgeInsets.only(bottom: 10),
-          padding: const EdgeInsets.all(14),
-          decoration: BoxDecoration(
-            color: AppColors.surface,
-            borderRadius: BorderRadius.circular(AppTokens.radiusDefault),
-            border: Border.all(color: AppColors.border),
-          ),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                width: 32,
-                height: 32,
-                decoration: const BoxDecoration(
-                  color: AppColors.surfaceHover,
-                  shape: BoxShape.circle,
+    return AppSkeleton.shimmer(
+      child: ListView.builder(
+        physics: const NeverScrollableScrollPhysics(),
+        padding: const EdgeInsets.all(AppTokens.spaceLG),
+        itemCount: 6,
+        itemBuilder: (context, index) {
+          return Container(
+            margin: const EdgeInsets.only(bottom: AppTokens.spaceMD),
+            padding: const EdgeInsets.all(AppTokens.spaceMD),
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              borderRadius: BorderRadius.circular(AppTokens.radiusCard),
+              border: Border.all(color: AppColors.border),
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const AppSkeleton.circle(radius: 19),
+                const SizedBox(width: AppTokens.spaceMD),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const AppSkeleton(width: 140, height: 14),
+                      const SizedBox(height: AppTokens.spaceSM),
+                      const AppSkeleton.text(height: 12),
+                      const SizedBox(height: AppTokens.spaceXS),
+                      const AppSkeleton.text(width: 180, height: 12),
+                      const SizedBox(height: AppTokens.spaceSM),
+                      const AppSkeleton(width: 80, height: 10),
+                    ],
+                  ),
                 ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                      width: 160,
-                      height: 14,
-                      decoration: BoxDecoration(
-                        color: AppColors.surfaceHover,
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Container(
-                      width: double.infinity,
-                      height: 12,
-                      decoration: BoxDecoration(
-                        color: AppColors.surfaceHover,
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    Container(
-                      width: 90,
-                      height: 10,
-                      decoration: BoxDecoration(
-                        color: AppColors.surfaceHover,
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        );
-      },
+              ],
+            ),
+          );
+        },
+      ),
     );
   }
 }

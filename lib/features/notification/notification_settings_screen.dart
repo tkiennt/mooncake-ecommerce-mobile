@@ -3,9 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_tokens.dart';
-import '../../shared_widgets/common/app_header.dart';
-import '../../shared_widgets/common/custom_button.dart';
 import '../../data/repositories/notification_repository.dart';
+import '../../shared_widgets/common/app_error_state.dart';
+import '../../shared_widgets/common/app_header.dart';
+import '../../shared_widgets/common/app_skeleton.dart';
 
 class NotificationSettingsScreen extends ConsumerStatefulWidget {
   const NotificationSettingsScreen({super.key});
@@ -138,6 +139,7 @@ class _NotificationSettingsScreenState extends ConsumerState<NotificationSetting
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.background,
       appBar: const AppHeader(title: 'Cài Đặt Thông Báo', showBack: true),
       body: _buildBody(),
     );
@@ -145,117 +147,216 @@ class _NotificationSettingsScreenState extends ConsumerState<NotificationSetting
 
   Widget _buildBody() {
     if (_isLoading) {
-      return const Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            CircularProgressIndicator(color: AppColors.primary),
-            SizedBox(height: 16),
-            Text(
-              'Đang tải cấu hình thông báo...',
-              style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
-            ),
-          ],
-        ),
-      );
+      return _buildSkeleton();
     }
 
     if (_errorMessage != null) {
       return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(Icons.error_outline, size: 48, color: AppColors.error),
-              const SizedBox(height: 12),
-              const Text(
-                'Không thể tải cài đặt thông báo',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                _errorMessage!,
-                textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 12.5, color: AppColors.textSecondary),
-              ),
-              const SizedBox(height: 18),
-              CustomButton(
-                title: 'Thử lại',
-                variant: ButtonVariant.primary,
-                size: ButtonSize.medium,
-                onPress: _loadSettings,
-              ),
-            ],
-          ),
+        child: AppErrorState(
+          title: 'Không thể tải cài đặt thông báo',
+          message: _errorMessage,
+          retryLabel: 'Thử lại',
+          onRetry: _loadSettings,
         ),
       );
     }
 
     return ListView(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(AppTokens.spaceLG),
       children: [
-        Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: AppColors.surface,
-            borderRadius: BorderRadius.circular(AppTokens.lucianRadiusLg),
-            border: Border.all(color: AppColors.border),
-            boxShadow: AppTokens.shadowSubtle,
+        // Section header
+        Padding(
+          padding: const EdgeInsets.only(bottom: AppTokens.spaceMD),
+          child: Text(
+            'Kênh thông báo & Cảnh báo thời gian thực',
+            style: AppTokens.titleMd.copyWith(
+              color: AppColors.primaryDark,
+              fontSize: 14,
+            ),
           ),
+        ),
+
+        // Settings Card with proper Material surface (no DecoratedBox warning)
+        Material(
+          color: AppColors.surface,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppTokens.radiusCard),
+            side: const BorderSide(color: AppColors.border, width: 0.8),
+          ),
+          elevation: 0,
+          clipBehavior: Clip.antiAlias,
           child: Column(
             children: [
-              Material(
-                type: MaterialType.transparency,
-                child: SwitchListTile(
-                  value: _rfqBids,
-                  activeThumbColor: AppColors.primary,
-                  activeTrackColor: AppColors.primary.withValues(alpha: 0.3),
-                  title: const Text('Báo giá mới từ xưởng sản xuất', style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.bold)),
-                  subtitle: const Text('Nhận thông báo khi có xưởng nộp hồ sơ đấu thầu RFQ', style: TextStyle(fontSize: 11.5, color: AppColors.textSecondary)),
-                  onChanged: (val) => _updateSetting(rfqBids: val),
+              SwitchListTile(
+                value: _rfqBids,
+                activeThumbColor: AppColors.primary,
+                activeTrackColor: AppColors.primaryLight.withValues(alpha: 0.35),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: AppTokens.spaceLG,
+                  vertical: AppTokens.spaceXS,
                 ),
+                title: const Text(
+                  'Báo giá mới từ xưởng sản xuất',
+                  style: TextStyle(
+                    fontFamily: 'Roboto',
+                    fontSize: 13.5,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+                subtitle: const Text(
+                  'Nhận thông báo khi có xưởng nộp hồ sơ chào giá RFQ',
+                  style: TextStyle(
+                    fontFamily: 'Roboto',
+                    fontSize: 12,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+                onChanged: (val) => _updateSetting(rfqBids: val),
               ),
               const Divider(height: 1, color: AppColors.border),
-              Material(
-                type: MaterialType.transparency,
-                child: SwitchListTile(
-                  value: _contractUpdates,
-                  activeThumbColor: AppColors.primary,
-                  activeTrackColor: AppColors.primary.withValues(alpha: 0.3),
-                  title: const Text('Hợp đồng & Đặt cọc ký quỹ', style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.bold)),
-                  subtitle: const Text('Thông báo ký số và tiến độ giải ngân ký quỹ', style: TextStyle(fontSize: 11.5, color: AppColors.textSecondary)),
-                  onChanged: (val) => _updateSetting(contractUpdates: val),
+              SwitchListTile(
+                value: _contractUpdates,
+                activeThumbColor: AppColors.primary,
+                activeTrackColor: AppColors.primaryLight.withValues(alpha: 0.35),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: AppTokens.spaceLG,
+                  vertical: AppTokens.spaceXS,
                 ),
+                title: const Text(
+                  'Hợp đồng & Đặt cọc ký quỹ',
+                  style: TextStyle(
+                    fontFamily: 'Roboto',
+                    fontSize: 13.5,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+                subtitle: const Text(
+                  'Thông báo ký hợp đồng số và tiến độ giải ngân ký quỹ',
+                  style: TextStyle(
+                    fontFamily: 'Roboto',
+                    fontSize: 12,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+                onChanged: (val) => _updateSetting(contractUpdates: val),
               ),
               const Divider(height: 1, color: AppColors.border),
-              Material(
-                type: MaterialType.transparency,
-                child: SwitchListTile(
-                  value: _deliveryAlerts,
-                  activeThumbColor: AppColors.primary,
-                  activeTrackColor: AppColors.primary.withValues(alpha: 0.3),
-                  title: const Text('Hành trình xe lạnh & PoD', style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.bold)),
-                  subtitle: const Text('Cảnh báo nhiệt độ và chuẩn bị nhận hàng', style: TextStyle(fontSize: 11.5, color: AppColors.textSecondary)),
-                  onChanged: (val) => _updateSetting(deliveryAlerts: val),
+              SwitchListTile(
+                value: _deliveryAlerts,
+                activeThumbColor: AppColors.primary,
+                activeTrackColor: AppColors.primaryLight.withValues(alpha: 0.35),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: AppTokens.spaceLG,
+                  vertical: AppTokens.spaceXS,
                 ),
+                title: const Text(
+                  'Hành trình xe lạnh & PoD giao nhận',
+                  style: TextStyle(
+                    fontFamily: 'Roboto',
+                    fontSize: 13.5,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+                subtitle: const Text(
+                  'Cảnh báo nhiệt độ bảo quản và thông báo nhận hàng',
+                  style: TextStyle(
+                    fontFamily: 'Roboto',
+                    fontSize: 12,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+                onChanged: (val) => _updateSetting(deliveryAlerts: val),
               ),
               const Divider(height: 1, color: AppColors.border),
-              Material(
-                type: MaterialType.transparency,
-                child: SwitchListTile(
-                  value: _promotions,
-                  activeThumbColor: AppColors.primary,
-                  activeTrackColor: AppColors.primary.withValues(alpha: 0.3),
-                  title: const Text('Ưu đãi mùa vụ 2026', style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.bold)),
-                  subtitle: const Text('Các chương trình chiết khấu thêm theo đợt đặt hàng sớm', style: TextStyle(fontSize: 11.5, color: AppColors.textSecondary)),
-                  onChanged: (val) => _updateSetting(promotions: val),
+              SwitchListTile(
+                value: _promotions,
+                activeThumbColor: AppColors.primary,
+                activeTrackColor: AppColors.primaryLight.withValues(alpha: 0.35),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: AppTokens.spaceLG,
+                  vertical: AppTokens.spaceXS,
                 ),
+                title: const Text(
+                  'Ưu đãi mùa vụ 2026',
+                  style: TextStyle(
+                    fontFamily: 'Roboto',
+                    fontSize: 13.5,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+                subtitle: const Text(
+                  'Chương trình chiết khấu thêm theo đợt đặt hàng sớm',
+                  style: TextStyle(
+                    fontFamily: 'Roboto',
+                    fontSize: 12,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+                onChanged: (val) => _updateSetting(promotions: val),
               ),
             ],
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildSkeleton() {
+    return AppSkeleton.shimmer(
+      child: Padding(
+        padding: const EdgeInsets.all(AppTokens.spaceLG),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const AppSkeleton(width: 220, height: 16),
+            const SizedBox(height: AppTokens.spaceLG),
+            Container(
+              decoration: BoxDecoration(
+                color: AppColors.surface,
+                borderRadius: BorderRadius.circular(AppTokens.radiusCard),
+                border: Border.all(color: AppColors.border),
+              ),
+              child: Column(
+                children: List.generate(
+                  4,
+                  (index) => Column(
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.all(AppTokens.spaceLG),
+                        child: Row(
+                          children: [
+                            const Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  AppSkeleton(width: 160, height: 14),
+                                  SizedBox(height: AppTokens.spaceSM),
+                                  AppSkeleton(width: 220, height: 12),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(width: AppTokens.spaceMD),
+                            const AppSkeleton(
+                              width: 44,
+                              height: 24,
+                              borderRadius: BorderRadius.all(Radius.circular(AppTokens.radiusPill)),
+                            ),
+                          ],
+                        ),
+                      ),
+                      if (index < 3) const Divider(height: 1, color: AppColors.border),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

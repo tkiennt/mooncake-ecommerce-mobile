@@ -230,24 +230,27 @@ class _ReviewFormScreenState extends ConsumerState<ReviewFormScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Đánh giá 4 tiêu chí chất lượng',
-                            style: TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.bold,
-                              color: AppColors.primaryDark,
+                      const Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Đánh giá 4 tiêu chí chất lượng',
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.primaryDark,
+                              ),
                             ),
-                          ),
-                          SizedBox(height: 2),
-                          Text(
-                            'Theo chuẩn nghiệm thu thu mua doanh nghiệp',
-                            style: TextStyle(fontSize: 11, color: AppColors.textSecondary),
-                          ),
-                        ],
+                            SizedBox(height: 2),
+                            Text(
+                              'Theo chuẩn nghiệm thu thu mua doanh nghiệp',
+                              style: TextStyle(fontSize: 11, color: AppColors.textSecondary),
+                            ),
+                          ],
+                        ),
                       ),
+                      const SizedBox(width: 8),
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                         decoration: BoxDecoration(
@@ -256,6 +259,7 @@ class _ReviewFormScreenState extends ConsumerState<ReviewFormScreen> {
                           border: Border.all(color: AppColors.accent),
                         ),
                         child: Row(
+                          mainAxisSize: MainAxisSize.min,
                           children: [
                             const Icon(Icons.star, size: 14, color: AppColors.accent),
                             const SizedBox(width: 4),
@@ -281,34 +285,36 @@ class _ReviewFormScreenState extends ConsumerState<ReviewFormScreen> {
 
                     return Padding(
                       padding: const EdgeInsets.symmetric(vertical: 8),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      child: Wrap(
+                        alignment: WrapAlignment.spaceBetween,
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        spacing: 8,
+                        runSpacing: 6,
                         children: [
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  label,
-                                  style: const TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w600,
-                                    color: AppColors.textPrimary,
-                                  ),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                label,
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.textPrimary,
                                 ),
-                                const SizedBox(height: 2),
-                                Text(
-                                  _scoreLabels[score],
-                                  style: const TextStyle(
-                                    fontSize: 11,
-                                    color: AppColors.accent,
-                                    fontWeight: FontWeight.w500,
-                                  ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                _scoreLabels[score],
+                                style: const TextStyle(
+                                  fontSize: 11,
+                                  color: AppColors.accent,
+                                  fontWeight: FontWeight.w500,
                                 ),
-                              ],
-                            ),
+                              ),
+                            ],
                           ),
                           Row(
+                            mainAxisSize: MainAxisSize.min,
                             children: List.generate(5, (starIdx) {
                               final starVal = starIdx + 1;
                               final isFilled = starVal <= score;
@@ -319,11 +325,11 @@ class _ReviewFormScreenState extends ConsumerState<ReviewFormScreen> {
                                   });
                                 },
                                 child: Padding(
-                                  padding: const EdgeInsets.symmetric(horizontal: 2),
+                                  padding: const EdgeInsets.symmetric(horizontal: 1.5),
                                   child: Icon(
                                     isFilled ? Icons.star : Icons.star_border,
                                     color: isFilled ? AppColors.accent : AppColors.border,
-                                    size: 24,
+                                    size: 22,
                                   ),
                                 ),
                               );

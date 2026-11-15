@@ -6,7 +6,6 @@ import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_tokens.dart';
 import '../../shared_widgets/common/product_grid_card.dart';
 import '../../shared_widgets/lucian/announcement_pill.dart';
-import '../../shared_widgets/lucian/recent_order_toast.dart';
 import '../../providers/catalog_provider.dart';
 import '../../providers/cart_provider.dart';
 import '../../providers/notification_provider.dart';
@@ -60,15 +59,6 @@ class HomeScreen extends ConsumerWidget {
               // Real Categories Section
               SliverToBoxAdapter(
                 child: _buildCategoriesSection(context, ref),
-              ),
-
-              // Recent Order Notification Toast
-              const SliverToBoxAdapter(
-                child: RecentOrderToast(
-                  companyName: 'FPT Software',
-                  boxCount: 350,
-                  timeAgo: '12 phút trước',
-                ),
               ),
 
               // Section Header

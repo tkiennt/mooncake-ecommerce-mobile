@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import 'shared_widgets/common/bottom_tab_bar.dart';
+import 'shared_widgets/common/app_header.dart';
+import 'core/theme/app_colors.dart';
 import 'providers/cart_provider.dart';
 
 import 'features/home/home_screen.dart';
@@ -42,7 +44,9 @@ import 'features/chat/chat_screen.dart';
 import 'data/models/product.dart';
 import 'data/models/order.dart';
 import 'data/models/rfq.dart';
-import 'providers/catalog_provider.dart';
+import 'data/repositories/catalog_repository.dart';
+import 'data/repositories/order_repository.dart';
+import 'data/repositories/rfq_repository.dart';
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
 
@@ -132,7 +136,12 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/verify-email',
         parentNavigatorKey: _rootNavigatorKey,
-        builder: (context, state) => VerifyEmailScreen(identifier: state.extra as String?),
+        builder: (context, state) {
+          final id = state.extra as String? ??
+              state.uri.queryParameters['email'] ??
+              state.uri.queryParameters['identifier'];
+          return VerifyEmailScreen(identifier: id);
+        },
       ),
       GoRoute(
         path: '/forgot-password',
@@ -142,7 +151,12 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/reset-password',
         parentNavigatorKey: _rootNavigatorKey,
-        builder: (context, state) => ResetPasswordScreen(phoneNumber: state.extra as String?),
+        builder: (context, state) {
+          final phone = state.extra as String? ??
+              state.uri.queryParameters['phone'] ??
+              state.uri.queryParameters['phoneNumber'];
+          return ResetPasswordScreen(phoneNumber: phone);
+        },
       ),
 
       // Product & Checkout
@@ -150,11 +164,47 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/product-detail',
         parentNavigatorKey: _rootNavigatorKey,
         builder: (context, state) {
-          final product = state.extra is Product
-              ? state.extra as Product
-              : CatalogNotifier.mockCatalog[0];
-          return ProductDetailScreen(product: product);
+          final id = state.uri.queryParameters['id'] ??
+              state.uri.queryParameters['productId'] ??
+              state.pathParameters['id'] ??
+              (state.extra is String ? state.extra as String : null);
+          Product? initialProduct;
+          if (state.extra is Product) {
+            initialProduct = state.extra as Product;
+          } else if (state.extra is Map<String, dynamic>) {
+            try {
+              initialProduct = Product.fromJson(state.extra as Map<String, dynamic>);
+            } catch (_) {}
+          }
+          return _ProductDetailRouteLoader(
+            initialProduct: initialProduct,
+            productId: id,
+          );
         },
+        routes: [
+          GoRoute(
+            path: ':id',
+            parentNavigatorKey: _rootNavigatorKey,
+            builder: (context, state) {
+              final id = state.pathParameters['id'] ??
+                  state.uri.queryParameters['id'] ??
+                  state.uri.queryParameters['productId'] ??
+                  (state.extra is String ? state.extra as String : null);
+              Product? initialProduct;
+              if (state.extra is Product) {
+                initialProduct = state.extra as Product;
+              } else if (state.extra is Map<String, dynamic>) {
+                try {
+                  initialProduct = Product.fromJson(state.extra as Map<String, dynamic>);
+                } catch (_) {}
+              }
+              return _ProductDetailRouteLoader(
+                initialProduct: initialProduct,
+                productId: id,
+              );
+            },
+          ),
+        ],
       ),
       GoRoute(
         path: '/checkout',
@@ -174,9 +224,47 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/order-detail',
         parentNavigatorKey: _rootNavigatorKey,
         builder: (context, state) {
-          final order = state.extra as Order;
-          return OrderDetailScreen(order: order);
+          final id = state.uri.queryParameters['orderId'] ??
+              state.uri.queryParameters['id'] ??
+              state.pathParameters['id'] ??
+              (state.extra is String ? state.extra as String : null);
+          Order? initialOrder;
+          if (state.extra is Order) {
+            initialOrder = state.extra as Order;
+          } else if (state.extra is Map<String, dynamic>) {
+            try {
+              initialOrder = Order.fromJson(state.extra as Map<String, dynamic>);
+            } catch (_) {}
+          }
+          return _OrderDetailRouteLoader(
+            initialOrder: initialOrder,
+            orderId: id,
+          );
         },
+        routes: [
+          GoRoute(
+            path: ':id',
+            parentNavigatorKey: _rootNavigatorKey,
+            builder: (context, state) {
+              final id = state.pathParameters['id'] ??
+                  state.uri.queryParameters['orderId'] ??
+                  state.uri.queryParameters['id'] ??
+                  (state.extra is String ? state.extra as String : null);
+              Order? initialOrder;
+              if (state.extra is Order) {
+                initialOrder = state.extra as Order;
+              } else if (state.extra is Map<String, dynamic>) {
+                try {
+                  initialOrder = Order.fromJson(state.extra as Map<String, dynamic>);
+                } catch (_) {}
+              }
+              return _OrderDetailRouteLoader(
+                initialOrder: initialOrder,
+                orderId: id,
+              );
+            },
+          ),
+        ],
       ),
       GoRoute(
         path: '/edit-profile',
@@ -199,9 +287,47 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/rfq-detail-bidding',
         parentNavigatorKey: _rootNavigatorKey,
         builder: (context, state) {
-          final rfq = state.extra as Rfq;
-          return RfqDetailBiddingScreen(rfq: rfq);
+          final id = state.uri.queryParameters['rfqId'] ??
+              state.uri.queryParameters['id'] ??
+              state.pathParameters['id'] ??
+              (state.extra is String ? state.extra as String : null);
+          Rfq? initialRfq;
+          if (state.extra is Rfq) {
+            initialRfq = state.extra as Rfq;
+          } else if (state.extra is Map<String, dynamic>) {
+            try {
+              initialRfq = Rfq.fromJson(state.extra as Map<String, dynamic>);
+            } catch (_) {}
+          }
+          return _RfqDetailBiddingRouteLoader(
+            initialRfq: initialRfq,
+            rfqId: id,
+          );
         },
+        routes: [
+          GoRoute(
+            path: ':id',
+            parentNavigatorKey: _rootNavigatorKey,
+            builder: (context, state) {
+              final id = state.pathParameters['id'] ??
+                  state.uri.queryParameters['rfqId'] ??
+                  state.uri.queryParameters['id'] ??
+                  (state.extra is String ? state.extra as String : null);
+              Rfq? initialRfq;
+              if (state.extra is Rfq) {
+                initialRfq = state.extra as Rfq;
+              } else if (state.extra is Map<String, dynamic>) {
+                try {
+                  initialRfq = Rfq.fromJson(state.extra as Map<String, dynamic>);
+                } catch (_) {}
+              }
+              return _RfqDetailBiddingRouteLoader(
+                initialRfq: initialRfq,
+                rfqId: id,
+              );
+            },
+          ),
+        ],
       ),
       GoRoute(
         path: '/contracts',
@@ -299,3 +425,336 @@ final routerProvider = Provider<GoRouter>((ref) {
     ],
   );
 });
+
+class _RouteLoadingView extends StatelessWidget {
+  final String title;
+
+  const _RouteLoadingView({required this.title});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: AppColors.background,
+      appBar: AppHeader(title: title, showBack: true),
+      body: const Center(
+        child: CircularProgressIndicator(color: AppColors.primary),
+      ),
+    );
+  }
+}
+
+class _RouteErrorView extends StatelessWidget {
+  final String title;
+  final String message;
+  final VoidCallback onRetry;
+
+  const _RouteErrorView({
+    required this.title,
+    required this.message,
+    required this.onRetry,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: AppColors.background,
+      appBar: AppHeader(title: title, showBack: true),
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.error_outline, size: 48, color: AppColors.error),
+              const SizedBox(height: 16),
+              Text(
+                message,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w500,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 20),
+              ElevatedButton.icon(
+                onPressed: onRetry,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: AppColors.textWhite,
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                icon: const Icon(Icons.refresh, size: 18),
+                label: const Text('Thử lại'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ProductDetailRouteLoader extends ConsumerStatefulWidget {
+  final Product? initialProduct;
+  final String? productId;
+
+  const _ProductDetailRouteLoader({
+    this.initialProduct,
+    this.productId,
+  });
+
+  @override
+  ConsumerState<_ProductDetailRouteLoader> createState() => _ProductDetailRouteLoaderState();
+}
+
+class _ProductDetailRouteLoaderState extends ConsumerState<_ProductDetailRouteLoader> {
+  Product? _product;
+  bool _isLoading = true;
+  String? _errorMessage;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.initialProduct != null) {
+      _product = widget.initialProduct;
+      _isLoading = false;
+    } else {
+      _loadProduct();
+    }
+  }
+
+  Future<void> _loadProduct() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      final catalogRepo = ref.read(catalogRepositoryProvider);
+      Product? loaded;
+      final pId = widget.productId;
+      if (pId != null && pId.isNotEmpty) {
+        loaded = await catalogRepo.getProductDetails(pId);
+      } else {
+        final list = await catalogRepo.getProducts(pageSize: 1);
+        if (list.isNotEmpty) {
+          loaded = list.first;
+        }
+      }
+
+      if (mounted) {
+        if (loaded != null) {
+          setState(() {
+            _product = loaded;
+            _isLoading = false;
+          });
+        } else {
+          setState(() {
+            _errorMessage = 'Không tìm thấy thông tin sản phẩm';
+            _isLoading = false;
+          });
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _errorMessage = e.toString().replaceFirst('Exception: ', '');
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_isLoading) {
+      return const _RouteLoadingView(title: 'Chi tiết sản phẩm');
+    }
+    if (_errorMessage != null || _product == null) {
+      return _RouteErrorView(
+        title: 'Chi tiết sản phẩm',
+        message: _errorMessage ?? 'Không tìm thấy thông tin sản phẩm',
+        onRetry: _loadProduct,
+      );
+    }
+    return ProductDetailScreen(product: _product!);
+  }
+}
+
+class _OrderDetailRouteLoader extends ConsumerStatefulWidget {
+  final Order? initialOrder;
+  final String? orderId;
+
+  const _OrderDetailRouteLoader({
+    this.initialOrder,
+    this.orderId,
+  });
+
+  @override
+  ConsumerState<_OrderDetailRouteLoader> createState() => _OrderDetailRouteLoaderState();
+}
+
+class _OrderDetailRouteLoaderState extends ConsumerState<_OrderDetailRouteLoader> {
+  Order? _order;
+  bool _isLoading = true;
+  String? _errorMessage;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.initialOrder != null) {
+      _order = widget.initialOrder;
+      _isLoading = false;
+    } else {
+      _loadOrder();
+    }
+  }
+
+  Future<void> _loadOrder() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      final orderRepo = ref.read(orderRepositoryProvider);
+      Order? loaded;
+      final oId = widget.orderId;
+      if (oId != null && oId.isNotEmpty) {
+        loaded = await orderRepo.getOrderDetails(oId);
+      } else {
+        final list = await orderRepo.getMyOrders(pageSize: 1);
+        if (list.isNotEmpty) {
+          loaded = await orderRepo.getOrderDetails(list.first.id);
+        }
+      }
+
+      if (mounted) {
+        if (loaded != null) {
+          setState(() {
+            _order = loaded;
+            _isLoading = false;
+          });
+        } else {
+          setState(() {
+            _errorMessage = 'Không tìm thấy thông tin đơn hàng';
+            _isLoading = false;
+          });
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _errorMessage = e.toString().replaceFirst('Exception: ', '');
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_isLoading) {
+      return const _RouteLoadingView(title: 'Chi tiết đơn hàng');
+    }
+    if (_errorMessage != null || _order == null) {
+      return _RouteErrorView(
+        title: 'Chi tiết đơn hàng',
+        message: _errorMessage ?? 'Không tìm thấy thông tin đơn hàng',
+        onRetry: _loadOrder,
+      );
+    }
+    return OrderDetailScreen(order: _order!);
+  }
+}
+
+class _RfqDetailBiddingRouteLoader extends ConsumerStatefulWidget {
+  final Rfq? initialRfq;
+  final String? rfqId;
+
+  const _RfqDetailBiddingRouteLoader({
+    this.initialRfq,
+    this.rfqId,
+  });
+
+  @override
+  ConsumerState<_RfqDetailBiddingRouteLoader> createState() => _RfqDetailBiddingRouteLoaderState();
+}
+
+class _RfqDetailBiddingRouteLoaderState extends ConsumerState<_RfqDetailBiddingRouteLoader> {
+  Rfq? _rfq;
+  bool _isLoading = true;
+  String? _errorMessage;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.initialRfq != null) {
+      _rfq = widget.initialRfq;
+      _isLoading = false;
+    } else {
+      _loadRfq();
+    }
+  }
+
+  Future<void> _loadRfq() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      final rfqRepo = ref.read(rfqRepositoryProvider);
+      Rfq? loaded;
+      final rId = widget.rfqId;
+      if (rId != null && rId.isNotEmpty) {
+        loaded = await rfqRepo.getRfqDetails(rId);
+      } else {
+        final list = await rfqRepo.getMyRfqs(pageSize: 1);
+        if (list.isNotEmpty) {
+          loaded = await rfqRepo.getRfqDetails(list.first.id);
+        }
+      }
+
+      if (mounted) {
+        if (loaded != null) {
+          setState(() {
+            _rfq = loaded;
+            _isLoading = false;
+          });
+        } else {
+          setState(() {
+            _errorMessage = 'Không tìm thấy thông tin yêu cầu báo giá';
+            _isLoading = false;
+          });
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _errorMessage = e.toString().replaceFirst('Exception: ', '');
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_isLoading) {
+      return const _RouteLoadingView(title: 'Chi tiết báo giá RFQ');
+    }
+    if (_errorMessage != null || _rfq == null) {
+      return _RouteErrorView(
+        title: 'Chi tiết báo giá RFQ',
+        message: _errorMessage ?? 'Không tìm thấy thông tin yêu cầu báo giá',
+        onRetry: _loadRfq,
+      );
+    }
+    return RfqDetailBiddingScreen(rfq: _rfq!);
+  }
+}

@@ -56,15 +56,37 @@ class WishlistRepository {
   Future<Map<String, bool>> checkWishlist(List<String> productIds) async {
     if (productIds.isEmpty) return {};
     try {
-      final response = await _client.dio.post(
+      final validGuids = productIds
+          .where((id) => RegExp(
+                  r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$')
+              .hasMatch(id))
+          .toList();
+
+      if (validGuids.isEmpty) {
+        return {for (final id in productIds) id: false};
+      }
+
+      final response = await _client.dio.get(
         ApiEndpoints.wishlistCheck,
-        data: {'productIds': productIds},
+        queryParameters: {'ids': validGuids.join(',')},
       );
       final data = ApiClient.unwrap(response);
+      final savedSet = <String>{};
+
       if (data is Map) {
-        return data.map((key, value) => MapEntry(key.toString(), value == true));
+        final rawList = data['savedIds'] ?? data['SavedIds'];
+        if (rawList is List) {
+          savedSet.addAll(rawList.map((e) => e.toString().toLowerCase()));
+        }
+      } else if (data is List) {
+        savedSet.addAll(data.map((e) => e.toString().toLowerCase()));
       }
-      return {};
+
+      final result = <String, bool>{};
+      for (final id in productIds) {
+        result[id] = savedSet.contains(id.toLowerCase());
+      }
+      return result;
     } catch (e) {
       throw ApiClient.handleError(e);
     }

@@ -225,7 +225,7 @@ class _PublicShopScreenState extends ConsumerState<PublicShopScreen>
         Stack(
           children: [
             AspectRatio(
-              aspectRatio: 2.4,
+              aspectRatio: 3.5,
               child: shop.bannerUrl != null && shop.bannerUrl!.isNotEmpty
                   ? CachedNetworkImage(
                       imageUrl: shop.bannerUrl!,
@@ -236,7 +236,7 @@ class _PublicShopScreenState extends ConsumerState<PublicShopScreen>
             ),
             Positioned(
               left: 16,
-              bottom: 12,
+              bottom: 8,
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
@@ -244,6 +244,7 @@ class _PublicShopScreenState extends ConsumerState<PublicShopScreen>
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: const Row(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
                     Icon(Icons.verified, size: 14, color: AppColors.accent),
                     SizedBox(width: 4),
@@ -260,7 +261,7 @@ class _PublicShopScreenState extends ConsumerState<PublicShopScreen>
 
         // Shop Profile Details
         Container(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           color: AppColors.surface,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -270,8 +271,8 @@ class _PublicShopScreenState extends ConsumerState<PublicShopScreen>
                 children: [
                   // Logo
                   Container(
-                    width: 60,
-                    height: 60,
+                    width: 50,
+                    height: 50,
                     decoration: BoxDecoration(
                       color: AppColors.accentGoldBg,
                       shape: BoxShape.circle,
@@ -285,16 +286,16 @@ class _PublicShopScreenState extends ConsumerState<PublicShopScreen>
                             errorWidget: (_, __, ___) => const Icon(
                               Icons.storefront,
                               color: AppColors.accent,
-                              size: 32,
+                              size: 28,
                             ),
                           )
                         : const Icon(
                             Icons.storefront,
                             color: AppColors.accent,
-                            size: 32,
+                            size: 28,
                           ),
                   ),
-                  const SizedBox(width: 14),
+                  const SizedBox(width: 12),
 
                   // Name & Info
                   Expanded(
@@ -307,7 +308,7 @@ class _PublicShopScreenState extends ConsumerState<PublicShopScreen>
                               child: Text(
                                 shop.name,
                                 style: const TextStyle(
-                                  fontSize: 16,
+                                  fontSize: 15,
                                   fontWeight: FontWeight.bold,
                                   color: AppColors.primaryDark,
                                 ),
@@ -320,17 +321,22 @@ class _PublicShopScreenState extends ConsumerState<PublicShopScreen>
                           ],
                         ),
                         const SizedBox(height: 4),
-                        Row(
+                        Wrap(
+                          crossAxisAlignment: WrapCrossAlignment.center,
+                          spacing: 6,
+                          runSpacing: 4,
                           children: [
-                            const Icon(Icons.star, size: 14, color: AppColors.accent),
-                            const SizedBox(width: 4),
-                            Text(
-                              '${shop.rating.toStringAsFixed(1)} (${shop.reviewCount} đánh giá)',
-                              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(Icons.star, size: 14, color: AppColors.accent),
+                                const SizedBox(width: 4),
+                                Text(
+                                  '${shop.rating.toStringAsFixed(1)} (${shop.reviewCount} đánh giá)',
+                                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                                ),
+                              ],
                             ),
-                            const SizedBox(width: 8),
-                            const Text('·', style: TextStyle(color: AppColors.border)),
-                            const SizedBox(width: 8),
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                               decoration: BoxDecoration(
@@ -370,14 +376,14 @@ class _PublicShopScreenState extends ConsumerState<PublicShopScreen>
                   ),
                 ],
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 8),
 
               if (shop.description != null && shop.description!.isNotEmpty)
                 Text(
                   shop.description!,
                   style: const TextStyle(fontSize: 12.5, color: AppColors.textSecondary, height: 1.4),
                 ),
-              const SizedBox(height: 14),
+              const SizedBox(height: 10),
 
               // Chat action button
               Row(

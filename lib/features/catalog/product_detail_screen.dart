@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_tokens.dart';
 import '../../data/models/product.dart';
 import '../../data/repositories/wishlist_repository.dart';
 import '../../providers/cart_provider.dart';
@@ -10,7 +11,6 @@ import '../../shared_widgets/common/app_header.dart';
 import '../../shared_widgets/common/custom_button.dart';
 import '../../shared_widgets/lucian/b2b_price_calculator.dart';
 import '../../shared_widgets/lucian/tear_off_coupon.dart';
-import '../../shared_widgets/lucian/trust_security_badges.dart';
 
 class ProductDetailScreen extends ConsumerStatefulWidget {
   final Product product;
@@ -379,7 +379,7 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
             ),
 
             // Trust badges
-            const TrustSecurityBadges(),
+            _buildTrustBadges(),
             const SizedBox(height: 20),
           ],
         ),
@@ -454,6 +454,86 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildTrustBadges() {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppTokens.lucianRadiusLg),
+        border: Border.all(color: AppColors.border, width: 0.8),
+        boxShadow: AppTokens.shadowSubtle,
+      ),
+      child: const Wrap(
+        alignment: WrapAlignment.spaceAround,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        spacing: 12,
+        runSpacing: 10,
+        children: [
+          _TrustBadgeItem(
+            icon: Icons.verified_user_outlined,
+            title: 'Ký quỹ an toàn',
+            subtitle: 'Bảo vệ nguồn tiền',
+          ),
+          _TrustBadgeItem(
+            icon: Icons.ac_unit,
+            title: 'Giao xe lạnh',
+            subtitle: 'Chuẩn 20-25°C',
+          ),
+          _TrustBadgeItem(
+            icon: Icons.receipt_long_outlined,
+            title: 'Hóa đơn VAT',
+            subtitle: 'Đầy đủ chứng từ',
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _TrustBadgeItem extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String subtitle;
+
+  const _TrustBadgeItem({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 20, color: AppColors.accent),
+        const SizedBox(width: 6),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              title,
+              style: const TextStyle(
+                fontSize: 11.5,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textPrimary,
+              ),
+            ),
+            Text(
+              subtitle,
+              style: const TextStyle(
+                fontSize: 10,
+                color: AppColors.textMuted,
+              ),
+            ),
+          ],
+        ),
+      ],
     );
   }
 }

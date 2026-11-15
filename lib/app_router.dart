@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -33,6 +34,7 @@ import 'features/ai/ai_assistant_screen.dart';
 import 'features/notification/notification_screen.dart';
 import 'features/notification/notification_settings_screen.dart';
 import 'features/dev/ui_catalog_screen.dart';
+import 'features/dev/dev_mode_sheet.dart';
 
 import 'features/reviews/review_form_screen.dart';
 import 'features/wishlist/wishlist_screen.dart';
@@ -56,7 +58,17 @@ final routerProvider = Provider<GoRouter>((ref) {
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) {
           return Scaffold(
-            body: navigationShell,
+            body: Stack(
+              children: [
+                navigationShell,
+                if (kDebugMode)
+                  const Positioned(
+                    right: 16,
+                    bottom: 16,
+                    child: DevModeFloatingTrigger(),
+                  ),
+              ],
+            ),
             bottomNavigationBar: BottomTabBar(
               currentIndex: navigationShell.currentIndex,
               cartBadgeCount: cartTotals.totalItems,
@@ -174,7 +186,20 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/order-detail',
         parentNavigatorKey: _rootNavigatorKey,
         builder: (context, state) {
-          final order = state.extra as Order;
+          final order = state.extra is Order
+              ? state.extra as Order
+              : Order(
+                  id: 'dev-order-001',
+                  orderCode: 'DH-2026-DEV01',
+                  status: 'Confirmed',
+                  totalAmount: 1850000,
+                  finalAmount: 1850000,
+                  shippingAddress: 'Tòa nhà FPT, Phố Duy Tân, Cầu Giấy, Hà Nội',
+                  recipientName: 'DevSeed Nguyễn Văn An',
+                  recipientPhone: '0900000005',
+                  createdAt: DateTime.now(),
+                  shopName: 'Tiệm Bánh Kinh Đô Truyền Thống',
+                );
           return OrderDetailScreen(order: order);
         },
       ),
@@ -199,7 +224,17 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/rfq-detail-bidding',
         parentNavigatorKey: _rootNavigatorKey,
         builder: (context, state) {
-          final rfq = state.extra as Rfq;
+          final rfq = state.extra is Rfq
+              ? state.extra as Rfq
+              : Rfq(
+                  id: 'dev-rfq-001',
+                  rfqNumber: 'RFQ-2026-DEV',
+                  title: 'Đơn báo giá hộp bánh nướng B2B trung thu',
+                  targetQuantity: 100,
+                  expectedDeliveryDate: DateTime.now().add(const Duration(days: 30)),
+                  status: 'Open',
+                  targetBudget: 25000000,
+                );
           return RfqDetailBiddingScreen(rfq: rfq);
         },
       ),
@@ -296,6 +331,16 @@ final routerProvider = Provider<GoRouter>((ref) {
         parentNavigatorKey: _rootNavigatorKey,
         builder: (context, state) => const UiCatalogScreen(),
       ),
+
+      // Dev Mode Toolbar Sheet
+      if (kDebugMode)
+        GoRoute(
+          path: '/dev-sheet',
+          parentNavigatorKey: _rootNavigatorKey,
+          builder: (context, state) => const Scaffold(
+            body: SafeArea(child: DevModeSheet()),
+          ),
+        ),
     ],
   );
 });

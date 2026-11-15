@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import '../../core/theme/app_colors.dart';
 import '../../shared_widgets/common/app_header.dart';
@@ -9,6 +10,7 @@ import '../../shared_widgets/lucian/b2b_price_calculator.dart';
 import '../../shared_widgets/lucian/review_filter_stars.dart';
 import '../../shared_widgets/antd/antd_steps.dart';
 import '../../shared_widgets/antd/antd_otp_input.dart';
+import 'dev_mode_sheet.dart';
 
 class UiCatalogScreen extends StatefulWidget {
   const UiCatalogScreen({super.key});
@@ -23,6 +25,38 @@ class _UiCatalogScreenState extends State<UiCatalogScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (!kDebugMode) {
+      return Scaffold(
+        appBar: const AppHeader(
+          title: 'UI Showcase',
+          showBack: true,
+        ),
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.lock_outline, size: 48, color: AppColors.textMuted),
+                const SizedBox(height: 12),
+                const Text(
+                  'Chế độ xem UI Catalog chỉ khả dụng trong môi trường Debug (kDebugMode).',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 14, color: AppColors.textSecondary),
+                ),
+                const SizedBox(height: 16),
+                CustomButton(
+                  title: 'Quay lại',
+                  size: ButtonSize.small,
+                  onPress: () => Navigator.of(context).pop(),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
     return Scaffold(
       appBar: const AppHeader(
         title: 'UI Showcase · AntD & Lucian',
@@ -39,12 +73,12 @@ class _UiCatalogScreenState extends State<UiCatalogScreen> {
               decoration: BoxDecoration(
                 color: AppColors.primaryTint,
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AppColors.primaryLight.withOpacity(0.3)),
+                border: Border.all(color: AppColors.primaryLight.withValues(alpha: 0.3)),
               ),
-              child: const Column(
+              child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
+                  const Text(
                     'Hệ Thống Component Hoàng Gia B2B',
                     style: TextStyle(
                       fontSize: 16,
@@ -52,10 +86,17 @@ class _UiCatalogScreenState extends State<UiCatalogScreen> {
                       color: AppColors.primary,
                     ),
                   ),
-                  SizedBox(height: 6),
-                  Text(
+                  const SizedBox(height: 6),
+                  const Text(
                     'Kết hợp chuẩn cấu trúc Ant Design với vi tương tác tinh tế của Lucian Labs. Bảo tồn 100% theme Crimson (#8C1524) & Imperial Gold (#D48806).',
                     style: TextStyle(fontSize: 13, color: AppColors.textSecondary, height: 1.4),
+                  ),
+                  const SizedBox(height: 12),
+                  CustomButton(
+                    title: 'Mở Thanh Công Cụ Dev Mode',
+                    icon: const Icon(Icons.developer_mode, size: 16, color: Colors.white),
+                    size: ButtonSize.small,
+                    onPress: () => showDevModeSheet(context),
                   ),
                 ],
               ),

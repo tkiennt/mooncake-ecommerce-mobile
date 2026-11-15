@@ -1,3 +1,33 @@
+class DeliveryItem {
+  final String? id;
+  final String productName;
+  final int quantity;
+  final String? unit;
+
+  DeliveryItem({
+    this.id,
+    required this.productName,
+    required this.quantity,
+    this.unit,
+  });
+
+  factory DeliveryItem.fromJson(Map<String, dynamic> json) {
+    return DeliveryItem(
+      id: json['id']?.toString() ?? json['itemId']?.toString(),
+      productName: json['productName']?.toString() ?? json['name']?.toString() ?? 'Sản phẩm',
+      quantity: (json['quantity'] as num?)?.toInt() ?? 1,
+      unit: json['unit']?.toString() ?? 'Hộp',
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+    if (id != null) 'id': id,
+    'productName': productName,
+    'quantity': quantity,
+    if (unit != null) 'unit': unit,
+  };
+}
+
 class DeliveryProof {
   final String id;
   final String proofType;
@@ -58,6 +88,14 @@ class DeliveryModel {
   final String? deliveryAddress;
   final String? recipientName;
   final String? recipientPhone;
+  final int? batchNumber;
+  final int? totalBatches;
+  final String? driverName;
+  final String? driverPhone;
+  final String? vehiclePlate;
+  final String? shareCode;
+  final DateTime? driverClaimedAt;
+  final List<DeliveryItem> items;
   final List<DeliveryProof> proofs;
 
   DeliveryModel({
@@ -74,14 +112,37 @@ class DeliveryModel {
     this.deliveryAddress,
     this.recipientName,
     this.recipientPhone,
+    this.batchNumber,
+    this.totalBatches,
+    this.driverName,
+    this.driverPhone,
+    this.vehiclePlate,
+    this.shareCode,
+    this.driverClaimedAt,
+    this.items = const [],
     this.proofs = const [],
   });
 
+  bool get hasDriverClaimed =>
+      driverClaimedAt != null ||
+      (driverName != null && driverName!.trim().isNotEmpty);
+
   factory DeliveryModel.fromJson(Map<String, dynamic> json) {
     final rawProofs = json['proofs'] as List? ?? [];
+    final rawItems = json['items'] as List? ?? json['deliveryItems'] as List? ?? [];
+
+    final driverClaimed = json['driverClaimedAt'] != null
+        ? DateTime.tryParse(json['driverClaimedAt'].toString())
+        : (json['driverClaimedAtUtc'] != null
+            ? DateTime.tryParse(json['driverClaimedAtUtc'].toString())
+            : null);
+
+    final driverObj = json['driver'] is Map<String, dynamic>
+        ? json['driver'] as Map<String, dynamic>
+        : (json['driver'] is Map ? Map<String, dynamic>.from(json['driver'] as Map) : null);
 
     return DeliveryModel(
-      id: json['id']?.toString() ?? '',
+      id: json['id']?.toString() ?? json['deliveryId']?.toString() ?? '',
       deliveryNumber: json['deliveryNumber']?.toString() ??
           json['deliveryCode']?.toString() ??
           '',
@@ -94,13 +155,27 @@ class DeliveryModel {
           (json['temperature'] as num?)?.toDouble(),
       estimatedDeliveryDate: json['estimatedDeliveryDate'] != null
           ? DateTime.tryParse(json['estimatedDeliveryDate'].toString())
-          : null,
+          : (json['scheduledDate'] != null ? DateTime.tryParse(json['scheduledDate'].toString()) : null),
       actualDeliveryDate: json['actualDeliveryDate'] != null
           ? DateTime.tryParse(json['actualDeliveryDate'].toString())
           : null,
-      deliveryAddress: json['deliveryAddress']?.toString(),
+      deliveryAddress: json['deliveryAddress']?.toString() ?? json['toAddress']?.toString(),
       recipientName: json['recipientName']?.toString(),
       recipientPhone: json['recipientPhone']?.toString(),
+      batchNumber: (json['batchNumber'] as num?)?.toInt(),
+      totalBatches: (json['totalBatches'] as num?)?.toInt(),
+      driverName: json['driverName']?.toString() ?? driverObj?['driverName']?.toString(),
+      driverPhone: json['driverPhone']?.toString() ?? driverObj?['driverPhone']?.toString(),
+      vehiclePlate: json['vehiclePlate']?.toString() ?? driverObj?['vehiclePlate']?.toString(),
+      shareCode: json['shareCode']?.toString(),
+      driverClaimedAt: driverClaimed ??
+          (driverObj?['driverClaimedAt'] != null
+              ? DateTime.tryParse(driverObj!['driverClaimedAt'].toString())
+              : null),
+      items: rawItems
+          .map((it) => DeliveryItem.fromJson(
+              it is Map<String, dynamic> ? it : Map<String, dynamic>.from(it as Map)))
+          .toList(),
       proofs: rawProofs
           .map((p) => DeliveryProof.fromJson(
               p is Map<String, dynamic> ? p : Map<String, dynamic>.from(p as Map)))
@@ -124,6 +199,63 @@ class DeliveryModel {
     if (deliveryAddress != null) 'deliveryAddress': deliveryAddress,
     if (recipientName != null) 'recipientName': recipientName,
     if (recipientPhone != null) 'recipientPhone': recipientPhone,
+    if (batchNumber != null) 'batchNumber': batchNumber,
+    if (totalBatches != null) 'totalBatches': totalBatches,
+    if (driverName != null) 'driverName': driverName,
+    if (driverPhone != null) 'driverPhone': driverPhone,
+    if (vehiclePlate != null) 'vehiclePlate': vehiclePlate,
+    if (shareCode != null) 'shareCode': shareCode,
+    if (driverClaimedAt != null) 'driverClaimedAt': driverClaimedAt!.toIso8601String(),
+    'items': items.map((it) => it.toJson()).toList(),
     'proofs': proofs.map((p) => p.toJson()).toList(),
   };
+}
+
+class ContractFulfillmentLine {
+  final String? lineId;
+  final String productName;
+  final int totalQuantity;
+  final int scheduledQuantity;
+  final int deliveredQuantity;
+  final int remainingQuantity;
+  final String? unit;
+
+  ContractFulfillmentLine({
+    this.lineId,
+    required this.productName,
+    required this.totalQuantity,
+    this.scheduledQuantity = 0,
+    this.deliveredQuantity = 0,
+    this.remainingQuantity = 0,
+    this.unit,
+  });
+
+  factory ContractFulfillmentLine.fromJson(Map<String, dynamic> json) {
+    final total = (json['totalQuantity'] as num?)?.toInt() ??
+        (json['total'] as num?)?.toInt() ??
+        0;
+    final delivered = (json['deliveredQuantity'] as num?)?.toInt() ??
+        (json['delivered'] as num?)?.toInt() ??
+        0;
+    final remaining = (json['remainingQuantity'] as num?)?.toInt() ??
+        (json['remaining'] as num?)?.toInt() ??
+        (total - delivered).clamp(0, total);
+    final scheduled = (json['scheduledQuantity'] as num?)?.toInt() ??
+        (json['scheduled'] as num?)?.toInt() ??
+        0;
+
+    return ContractFulfillmentLine(
+      lineId: json['lineId']?.toString() ?? json['id']?.toString(),
+      productName: json['productName']?.toString() ?? json['name']?.toString() ?? 'Sản phẩm',
+      totalQuantity: total,
+      scheduledQuantity: scheduled,
+      deliveredQuantity: delivered,
+      remainingQuantity: remaining,
+      unit: json['unit']?.toString() ?? 'Hộp',
+    );
+  }
+
+  double get progressRatio =>
+      totalQuantity > 0 ? (deliveredQuantity / totalQuantity).clamp(0.0, 1.0) : 0.0;
+  int get progressPercent => (progressRatio * 100).round();
 }

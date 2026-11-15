@@ -361,6 +361,114 @@ class _ContractSignScreenState extends ConsumerState<ContractSignScreen> {
     );
   }
 
+  Widget _buildBothPartiesSignStatusCard() {
+    final customerSignedAt = _loadedContract?.signedByCustomerAt;
+    final supplierSignedAt = _loadedContract?.signedBySupplierAt;
+    final isCustomerSigned = customerSignedAt != null;
+    final isSupplierSigned = supplierSignedAt != null;
+
+    final customerText = isCustomerSigned
+        ? 'Bạn đã ký số lúc ${DateFormat("HH:mm dd/MM/yyyy").format(customerSignedAt)}'
+        : 'Chờ bạn ký xác thực OTP';
+    final supplierText = isSupplierSigned
+        ? 'Xưởng đã ký số lúc ${DateFormat("HH:mm dd/MM/yyyy").format(supplierSignedAt)}'
+        : 'Đang chờ xưởng sản xuất ký OTP';
+
+    return Container(
+      padding: const EdgeInsets.all(AppTokens.spaceMD),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppTokens.radiusCard),
+        border: Border.all(color: AppColors.border),
+        boxShadow: AppTokens.shadowSubtle,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Row(
+            children: [
+              Icon(Icons.draw_outlined, size: 18, color: AppColors.primary),
+              SizedBox(width: 8),
+              Text(
+                'Tiến Độ Ký Hợp Đồng Hai Bên (D22)',
+                style: TextStyle(
+                  fontFamily: 'Roboto',
+                  fontWeight: FontWeight.w700,
+                  fontSize: 13.5,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppTokens.spaceSM),
+          // Customer Party
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Icon(
+                isCustomerSigned ? Icons.check_circle : Icons.radio_button_unchecked,
+                size: 16,
+                color: isCustomerSigned ? AppColors.success : AppColors.warning,
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Bên Mua (Khách hàng doanh nghiệp):',
+                      style: TextStyle(fontSize: 11.5, color: AppColors.textSecondary),
+                    ),
+                    Text(
+                      customerText,
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: isCustomerSigned ? AppColors.success : AppColors.warning,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          // Supplier Party
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Icon(
+                isSupplierSigned ? Icons.check_circle : Icons.hourglass_top,
+                size: 16,
+                color: isSupplierSigned ? AppColors.success : AppColors.textMuted,
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Bên Bán (${_loadedContract?.supplierName ?? "Xưởng sản xuất"}):',
+                      style: const TextStyle(fontSize: 11.5, color: AppColors.textSecondary),
+                    ),
+                    Text(
+                      supplierText,
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: isSupplierSigned ? AppColors.success : AppColors.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final contractNumber = _contractNumber;
@@ -492,7 +600,9 @@ class _ContractSignScreenState extends ConsumerState<ContractSignScreen> {
             ),
             const SizedBox(height: AppTokens.spaceMD),
 
-            // 2. Terms & Conditions Card with "Xem văn bản đầy đủ" button (D17)
+            // Trạng thái ký hai bên (D22)
+            _buildBothPartiesSignStatusCard(),
+            const SizedBox(height: AppTokens.spaceMD),
             Container(
               padding: const EdgeInsets.all(AppTokens.spaceLG),
               decoration: BoxDecoration(

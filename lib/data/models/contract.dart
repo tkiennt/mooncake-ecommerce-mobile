@@ -35,6 +35,52 @@ class ContractMilestone {
     );
   }
 
+  DateTime? get parsedDueDate {
+    if (dueDate.isEmpty) return null;
+    return DateTime.tryParse(dueDate);
+  }
+
+  int? get daysUntilDue {
+    final parsed = parsedDueDate;
+    if (parsed == null) return null;
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final target = DateTime(parsed.year, parsed.month, parsed.day);
+    return target.difference(today).inDays;
+  }
+
+  bool get isCompleted {
+    final s = status.toLowerCase();
+    return s == 'completed' ||
+        s == 'completedontime' ||
+        s == 'completedlate' ||
+        s == 'paid';
+  }
+
+  bool get isOverdue {
+    if (isCompleted) return false;
+    final s = status.toLowerCase();
+    if (s == 'overdue') return true;
+    final diff = daysUntilDue;
+    return diff != null && diff < 0;
+  }
+
+  bool get isNearDeadline {
+    if (isCompleted || isOverdue) return false;
+    final diff = daysUntilDue;
+    return diff != null && diff >= 0 && diff <= 7;
+  }
+
+  String? get dueNoticeTag {
+    if (isOverdue) return 'Quá hạn';
+    if (isNearDeadline) {
+      final diff = daysUntilDue;
+      if (diff == 0) return 'Sắp đến hạn (Hôm nay)';
+      return 'Sắp đến hạn (còn $diff ngày)';
+    }
+    return null;
+  }
+
   Map<String, dynamic> toJson() => {
     'id': id,
     'name': name,
@@ -111,6 +157,10 @@ class ContractModel {
           .toList(),
     );
   }
+
+  bool get isBothSigned => signedByCustomerAt != null && signedBySupplierAt != null;
+  bool get isCustomerSigned => signedByCustomerAt != null;
+  bool get isSupplierSigned => signedBySupplierAt != null;
 
   Map<String, dynamic> toJson() => {
     'id': id,

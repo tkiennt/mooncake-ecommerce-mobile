@@ -14,6 +14,7 @@ import '../../shared_widgets/common/milestone_timeline.dart';
 import '../../data/models/delivery.dart';
 import '../../data/repositories/delivery_repository.dart';
 import '../../data/repositories/order_repository.dart';
+import '../profile/widgets/delivery_driver_info_card.dart';
 
 class DeliveryPoDScreen extends ConsumerStatefulWidget {
   final String? orderId;
@@ -536,6 +537,24 @@ class _DeliveryPoDScreenState extends ConsumerState<DeliveryPoDScreen> {
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
+                      if (d.batchNumber != null)
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: AppColors.accentGoldBg,
+                            borderRadius: BorderRadius.circular(4),
+                            border: Border.all(color: AppColors.accent, width: 0.8),
+                          ),
+                          child: Text(
+                            'Đợt ${d.batchNumber}${d.totalBatches != null ? "/${d.totalBatches}" : ""}',
+                            style: const TextStyle(
+                              fontFamily: 'Roboto',
+                              fontSize: 11.5,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.accent,
+                            ),
+                          ),
+                        ),
                     ],
                   ),
                   const SizedBox(height: AppTokens.spaceSM),
@@ -581,6 +600,80 @@ class _DeliveryPoDScreenState extends ConsumerState<DeliveryPoDScreen> {
               ),
             ),
             const SizedBox(height: AppTokens.spaceMD),
+
+            // 2b. Driver Info Card (D33)
+            DeliveryDriverInfoCard(
+              driverName: d.driverName,
+              driverPhone: d.driverPhone,
+              vehiclePlate: d.vehiclePlate,
+              driverClaimedAt: d.driverClaimedAt,
+              trackingCode: d.trackingCode,
+              deliveryNumber: d.deliveryNumber,
+            ),
+            const SizedBox(height: AppTokens.spaceMD),
+
+            // 2c. Batch Items (if any)
+            if (d.items.isNotEmpty) ...[
+              Container(
+                padding: const EdgeInsets.all(AppTokens.spaceLG),
+                decoration: BoxDecoration(
+                  color: AppColors.surface,
+                  borderRadius: BorderRadius.circular(AppTokens.radiusCard),
+                  border: Border.all(color: AppColors.border, width: 0.8),
+                  boxShadow: AppTokens.shadowSubtle,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        const Icon(Icons.bakery_dining_outlined, size: 18, color: AppColors.primary),
+                        const SizedBox(width: 6),
+                        Text(
+                          'Sản phẩm trong đợt (${d.items.length})',
+                          style: const TextStyle(
+                            fontFamily: 'Roboto',
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: AppTokens.spaceMD),
+                    ...d.items.map(
+                      (item) => Padding(
+                        padding: const EdgeInsets.only(bottom: 8.0),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                item.productName,
+                                style: const TextStyle(
+                                  fontFamily: 'Roboto',
+                                  fontSize: 13,
+                                  color: AppColors.textPrimary,
+                                ),
+                              ),
+                            ),
+                            Text(
+                              'x${item.quantity}',
+                              style: const TextStyle(
+                                fontFamily: 'Roboto',
+                                fontSize: 13,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.primary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: AppTokens.spaceMD),
+            ],
 
             // 3. ColdChain Monitor Box (Giám sát nhiệt độ / độ ẩm xe lạnh)
             Container(

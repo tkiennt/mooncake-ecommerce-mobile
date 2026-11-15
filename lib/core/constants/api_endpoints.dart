@@ -79,6 +79,8 @@ class ApiEndpoints {
   static String contractMilestones(String id) => '/contracts/$id/milestones';
   static String verifyContractMilestone(String contractId, String milestoneId) =>
       '/contracts/$contractId/milestones/$milestoneId/verify';
+  static String contractFulfillment(String contractId) =>
+      '/deliveries/contract/$contractId/fulfillment';
 
   // Deliveries & PoD
   static const String deliveries = '/deliveries';
@@ -87,6 +89,16 @@ class ApiEndpoints {
   static String deliveriesByContract(String contractId) => '/deliveries/contract/$contractId';
   static String deliveryProofs(String deliveryId) => '/deliveries/$deliveryId/proofs';
   static String deliveryProofVerify(String proofId) => '/deliveries/proofs/$proofId/verify';
+  static String deliveryDriver(String id) => '/deliveries/$id/driver';
+  static String deliveryShareCode(String code) => '/deliveries/public/code/$code';
+  static String deliveryClaim(String token) => '/deliveries/public/$token/claim';
+  static String deliveryPublic(String token) => '/deliveries/public/$token';
+
+  // Custom Packaging
+  static String customPackaging(String orderId) =>
+      '/orders/$orderId/custom-packaging';
+  static String customPackagingReview(String orderId, String revisionId) =>
+      '/orders/$orderId/custom-packaging/revisions/$revisionId/review';
 
   // Notifications
   static const String notifications = '/notifications';

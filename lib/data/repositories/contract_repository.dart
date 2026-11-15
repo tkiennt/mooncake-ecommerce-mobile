@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/api_endpoints.dart';
 import '../../core/network/api_client.dart';
 import '../models/contract.dart';
+import '../models/delivery.dart';
 
 class ContractRepository {
   final ApiClient _client;
@@ -122,6 +123,22 @@ class ContractRepository {
       );
       final data = ApiClient.unwrap(response);
       return data['paymentUrl']?.toString() ?? data['url']?.toString() ?? data.toString();
+    } catch (e) {
+      throw ApiClient.handleError(e);
+    }
+  }
+
+  /// Gets contract batch fulfillment tracking (lines, quantities, remaining)
+  Future<List<ContractFulfillmentLine>> getContractFulfillment(String contractId) async {
+    try {
+      final response = await _client.dio.get(ApiEndpoints.contractFulfillment(contractId));
+      final data = ApiClient.unwrap(response);
+      final rawList = data is Map ? (data['items'] as List? ?? []) : (data as List? ?? []);
+
+      return rawList
+          .map((line) => ContractFulfillmentLine.fromJson(
+              line is Map<String, dynamic> ? line : Map<String, dynamic>.from(line as Map)))
+          .toList();
     } catch (e) {
       throw ApiClient.handleError(e);
     }

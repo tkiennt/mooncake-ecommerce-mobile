@@ -412,12 +412,15 @@ class _MenuItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ListTile(
-      leading: Icon(icon, color: AppColors.primary, size: 22),
-      title: Text(title, style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600)),
-      subtitle: Text(subtitle, style: const TextStyle(fontSize: 11, color: AppColors.textMuted)),
-      trailing: const Icon(Icons.chevron_right, size: 18, color: AppColors.textMuted),
-      onTap: onTap,
+    return Material(
+      type: MaterialType.transparency,
+      child: ListTile(
+        leading: Icon(icon, color: AppColors.primary, size: 22),
+        title: Text(title, style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600)),
+        subtitle: Text(subtitle, style: const TextStyle(fontSize: 11, color: AppColors.textMuted)),
+        trailing: const Icon(Icons.chevron_right, size: 18, color: AppColors.textMuted),
+        onTap: onTap,
+      ),
     );
   }
 }

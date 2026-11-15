@@ -293,19 +293,25 @@ class _CreateRfqScreenState extends ConsumerState<CreateRfqScreen> {
                       ),
                     ),
                     const SizedBox(height: 14),
-                    CheckboxListTile(
-                      value: _customPackaging,
-                      activeColor: AppColors.primary,
-                      contentPadding: EdgeInsets.zero,
-                      title: const Text('Cần thiết kế bao bì & in logo thương hiệu', style: TextStyle(fontSize: 13)),
-                      onChanged: (val) => setState(() => _customPackaging = val ?? false),
+                    Material(
+                      type: MaterialType.transparency,
+                      child: CheckboxListTile(
+                        value: _customPackaging,
+                        activeColor: AppColors.primary,
+                        contentPadding: EdgeInsets.zero,
+                        title: const Text('Cần thiết kế bao bì & in logo thương hiệu', style: TextStyle(fontSize: 13)),
+                        onChanged: (val) => setState(() => _customPackaging = val ?? false),
+                      ),
                     ),
-                    CheckboxListTile(
-                      value: _sampleBoxNeeded,
-                      activeColor: AppColors.primary,
-                      contentPadding: EdgeInsets.zero,
-                      title: const Text('Gửi 01 hộp mẫu thử nguyên seal tận nơi trước khi ký HĐ', style: TextStyle(fontSize: 13)),
-                      onChanged: (val) => setState(() => _sampleBoxNeeded = val ?? false),
+                    Material(
+                      type: MaterialType.transparency,
+                      child: CheckboxListTile(
+                        value: _sampleBoxNeeded,
+                        activeColor: AppColors.primary,
+                        contentPadding: EdgeInsets.zero,
+                        title: const Text('Gửi 01 hộp mẫu thử nguyên seal tận nơi trước khi ký HĐ', style: TextStyle(fontSize: 13)),
+                        onChanged: (val) => setState(() => _sampleBoxNeeded = val ?? false),
+                      ),
                     ),
                   ],
                 ),

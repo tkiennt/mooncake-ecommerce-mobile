@@ -178,31 +178,41 @@ class DeliveryDriverInfoCard extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Row(
-                children: [
-                  Icon(Icons.local_shipping_outlined, color: AppColors.primary, size: 20),
-                  SizedBox(width: 8),
-                  Text(
-                    'Thông Tin Vận Chuyển & Tài Xế',
-                    style: TextStyle(
-                      fontFamily: 'Roboto',
-                      fontWeight: FontWeight.bold,
-                      fontSize: 14,
-                      color: AppColors.textPrimary,
+              const Expanded(
+                child: Row(
+                  children: [
+                    Icon(Icons.local_shipping_outlined, color: AppColors.primary, size: 20),
+                    SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Thông Tin Vận Chuyển & Tài Xế',
+                        style: TextStyle(
+                          fontFamily: 'Roboto',
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                          color: AppColors.textPrimary,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-              if (deliveryNumber != null && deliveryNumber!.isNotEmpty)
-                Text(
-                  deliveryNumber!,
-                  style: const TextStyle(
-                    fontFamily: 'Roboto',
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.primary,
+              if (deliveryNumber != null && deliveryNumber!.isNotEmpty) ...[
+                const SizedBox(width: 8),
+                Flexible(
+                  child: Text(
+                    deliveryNumber!,
+                    style: const TextStyle(
+                      fontFamily: 'Roboto',
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.primary,
+                    ),
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
+              ],
             ],
           ),
           const SizedBox(height: AppTokens.spaceMD),
@@ -221,13 +231,16 @@ class DeliveryDriverInfoCard extends StatelessWidget {
                     children: [
                       const Icon(Icons.check_circle, color: Color(0xFF52C41A), size: 18),
                       const SizedBox(width: 6),
-                      Text(
-                        'Tài xế đã nhận chuyến: ${driverName ?? "Đang cập nhật"}',
-                        style: const TextStyle(
-                          fontFamily: 'Roboto',
-                          fontWeight: FontWeight.w700,
-                          fontSize: 13,
-                          color: Color(0xFF389E0D),
+                      Expanded(
+                        child: Text(
+                          'Tài xế đã nhận chuyến: ${driverName ?? "Đang cập nhật"}',
+                          style: const TextStyle(
+                            fontFamily: 'Roboto',
+                            fontWeight: FontWeight.w700,
+                            fontSize: 13,
+                            color: Color(0xFF389E0D),
+                          ),
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                     ],

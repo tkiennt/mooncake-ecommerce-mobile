@@ -143,7 +143,7 @@ class _DriverTripDetailScreenState
     final dateFormat = DateFormat('dd/MM/yyyy HH:mm');
     final claimedTimeText = trip.driverClaimedAt != null
         ? dateFormat.format(trip.driverClaimedAt!.toLocal())
-        : 'Chưa nhận';
+        : 'Chưa nhận chuyến';
     final scheduledText = trip.scheduledDate != null
         ? DateFormat('dd/MM/yyyy').format(trip.scheduledDate!.toLocal())
         : 'Chưa có lịch';
@@ -309,7 +309,9 @@ class _DriverTripDetailScreenState
                   icon: Icons.badge_outlined,
                   children: [
                     _InfoRow(
-                      label: 'Tài xế đã nhận',
+                      label: trip.driverClaimedAt != null
+                          ? 'Tài xế đã nhận'
+                          : 'Tài xế được gán',
                       value: trip.driverName ?? 'Chưa nhận chuyến',
                       isBold: true,
                     ),

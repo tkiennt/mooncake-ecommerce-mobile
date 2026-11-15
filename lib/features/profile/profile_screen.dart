@@ -372,7 +372,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       icon: Icons.receipt_long_outlined,
                       title: 'Đơn Hàng Doanh Nghiệp',
                       subtitle: 'Lịch sử đặt mua và theo dõi tiến độ',
-                      onTap: () => context.push('/order-history'),
+                      onTap: () => context.push('/orders'),
                     ),
                     const Divider(height: 1, indent: 52, color: AppColors.border),
                     _MenuItem(

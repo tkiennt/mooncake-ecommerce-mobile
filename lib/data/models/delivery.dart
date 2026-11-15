@@ -95,6 +95,7 @@ class DeliveryModel {
   final String? vehiclePlate;
   final String? shareCode;
   final DateTime? driverClaimedAt;
+  final DateTime? createdAt;
   final List<DeliveryItem> items;
   final List<DeliveryProof> proofs;
 
@@ -119,6 +120,7 @@ class DeliveryModel {
     this.vehiclePlate,
     this.shareCode,
     this.driverClaimedAt,
+    this.createdAt,
     this.items = const [],
     this.proofs = const [],
   });
@@ -172,6 +174,11 @@ class DeliveryModel {
           (driverObj?['driverClaimedAt'] != null
               ? DateTime.tryParse(driverObj!['driverClaimedAt'].toString())
               : null),
+      createdAt: json['createdAt'] != null
+          ? DateTime.tryParse(json['createdAt'].toString())
+          : (json['createdAtUtc'] != null
+              ? DateTime.tryParse(json['createdAtUtc'].toString())
+              : null),
       items: rawItems
           .map((it) => DeliveryItem.fromJson(
               it is Map<String, dynamic> ? it : Map<String, dynamic>.from(it as Map)))
@@ -206,6 +213,7 @@ class DeliveryModel {
     if (vehiclePlate != null) 'vehiclePlate': vehiclePlate,
     if (shareCode != null) 'shareCode': shareCode,
     if (driverClaimedAt != null) 'driverClaimedAt': driverClaimedAt!.toIso8601String(),
+    if (createdAt != null) 'createdAt': createdAt!.toIso8601String(),
     'items': items.map((it) => it.toJson()).toList(),
     'proofs': proofs.map((p) => p.toJson()).toList(),
   };

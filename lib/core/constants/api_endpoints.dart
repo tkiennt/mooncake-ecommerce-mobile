@@ -10,8 +10,8 @@ class ApiEndpoints {
     return 'http://localhost:8089/api/v1';
   }
 
-  static String get hubUrl => '${baseUrl.replaceAll('/api/v1', '')}/hubs/notifications';
-  static String get chatHubUrl => '${baseUrl.replaceAll('/api/v1', '')}/hubs/chat';
+  static String get hubUrl => '$baseUrl/hubs/notifications';
+  static String get chatHubUrl => '$baseUrl/hubs/chat';
 
   // Auth
   static const String login = '/auth/login';

@@ -6,6 +6,11 @@ import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_tokens.dart';
 import '../../shared_widgets/common/app_header.dart';
 import '../../shared_widgets/common/custom_button.dart';
+import '../../shared_widgets/common/app_status_chip.dart';
+import '../../shared_widgets/common/app_skeleton.dart';
+import '../../shared_widgets/common/app_empty_state.dart';
+import '../../shared_widgets/common/app_error_state.dart';
+import '../../shared_widgets/common/milestone_timeline.dart';
 import '../../data/models/delivery.dart';
 import '../../data/repositories/delivery_repository.dart';
 import '../../data/repositories/order_repository.dart';
@@ -80,12 +85,12 @@ class _DeliveryPoDScreenState extends ConsumerState<DeliveryPoDScreen> {
 
       await orderRepo.confirmDeliveryReceipt(targetId);
 
-      // Also verify any associated proof if present
+      // Verify associated proofs
       final deliveryRepo = ref.read(deliveryRepositoryProvider);
       for (final p in _delivery!.proofs) {
         if (!p.isVerified) {
           try {
-            await deliveryRepo.verifyProof(p.id, isVerified: true, notes: 'Khách hàng đã xác nhận qua Mobile PoD');
+            await deliveryRepo.verifyProof(p.id, isVerified: true, notes: 'Khách hàng xác nhận qua Mobile PoD');
           } catch (_) {}
         }
       }
@@ -122,7 +127,7 @@ class _DeliveryPoDScreenState extends ConsumerState<DeliveryPoDScreen> {
       'Thiếu số lượng kiện hàng so với hợp đồng',
       'Tem niêm phong hộp bị rách / trầy xước',
       'Nhiệt độ xe lạnh vượt ngưỡng an toàn',
-      'Khác',
+      'Lý do khác',
     ];
 
     showDialog(
@@ -132,13 +137,20 @@ class _DeliveryPoDScreenState extends ConsumerState<DeliveryPoDScreen> {
           builder: (context, setDialogState) {
             return AlertDialog(
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(AppTokens.lucianRadiusLg),
+                borderRadius: BorderRadius.circular(AppTokens.radiusCard),
               ),
               title: const Row(
                 children: [
                   Icon(Icons.report_problem_outlined, color: AppColors.warning, size: 24),
                   SizedBox(width: 8),
-                  Text('Khiếu Nại Kiện Hàng', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                  Text(
+                    'Khiếu Nại Kiện Hàng',
+                    style: TextStyle(
+                      fontFamily: 'Roboto',
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
                 ],
               ),
               content: SingleChildScrollView(
@@ -148,15 +160,16 @@ class _DeliveryPoDScreenState extends ConsumerState<DeliveryPoDScreen> {
                   children: [
                     const Text(
                       'Vui lòng chọn lý do phát sinh sự cố giao nhận:',
-                      style: TextStyle(fontSize: 12.5, color: AppColors.textSecondary),
+                      style: TextStyle(fontFamily: 'Roboto', fontSize: 12.5, color: AppColors.textSecondary),
                     ),
                     const SizedBox(height: 10),
                     ...reasons.map((r) {
                       final isSelected = selectedReason == r;
                       return InkWell(
                         onTap: () => setDialogState(() => selectedReason = r),
+                        borderRadius: BorderRadius.circular(AppTokens.radiusSM),
                         child: Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 6),
+                          padding: const EdgeInsets.symmetric(vertical: 8),
                           child: Row(
                             children: [
                               Icon(
@@ -169,6 +182,7 @@ class _DeliveryPoDScreenState extends ConsumerState<DeliveryPoDScreen> {
                                 child: Text(
                                   r,
                                   style: TextStyle(
+                                    fontFamily: 'Roboto',
                                     fontSize: 12.5,
                                     fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
                                     color: isSelected ? AppColors.textPrimary : AppColors.textSecondary,
@@ -180,13 +194,14 @@ class _DeliveryPoDScreenState extends ConsumerState<DeliveryPoDScreen> {
                         ),
                       );
                     }),
-                    const SizedBox(height: 10),
+                    const SizedBox(height: 12),
                     TextField(
                       controller: notesController,
                       maxLines: 3,
-                      decoration: const InputDecoration(
-                        labelText: 'Mô tả chi tiết sự cố kiện hàng',
-                        hintText: 'Nhập ghi chú hoặc mã số kiện hàng gặp sự cố...',
+                      decoration: InputDecoration(
+                        labelText: 'Mô tả chi tiết sự cố kiện hàng *',
+                        hintText: 'Nhập mã số kiện hoặc tình trạng hư hại...',
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(AppTokens.radiusInput)),
                         isDense: true,
                       ),
                     ),
@@ -198,11 +213,14 @@ class _DeliveryPoDScreenState extends ConsumerState<DeliveryPoDScreen> {
                   onPressed: () => Navigator.of(dialogCtx).pop(),
                   child: const Text('Hủy bỏ', style: TextStyle(color: AppColors.textSecondary)),
                 ),
-                CustomButton(
-                  title: 'Gửi khiếu nại',
-                  variant: ButtonVariant.primary,
-                  size: ButtonSize.small,
-                  onPress: () async {
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: AppColors.textWhite,
+                    minimumSize: const Size(120, AppTokens.minTapTarget),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppTokens.radiusSM)),
+                  ),
+                  onPressed: () async {
                     Navigator.of(dialogCtx).pop();
                     setState(() => _isSubmitting = true);
                     try {
@@ -216,7 +234,7 @@ class _DeliveryPoDScreenState extends ConsumerState<DeliveryPoDScreen> {
                       if (!mounted) return;
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
-                          content: Text('Đã gửi khiếu nại tới xưởng và bộ phận CSKH để xử lý đối soát.'),
+                          content: Text('Đã gửi khiếu nại tới xưởng và bộ phận CSKH để đối soát hoàn tiền.'),
                           backgroundColor: AppColors.warning,
                         ),
                       );
@@ -233,6 +251,7 @@ class _DeliveryPoDScreenState extends ConsumerState<DeliveryPoDScreen> {
                       if (mounted) setState(() => _isSubmitting = false);
                     }
                   },
+                  child: const Text('Gửi khiếu nại', style: TextStyle(fontWeight: FontWeight.w700)),
                 ),
               ],
             );
@@ -242,56 +261,116 @@ class _DeliveryPoDScreenState extends ConsumerState<DeliveryPoDScreen> {
     );
   }
 
-  void _showProofPreview(DeliveryProof proof) {
+  /// Phóng to ảnh chứng từ PoD với InteractiveViewer (Zoom/Pinch)
+  void _showProofZoomModal(DeliveryProof proof) {
     showDialog(
       context: context,
-      builder: (_) => Dialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppTokens.lucianRadiusLg)),
+      builder: (ctx) => Dialog(
+        insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppTokens.radiusCard)),
+        clipBehavior: Clip.antiAlias,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            ClipRRect(
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(AppTokens.lucianRadiusLg)),
-              child: proof.photoUrl.isNotEmpty
-                  ? CachedNetworkImage(
-                      imageUrl: proof.photoUrl,
-                      fit: BoxFit.cover,
-                      placeholder: (_, __) => const SizedBox(
-                        height: 200,
-                        child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
-                      ),
-                      errorWidget: (_, __, ___) => Container(
-                        height: 200,
-                        color: AppColors.surfaceHover,
-                        child: const Icon(Icons.broken_image_outlined, size: 48, color: AppColors.textMuted),
-                      ),
-                    )
-                  : Container(
-                      height: 200,
-                      color: AppColors.surfaceHover,
-                      child: const Icon(Icons.receipt_long_outlined, size: 48, color: AppColors.textMuted),
+            // Modal Header
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: AppTokens.spaceLG, vertical: AppTokens.spaceMD),
+              color: AppColors.surface,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          proof.proofType,
+                          style: const TextStyle(
+                            fontFamily: 'Roboto',
+                            fontSize: 14.5,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          'Chụp lúc: ${DateFormat('dd/MM/yyyy HH:mm').format(proof.takenAt)}',
+                          style: const TextStyle(fontFamily: 'Roboto', fontSize: 11.5, color: AppColors.textSecondary),
+                        ),
+                      ],
                     ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close),
+                    onPressed: () => Navigator.of(ctx).pop(),
+                  ),
+                ],
+              ),
             ),
-            Padding(
-              padding: const EdgeInsets.all(16),
+            const Divider(height: 1, color: AppColors.border),
+
+            // Zoomable Image Container
+            Container(
+              color: Colors.black,
+              constraints: const BoxConstraints(maxHeight: 420),
+              child: ClipRect(
+                child: InteractiveViewer(
+                  panEnabled: true,
+                  boundaryMargin: const EdgeInsets.all(20),
+                  minScale: 1.0,
+                  maxScale: 4.0,
+                  child: Center(
+                    child: proof.photoUrl.isNotEmpty
+                        ? CachedNetworkImage(
+                            imageUrl: proof.photoUrl,
+                            fit: BoxFit.contain,
+                            placeholder: (_, __) => const SizedBox(
+                              height: 260,
+                              child: Center(
+                                child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary),
+                              ),
+                            ),
+                            errorWidget: (_, __, ___) => const SizedBox(
+                              height: 260,
+                              child: Center(
+                                child: Icon(Icons.broken_image_outlined, size: 54, color: AppColors.textMuted),
+                              ),
+                            ),
+                          )
+                        : const SizedBox(
+                            height: 260,
+                            child: Center(
+                              child: Icon(Icons.receipt_long_outlined, size: 54, color: AppColors.textMuted),
+                            ),
+                          ),
+                  ),
+                ),
+              ),
+            ),
+
+            // Modal Footer: Zoom guide & Notes
+            Container(
+              padding: const EdgeInsets.all(AppTokens.spaceMD),
+              color: AppColors.surface,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    proof.proofType,
-                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Thời gian: ${DateFormat('dd/MM/yyyy HH:mm').format(proof.takenAt)}',
-                    style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                  const Row(
+                    children: [
+                      Icon(Icons.pinch_outlined, size: 14, color: AppColors.textMuted),
+                      SizedBox(width: 4),
+                      Text(
+                        'Dùng 2 ngón tay chạm để phóng to chi tiết tem niêm phong / chữ ký',
+                        style: TextStyle(fontFamily: 'Roboto', fontSize: 11, color: AppColors.textMuted),
+                      ),
+                    ],
                   ),
                   if (proof.notes != null && proof.notes!.isNotEmpty) ...[
                     const SizedBox(height: 6),
                     Text(
-                      'Ghi chú: ${proof.notes}',
-                      style: const TextStyle(fontSize: 12, color: AppColors.textMuted),
+                      'Ghi chú tài xế: ${proof.notes}',
+                      style: const TextStyle(fontFamily: 'Roboto', fontSize: 12, color: AppColors.textSecondary),
                     ),
                   ],
                 ],
@@ -303,9 +382,79 @@ class _DeliveryPoDScreenState extends ConsumerState<DeliveryPoDScreen> {
     );
   }
 
+  List<MilestoneItem> _buildDeliveryMilestones(DeliveryModel d) {
+    final status = d.status.toLowerCase();
+    final isDispatched = status != 'created' && status != 'pending';
+    final isInTransit = status == 'in_transit' ||
+        status == 'delivering' ||
+        status == 'delivered' ||
+        status == 'completed';
+    final isDelivered = status == 'delivered' || status == 'completed';
+    final isCompleted = status == 'completed';
+
+    return [
+      MilestoneItem(
+        title: 'Xuất xưởng',
+        subtitle: 'Đóng gói xe lạnh',
+        status: isDispatched ? MilestoneStepStatus.completed : MilestoneStepStatus.current,
+      ),
+      MilestoneItem(
+        title: 'Đang giao',
+        subtitle: 'Kiểm soát 18-25°C',
+        status: isInTransit
+            ? (isDelivered ? MilestoneStepStatus.completed : MilestoneStepStatus.current)
+            : MilestoneStepStatus.upcoming,
+      ),
+      MilestoneItem(
+        title: 'Đến điểm nhận',
+        subtitle: isDelivered ? 'Đã giao hàng' : 'Đang tới',
+        status: isDelivered
+            ? (isCompleted ? MilestoneStepStatus.completed : MilestoneStepStatus.current)
+            : MilestoneStepStatus.upcoming,
+      ),
+      MilestoneItem(
+        title: 'Xác nhận PoD',
+        subtitle: isCompleted ? 'Đã nghiệm thu' : 'Chờ khách duyệt',
+        status: isCompleted ? MilestoneStepStatus.completed : MilestoneStepStatus.upcoming,
+      ),
+    ];
+  }
+
+  Widget _buildLoadingSkeleton() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(AppTokens.spaceLG),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          AppSkeleton.shimmer(
+            child: Container(
+              height: 120,
+              decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(AppTokens.radiusCard)),
+            ),
+          ),
+          const SizedBox(height: AppTokens.spaceLG),
+          AppSkeleton.shimmer(
+            child: Container(
+              height: 140,
+              decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(AppTokens.radiusCard)),
+            ),
+          ),
+          const SizedBox(height: AppTokens.spaceLG),
+          AppSkeleton.shimmer(
+            child: Container(
+              height: 220,
+              decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(AppTokens.radiusCard)),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.background,
       appBar: const AppHeader(title: 'Giám Sát Vận Chuyển & PoD', showBack: true),
       body: _buildBody(),
     );
@@ -313,90 +462,25 @@ class _DeliveryPoDScreenState extends ConsumerState<DeliveryPoDScreen> {
 
   Widget _buildBody() {
     if (_isLoading) {
-      return const Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            CircularProgressIndicator(color: AppColors.primary),
-            SizedBox(height: 16),
-            Text(
-              'Đang tải dữ liệu vận chuyển & chứng từ xe lạnh...',
-              style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
-            ),
-          ],
-        ),
-      );
+      return _buildLoadingSkeleton();
     }
 
     if (_errorMessage != null) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(Icons.error_outline, size: 48, color: AppColors.error),
-              const SizedBox(height: 12),
-              const Text(
-                'Không thể tải dữ liệu vận chuyển',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                _errorMessage!,
-                textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 12.5, color: AppColors.textSecondary),
-              ),
-              const SizedBox(height: 18),
-              CustomButton(
-                title: 'Thử lại',
-                variant: ButtonVariant.primary,
-                size: ButtonSize.medium,
-                onPress: _loadDelivery,
-              ),
-            ],
-          ),
-        ),
+      return AppErrorState(
+        title: 'Không thể tải dữ liệu vận chuyển',
+        message: _errorMessage!,
+        onRetry: _loadDelivery,
+        retryLabel: 'Thử lại ngay',
       );
     }
 
     if (_delivery == null) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Container(
-                width: 72,
-                height: 72,
-                decoration: const BoxDecoration(
-                  color: AppColors.primaryTint,
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(Icons.local_shipping_outlined, size: 36, color: AppColors.primary),
-              ),
-              const SizedBox(height: 16),
-              const Text(
-                'Chưa Có Chuyến Giao Hàng',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
-              ),
-              const SizedBox(height: 8),
-              const Text(
-                'Hiện tại Quý Doanh Nghiệp chưa có chuyến vận chuyển xe lạnh nào đang thực hiện hoặc chờ xác nhận biên bản PoD.',
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 13, color: AppColors.textSecondary, height: 1.4),
-              ),
-              const SizedBox(height: 20),
-              CustomButton(
-                title: 'Tải lại',
-                variant: ButtonVariant.outline,
-                size: ButtonSize.medium,
-                onPress: _loadDelivery,
-              ),
-            ],
-          ),
-        ),
+      return AppEmptyState(
+        icon: Icons.local_shipping_outlined,
+        title: 'Chưa có chuyến giao hàng',
+        message: 'Hiện tại Quý Doanh Nghiệp chưa có chuyến vận chuyển xe lạnh nào đang thực hiện hoặc chờ xác nhận biên bản PoD.',
+        actionLabel: 'Tải lại',
+        onAction: _loadDelivery,
       );
     }
 
@@ -404,75 +488,135 @@ class _DeliveryPoDScreenState extends ConsumerState<DeliveryPoDScreen> {
     final temp = d.coldChainTemp ?? 21.5;
     final isTempSafe = temp >= 18.0 && temp <= 25.0;
     final isCompleted = d.status.toLowerCase() == 'delivered' || d.status.toLowerCase() == 'completed';
+    final trackingCode = d.trackingCode ?? d.deliveryNumber;
+
+    final deliveryMilestones = _buildDeliveryMilestones(d);
 
     return RefreshIndicator(
       color: AppColors.primary,
       onRefresh: _loadDelivery,
       child: SingleChildScrollView(
         physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(AppTokens.spaceLG),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // ColdChain Monitor Box
+            // 1. Header Card (Sửa triệt để lỗi tràn 63px - bọc Column + Flexible, badge đặt dòng dưới)
             Container(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(AppTokens.spaceLG),
+              decoration: BoxDecoration(
+                color: AppColors.surface,
+                borderRadius: BorderRadius.circular(AppTokens.radiusCard),
+                border: Border.all(color: AppColors.border, width: 0.8),
+                boxShadow: AppTokens.shadowSubtle,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Mã vận đơn vận chuyển xe lạnh',
+                    style: TextStyle(
+                      fontFamily: 'Roboto',
+                      fontSize: 12,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          trackingCode,
+                          style: const TextStyle(
+                            fontFamily: 'Roboto',
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.textPrimary,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: AppTokens.spaceSM),
+                  AppStatusChip(
+                    status: d.status,
+                    type: AppStatusType.delivery,
+                    size: AppStatusChipSize.small,
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: AppTokens.spaceMD),
+
+            // 2. MilestoneTimeline (Tiến độ giao nhận)
+            Container(
+              padding: const EdgeInsets.all(AppTokens.spaceLG),
+              decoration: BoxDecoration(
+                color: AppColors.surface,
+                borderRadius: BorderRadius.circular(AppTokens.radiusCard),
+                border: Border.all(color: AppColors.border, width: 0.8),
+                boxShadow: AppTokens.shadowSubtle,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Row(
+                    children: [
+                      Icon(Icons.timeline_outlined, size: 18, color: AppColors.primary),
+                      SizedBox(width: 6),
+                      Text(
+                        'Tiến Độ Vận Chuyển',
+                        style: TextStyle(fontFamily: 'Roboto', fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: AppTokens.spaceMD),
+                  MilestoneTimeline(
+                    items: deliveryMilestones,
+                    orientation: Axis.horizontal,
+                    padding: EdgeInsets.zero,
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: AppTokens.spaceMD),
+
+            // 3. ColdChain Monitor Box (Giám sát nhiệt độ / độ ẩm xe lạnh)
+            Container(
+              padding: const EdgeInsets.all(AppTokens.spaceLG),
               decoration: BoxDecoration(
                 color: isTempSafe ? AppColors.infoBg : AppColors.errorBg,
-                borderRadius: BorderRadius.circular(AppTokens.lucianRadiusLg),
+                borderRadius: BorderRadius.circular(AppTokens.radiusCard),
                 border: Border.all(
-                  color: isTempSafe
-                      ? AppColors.info.withValues(alpha: 0.4)
-                      : AppColors.error.withValues(alpha: 0.4),
+                  color: isTempSafe ? AppColors.info.withValues(alpha: 0.3) : AppColors.error.withValues(alpha: 0.3),
                 ),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Wrap(
-                    alignment: WrapAlignment.spaceBetween,
-                    crossAxisAlignment: WrapCrossAlignment.center,
-                    spacing: 8,
-                    runSpacing: 6,
+                  Row(
                     children: [
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            Icons.ac_unit,
-                            color: isTempSafe ? AppColors.info : AppColors.error,
-                            size: 22,
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            'Cảm Biến Xe Lạnh Vận Chuyển',
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 14,
-                              color: isTempSafe ? AppColors.info : AppColors.error,
-                            ),
-                          ),
-                        ],
+                      Icon(
+                        Icons.ac_unit,
+                        color: isTempSafe ? AppColors.info : AppColors.error,
+                        size: 20,
                       ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: AppColors.surface,
-                          borderRadius: BorderRadius.circular(AppTokens.lucianRadiusPill),
-                          border: Border.all(color: AppColors.border),
-                        ),
+                      const SizedBox(width: 8),
+                      Expanded(
                         child: Text(
-                          d.status,
-                          style: const TextStyle(
-                            color: AppColors.success,
-                            fontSize: 11,
-                            fontWeight: FontWeight.bold,
+                          'Cảm Biến Xe Lạnh Thời Gian Thực',
+                          style: TextStyle(
+                            fontFamily: 'Roboto',
+                            fontWeight: FontWeight.w700,
+                            fontSize: 13.5,
+                            color: isTempSafe ? AppColors.info : AppColors.error,
                           ),
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: AppTokens.spaceMD),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceAround,
                     children: [
@@ -483,24 +627,25 @@ class _DeliveryPoDScreenState extends ConsumerState<DeliveryPoDScreen> {
                         isSafe: isTempSafe,
                       ),
                       const _ColdChainMetric(
-                        label: 'Độ ẩm không khí',
+                        label: 'Độ ẩm thùng hàng',
                         value: '55%',
-                        status: 'Tối ưu bảo quản',
+                        status: 'Tối ưu bánh tươi',
                         isSafe: true,
                       ),
                     ],
                   ),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: AppTokens.spaceMD),
                   const Divider(color: AppColors.border),
                   const SizedBox(height: 6),
                   Row(
                     children: [
-                      const Icon(Icons.local_shipping, size: 16, color: AppColors.info),
+                      const Icon(Icons.local_shipping_outlined, size: 15, color: AppColors.info),
                       const SizedBox(width: 6),
                       Expanded(
                         child: Text(
-                          'Đơn vị: ${d.carrierName ?? 'Xe Lạnh Hoàng Gia Logistics'} (${d.trackingCode ?? d.deliveryNumber})',
-                          style: const TextStyle(fontSize: 12, color: AppColors.textPrimary),
+                          'Đơn vị: ${d.carrierName ?? "Đội Xe Lạnh Chuyên Dụng Nguyệt Phố"}',
+                          style: const TextStyle(fontFamily: 'Roboto', fontSize: 12, color: AppColors.textPrimary),
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                     ],
@@ -508,12 +653,13 @@ class _DeliveryPoDScreenState extends ConsumerState<DeliveryPoDScreen> {
                   const SizedBox(height: 4),
                   Row(
                     children: [
-                      const Icon(Icons.location_on, size: 16, color: AppColors.info),
+                      const Icon(Icons.location_on_outlined, size: 15, color: AppColors.info),
                       const SizedBox(width: 6),
                       Expanded(
                         child: Text(
-                          'Điểm giao: ${d.deliveryAddress ?? 'Địa chỉ doanh nghiệp'}',
-                          style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                          'Điểm giao: ${d.deliveryAddress ?? "Kho nhận hàng doanh nghiệp"}',
+                          style: const TextStyle(fontFamily: 'Roboto', fontSize: 12, color: AppColors.textSecondary),
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                     ],
@@ -521,15 +667,15 @@ class _DeliveryPoDScreenState extends ConsumerState<DeliveryPoDScreen> {
                 ],
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppTokens.spaceMD),
 
-            // Proof of Delivery (PoD) Documents Card
+            // 4. Proof of Delivery (PoD) Documents Card (Ảnh phóng to + 2 nút Xác nhận/Khiếu nại)
             Container(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(AppTokens.spaceLG),
               decoration: BoxDecoration(
                 color: AppColors.surface,
-                borderRadius: BorderRadius.circular(AppTokens.lucianRadiusLg),
-                border: Border.all(color: AppColors.border),
+                borderRadius: BorderRadius.circular(AppTokens.radiusCard),
+                border: Border.all(color: AppColors.border, width: 0.8),
                 boxShadow: AppTokens.shadowSubtle,
               ),
               child: Column(
@@ -542,17 +688,17 @@ class _DeliveryPoDScreenState extends ConsumerState<DeliveryPoDScreen> {
                       Expanded(
                         child: Text(
                           'Chứng Từ & Ảnh Bàn Giao (PoD)',
-                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                          style: TextStyle(fontFamily: 'Roboto', fontWeight: FontWeight.w700, fontSize: 14),
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 6),
                   const Text(
-                    'Khách hàng kiểm tra chứng từ xe lạnh, tem niêm phong và ảnh chụp kiện hàng do tài xế tải lên trước khi bấm xác nhận hoàn tất.',
-                    style: TextStyle(fontSize: 12.5, color: AppColors.textSecondary, height: 1.4),
+                    'Chạm vào ảnh để phóng to chi tiết tem niêm phong và chữ ký biên bản giao nhận của tài xế.',
+                    style: TextStyle(fontFamily: 'Roboto', fontSize: 12, color: AppColors.textSecondary, height: 1.4),
                   ),
-                  const SizedBox(height: 14),
+                  const SizedBox(height: AppTokens.spaceMD),
 
                   // Display uploaded proofs from driver/carrier
                   if (d.proofs.isNotEmpty) ...[
@@ -563,44 +709,61 @@ class _DeliveryPoDScreenState extends ConsumerState<DeliveryPoDScreen> {
                         crossAxisCount: 2,
                         crossAxisSpacing: 10,
                         mainAxisSpacing: 10,
-                        childAspectRatio: 1.1,
+                        childAspectRatio: 1.05,
                       ),
                       itemCount: d.proofs.length,
                       itemBuilder: (context, index) {
                         final proof = d.proofs[index];
                         return InkWell(
-                          onTap: () => _showProofPreview(proof),
-                          borderRadius: BorderRadius.circular(AppTokens.radiusDefault),
+                          onTap: () => _showProofZoomModal(proof),
+                          borderRadius: BorderRadius.circular(AppTokens.radiusSM),
                           child: Container(
                             decoration: BoxDecoration(
                               color: AppColors.background,
-                              borderRadius: BorderRadius.circular(AppTokens.radiusDefault),
+                              borderRadius: BorderRadius.circular(AppTokens.radiusSM),
                               border: Border.all(color: AppColors.border),
                             ),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.stretch,
                               children: [
                                 Expanded(
-                                  child: ClipRRect(
-                                    borderRadius: const BorderRadius.vertical(top: Radius.circular(AppTokens.radiusDefault)),
-                                    child: proof.photoUrl.isNotEmpty
-                                        ? CachedNetworkImage(
-                                            imageUrl: proof.photoUrl,
-                                            fit: BoxFit.cover,
-                                            placeholder: (_, __) => const Center(
-                                              child: SizedBox(
-                                                width: 20,
-                                                height: 20,
-                                                child: CircularProgressIndicator(strokeWidth: 2),
-                                              ),
-                                            ),
-                                            errorWidget: (_, __, ___) => const Icon(
-                                              Icons.image_outlined,
-                                              size: 32,
-                                              color: AppColors.textMuted,
-                                            ),
-                                          )
-                                        : const Icon(Icons.receipt_outlined, size: 32, color: AppColors.textMuted),
+                                  child: Stack(
+                                    fit: StackFit.expand,
+                                    children: [
+                                      ClipRRect(
+                                        borderRadius: const BorderRadius.vertical(top: Radius.circular(AppTokens.radiusSM)),
+                                        child: proof.photoUrl.isNotEmpty
+                                            ? CachedNetworkImage(
+                                                imageUrl: proof.photoUrl,
+                                                fit: BoxFit.cover,
+                                                placeholder: (_, __) => const Center(
+                                                  child: SizedBox(
+                                                    width: 20,
+                                                    height: 20,
+                                                    child: CircularProgressIndicator(strokeWidth: 2),
+                                                  ),
+                                                ),
+                                                errorWidget: (_, __, ___) => const Icon(
+                                                  Icons.image_outlined,
+                                                  size: 32,
+                                                  color: AppColors.textMuted,
+                                                ),
+                                              )
+                                            : const Icon(Icons.receipt_outlined, size: 32, color: AppColors.textMuted),
+                                      ),
+                                      Positioned(
+                                        right: 4,
+                                        bottom: 4,
+                                        child: Container(
+                                          padding: const EdgeInsets.all(4),
+                                          decoration: BoxDecoration(
+                                            color: Colors.black.withValues(alpha: 0.6),
+                                            shape: BoxShape.circle,
+                                          ),
+                                          child: const Icon(Icons.zoom_in, size: 14, color: Colors.white),
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
                                 Padding(
@@ -612,11 +775,11 @@ class _DeliveryPoDScreenState extends ConsumerState<DeliveryPoDScreen> {
                                         proof.proofType,
                                         maxLines: 1,
                                         overflow: TextOverflow.ellipsis,
-                                        style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+                                        style: const TextStyle(fontFamily: 'Roboto', fontSize: 11, fontWeight: FontWeight.w700),
                                       ),
                                       Text(
                                         DateFormat('dd/MM HH:mm').format(proof.takenAt),
-                                        style: const TextStyle(fontSize: 10, color: AppColors.textMuted),
+                                        style: const TextStyle(fontFamily: 'Roboto', fontSize: 10, color: AppColors.textMuted),
                                       ),
                                     ],
                                   ),
@@ -629,26 +792,26 @@ class _DeliveryPoDScreenState extends ConsumerState<DeliveryPoDScreen> {
                     ),
                   ] else ...[
                     Container(
-                      padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+                      padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
                       decoration: BoxDecoration(
                         color: AppColors.background,
-                        borderRadius: BorderRadius.circular(AppTokens.radiusDefault),
+                        borderRadius: BorderRadius.circular(AppTokens.radiusSM),
                         border: Border.all(color: AppColors.border),
                       ),
                       child: const Center(
                         child: Column(
                           children: [
-                            Icon(Icons.inventory_2_outlined, size: 36, color: AppColors.textMuted),
+                            Icon(Icons.inventory_2_outlined, size: 34, color: AppColors.textMuted),
                             SizedBox(height: 8),
                             Text(
                               'Đang Chờ Tài Xế Tải Lên Chứng Từ',
-                              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+                              style: TextStyle(fontFamily: 'Roboto', fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
                             ),
                             SizedBox(height: 4),
                             Text(
-                              'Biên bản bàn giao và ảnh niêm phong kiện hàng sẽ xuất hiện khi tài xế đến điểm giao.',
+                              'Biên bản bàn giao và ảnh niêm phong kiện hàng sẽ xuất hiện tại đây khi tài xế hoàn tất chặng giao.',
                               textAlign: TextAlign.center,
-                              style: TextStyle(fontSize: 11.5, color: AppColors.textSecondary),
+                              style: TextStyle(fontFamily: 'Roboto', fontSize: 11.5, color: AppColors.textSecondary),
                             ),
                           ],
                         ),
@@ -656,14 +819,15 @@ class _DeliveryPoDScreenState extends ConsumerState<DeliveryPoDScreen> {
                     ),
                   ],
 
-                  const SizedBox(height: 20),
+                  const SizedBox(height: AppTokens.spaceLG),
 
+                  // 2 Nút Xác nhận / Khiếu nại (D18)
                   if (isCompleted) ...[
                     Container(
-                      padding: const EdgeInsets.all(12),
+                      padding: const EdgeInsets.all(AppTokens.spaceMD),
                       decoration: BoxDecoration(
                         color: AppColors.successBg,
-                        borderRadius: BorderRadius.circular(AppTokens.radiusDefault),
+                        borderRadius: BorderRadius.circular(AppTokens.radiusSM),
                         border: Border.all(color: AppColors.success),
                       ),
                       child: const Row(
@@ -672,26 +836,25 @@ class _DeliveryPoDScreenState extends ConsumerState<DeliveryPoDScreen> {
                           SizedBox(width: 8),
                           Expanded(
                             child: Text(
-                              'Đã hoàn tất xác nhận nhận hàng PoD. Biên bản đã được lưu trữ an toàn.',
-                              style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: AppColors.success),
+                              'Đã hoàn tất xác nhận nhận hàng PoD. Biên bản bàn giao đã lưu trữ an toàn.',
+                              style: TextStyle(fontFamily: 'Roboto', fontSize: 12.5, fontWeight: FontWeight.w600, color: AppColors.success),
                             ),
                           ),
                         ],
                       ),
                     ),
                   ] else ...[
-                    // Customer actions: Confirm receipt & Dispute
                     CustomButton(
-                      title: 'Xác nhận đã nhận đủ số lượng & nguyên vẹn',
+                      title: 'Xác nhận nhận hàng',
                       size: ButtonSize.large,
                       width: double.infinity,
                       loading: _isSubmitting,
                       disabled: _isSubmitting,
                       onPress: _handleConfirmReceipt,
                     ),
-                    const SizedBox(height: 10),
+                    const SizedBox(height: AppTokens.spaceMD),
                     CustomButton(
-                      title: 'Khiếu nại / Báo cáo sự cố kiện hàng',
+                      title: 'Khiếu nại / Báo cáo sự cố',
                       variant: ButtonVariant.outline,
                       size: ButtonSize.medium,
                       width: double.infinity,
@@ -731,14 +894,15 @@ class _ColdChainMetric extends StatelessWidget {
         Text(
           value,
           style: TextStyle(
+            fontFamily: 'Roboto',
             fontSize: 20,
-            fontWeight: FontWeight.bold,
+            fontWeight: FontWeight.w700,
             color: isSafe ? AppColors.info : AppColors.error,
           ),
         ),
         const SizedBox(height: 2),
-        Text(label, style: const TextStyle(fontSize: 11, color: AppColors.textSecondary)),
-        Text(status, style: TextStyle(fontSize: 10, color: statusColor, fontWeight: FontWeight.w600)),
+        Text(label, style: const TextStyle(fontFamily: 'Roboto', fontSize: 11, color: AppColors.textSecondary)),
+        Text(status, style: TextStyle(fontFamily: 'Roboto', fontSize: 10, color: statusColor, fontWeight: FontWeight.w600)),
       ],
     );
   }

@@ -144,12 +144,10 @@ class _CreateRfqScreenState extends ConsumerState<CreateRfqScreen> {
       final repository = ref.read(rfqRepositoryProvider);
       final rfq = await repository.createRfq(payload);
 
-      // Tự động phát hành RFQ để các xưởng có thể nộp báo giá
+      // Auto-publish RFQ to market
       try {
         await repository.publishRfq(rfq.id);
-      } catch (_) {
-        // Nếu đã ở trạng thái mở hoặc chưa publish được thì giữ nguyên bản ghi đã tạo
-      }
+      } catch (_) {}
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -165,7 +163,7 @@ class _CreateRfqScreenState extends ConsumerState<CreateRfqScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             backgroundColor: AppColors.error,
-            content: Text('Lỗi tạo RFQ: ${e.toString()}'),
+            content: Text('Lỗi tạo RFQ: ${e.toString().replaceFirst('Exception: ', '')}'),
           ),
         );
       }
@@ -179,23 +177,24 @@ class _CreateRfqScreenState extends ConsumerState<CreateRfqScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.background,
       appBar: const AppHeader(
         title: 'Tạo Yêu Cầu Báo Giá (RFQ)',
         showBack: true,
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(AppTokens.spaceLG),
         child: Form(
           key: _formKey,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Container(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(AppTokens.spaceLG),
                 decoration: BoxDecoration(
                   color: AppColors.surface,
-                  borderRadius: BorderRadius.circular(AppTokens.lucianRadiusLg),
-                  border: Border.all(color: AppColors.border),
+                  borderRadius: BorderRadius.circular(AppTokens.radiusCard),
+                  border: Border.all(color: AppColors.border, width: 0.8),
                   boxShadow: AppTokens.shadowSubtle,
                 ),
                 child: Column(
@@ -203,120 +202,128 @@ class _CreateRfqScreenState extends ConsumerState<CreateRfqScreen> {
                   children: [
                     const Text(
                       'Thông Tin Đơn Hàng Doanh Nghiệp',
-                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14.5, color: AppColors.textPrimary),
-                    ),
-                    const SizedBox(height: 12),
-                    TextField(
-                      controller: _titleController,
-                      decoration: const InputDecoration(
-                        labelText: 'Tiêu đề yêu cầu báo giá *',
-                        hintText: 'VD: Đặt 500 hộp quà trung thu doanh nghiệp',
+                      style: TextStyle(
+                        fontFamily: 'Roboto',
+                        fontWeight: FontWeight.w700,
+                        fontSize: 15,
+                        color: AppColors.textPrimary,
                       ),
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: AppTokens.spaceMD),
+                    TextField(
+                      controller: _titleController,
+                      decoration: InputDecoration(
+                        labelText: 'Tiêu đề yêu cầu báo giá *',
+                        hintText: 'VD: Đặt 500 hộp quà trung thu doanh nghiệp',
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(AppTokens.radiusInput)),
+                      ),
+                    ),
+                    const SizedBox(height: AppTokens.spaceMD),
                     Row(
                       children: [
                         Expanded(
                           child: TextField(
                             controller: _qtyController,
                             keyboardType: TextInputType.number,
-                            decoration: const InputDecoration(
+                            decoration: InputDecoration(
                               labelText: 'Số lượng hộp *',
                               hintText: '500',
+                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(AppTokens.radiusInput)),
                             ),
                           ),
                         ),
-                        const SizedBox(width: 12),
+                        const SizedBox(width: AppTokens.spaceMD),
                         Expanded(
                           child: TextField(
                             controller: _budgetController,
                             keyboardType: TextInputType.number,
-                            decoration: const InputDecoration(
-                              labelText: 'Ngân sách dự kiến (₫) *',
+                            decoration: InputDecoration(
+                              labelText: 'Ngân sách (₫) *',
                               hintText: '200000000',
+                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(AppTokens.radiusInput)),
                             ),
                           ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: AppTokens.spaceMD),
                     TextField(
                       controller: _addressController,
-                      decoration: const InputDecoration(
+                      decoration: InputDecoration(
                         labelText: 'Địa chỉ nhận hàng tận nơi *',
                         hintText: 'Số nhà, đường, quận/huyện, tỉnh/thành phố',
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(AppTokens.radiusInput)),
                       ),
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: AppTokens.spaceMD),
                     Row(
                       children: [
                         Expanded(
                           child: InkWell(
                             onTap: _selectDeliveryDate,
+                            borderRadius: BorderRadius.circular(AppTokens.radiusInput),
                             child: InputDecorator(
-                              decoration: const InputDecoration(
+                              decoration: InputDecoration(
                                 labelText: 'Ngày cần giao *',
-                                suffixIcon: Icon(Icons.calendar_today, size: 18),
+                                suffixIcon: const Icon(Icons.calendar_today, size: 18),
+                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(AppTokens.radiusInput)),
                               ),
                               child: Text(
                                 DateFormat('dd/MM/yyyy').format(_expectedDeliveryDate),
-                                style: const TextStyle(fontSize: 13.5),
+                                style: const TextStyle(fontSize: 13),
                               ),
                             ),
                           ),
                         ),
-                        const SizedBox(width: 12),
+                        const SizedBox(width: AppTokens.spaceMD),
                         Expanded(
                           child: InkWell(
                             onTap: _selectBidDeadline,
+                            borderRadius: BorderRadius.circular(AppTokens.radiusInput),
                             child: InputDecorator(
-                              decoration: const InputDecoration(
-                                labelText: 'Hạn nhận báo giá *',
-                                suffixIcon: Icon(Icons.access_time, size: 18),
+                              decoration: InputDecoration(
+                                labelText: 'Hạn nhận giá *',
+                                suffixIcon: const Icon(Icons.access_time, size: 18),
+                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(AppTokens.radiusInput)),
                               ),
                               child: Text(
                                 DateFormat('dd/MM/yyyy').format(_bidDeadline),
-                                style: const TextStyle(fontSize: 13.5),
+                                style: const TextStyle(fontSize: 13),
                               ),
                             ),
                           ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: AppTokens.spaceMD),
                     TextField(
                       controller: _notesController,
                       maxLines: 3,
-                      decoration: const InputDecoration(
+                      decoration: InputDecoration(
                         labelText: 'Yêu cầu quy cách, hương vị & in ấn',
                         hintText: 'Chi tiết các vị bánh, bao bì, xe lạnh...',
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(AppTokens.radiusInput)),
                       ),
                     ),
-                    const SizedBox(height: 14),
-                    Material(
-                      type: MaterialType.transparency,
-                      child: CheckboxListTile(
-                        value: _customPackaging,
-                        activeColor: AppColors.primary,
-                        contentPadding: EdgeInsets.zero,
-                        title: const Text('Cần thiết kế bao bì & in logo thương hiệu', style: TextStyle(fontSize: 13)),
-                        onChanged: (val) => setState(() => _customPackaging = val ?? false),
-                      ),
+                    const SizedBox(height: AppTokens.spaceMD),
+                    CheckboxListTile(
+                      value: _customPackaging,
+                      activeColor: AppColors.primary,
+                      contentPadding: EdgeInsets.zero,
+                      title: const Text('Cần thiết kế bao bì & in logo thương hiệu', style: TextStyle(fontFamily: 'Roboto', fontSize: 13)),
+                      onChanged: (val) => setState(() => _customPackaging = val ?? false),
                     ),
-                    Material(
-                      type: MaterialType.transparency,
-                      child: CheckboxListTile(
-                        value: _sampleBoxNeeded,
-                        activeColor: AppColors.primary,
-                        contentPadding: EdgeInsets.zero,
-                        title: const Text('Gửi 01 hộp mẫu thử nguyên seal tận nơi trước khi ký HĐ', style: TextStyle(fontSize: 13)),
-                        onChanged: (val) => setState(() => _sampleBoxNeeded = val ?? false),
-                      ),
+                    CheckboxListTile(
+                      value: _sampleBoxNeeded,
+                      activeColor: AppColors.primary,
+                      contentPadding: EdgeInsets.zero,
+                      title: const Text('Gửi 01 hộp mẫu thử nguyên seal tận nơi trước khi ký HĐ', style: TextStyle(fontFamily: 'Roboto', fontSize: 13)),
+                      onChanged: (val) => setState(() => _sampleBoxNeeded = val ?? false),
                     ),
                   ],
                 ),
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: AppTokens.space2XL),
               CustomButton(
                 title: 'Gửi yêu cầu nhận báo giá xưởng',
                 size: ButtonSize.large,
@@ -324,6 +331,7 @@ class _CreateRfqScreenState extends ConsumerState<CreateRfqScreen> {
                 disabled: _isSubmitting,
                 onPress: _handleSubmit,
               ),
+              const SizedBox(height: AppTokens.space2XL),
             ],
           ),
         ),

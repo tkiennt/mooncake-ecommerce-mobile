@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/theme/app_colors.dart';
@@ -5,6 +6,7 @@ import '../../core/theme/app_tokens.dart';
 import '../../shared_widgets/common/app_header.dart';
 import '../../shared_widgets/common/custom_button.dart';
 import '../../providers/auth_provider.dart';
+import '../../data/repositories/profile_repository.dart';
 
 class EditProfileScreen extends ConsumerStatefulWidget {
   const EditProfileScreen({super.key});
@@ -14,11 +16,24 @@ class EditProfileScreen extends ConsumerStatefulWidget {
 }
 
 class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
-  final _nameController = TextEditingController(text: 'Nguyễn Văn Kiên');
-  final _companyController = TextEditingController(text: 'Tập đoàn B2B Mooncake');
-  final _phoneController = TextEditingController(text: '0901234567');
-  final _emailController = TextEditingController(text: 'khachhang@nguyetpho.vn');
-  final _taxIdController = TextEditingController(text: '0101234567');
+  final _formKey = GlobalKey<FormState>();
+  late final TextEditingController _nameController;
+  late final TextEditingController _companyController;
+  late final TextEditingController _phoneController;
+  late final TextEditingController _emailController;
+
+  bool _isSaving = false;
+  String? _errorMessage;
+
+  @override
+  void initState() {
+    super.initState();
+    final user = ref.read(authProvider).user;
+    _nameController = TextEditingController(text: user?.fullName ?? '');
+    _companyController = TextEditingController(text: user?.companyName ?? '');
+    _phoneController = TextEditingController(text: user?.phoneNumber ?? user?.phone ?? '');
+    _emailController = TextEditingController(text: user?.email ?? '');
+  }
 
   @override
   void dispose() {
@@ -26,8 +41,50 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     _companyController.dispose();
     _phoneController.dispose();
     _emailController.dispose();
-    _taxIdController.dispose();
     super.dispose();
+  }
+
+  Future<void> _handleSave() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    setState(() {
+      _isSaving = true;
+      _errorMessage = null;
+    });
+
+    try {
+      final repo = ref.read(profileRepositoryProvider);
+      final updatedUser = await repo.updateProfile(
+        fullName: _nameController.text.trim(),
+        phone: _phoneController.text.trim(),
+      );
+
+      // Persist to local storage and update auth provider session
+      final storage = ref.read(storageServiceProvider);
+      await storage.saveUserJson(jsonEncode(updatedUser.toJson()));
+      await ref.read(authProvider.notifier).loadStoredSession();
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Hồ sơ doanh nghiệp đã được cập nhật thành công!'),
+          backgroundColor: AppColors.success,
+        ),
+      );
+      Navigator.of(context).pop();
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _isSaving = false;
+        _errorMessage = e.toString().replaceFirst('Exception: ', '');
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(_errorMessage ?? 'Không thể lưu hồ sơ. Vui lòng thử lại.'),
+          backgroundColor: AppColors.error,
+        ),
+      );
+    }
   }
 
   @override
@@ -36,57 +93,108 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       appBar: const AppHeader(title: 'Chỉnh Sửa Hồ Sơ', showBack: true),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: AppColors.surface,
-                borderRadius: BorderRadius.circular(AppTokens.lucianRadiusLg),
-                border: Border.all(color: AppColors.border),
+        child: Form(
+          key: _formKey,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              if (_errorMessage != null) ...[
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  margin: const EdgeInsets.only(bottom: 16),
+                  decoration: BoxDecoration(
+                    color: AppColors.errorBg,
+                    borderRadius: BorderRadius.circular(AppTokens.radiusDefault),
+                    border: Border.all(color: AppColors.error),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.error_outline, color: AppColors.error, size: 20),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          _errorMessage!,
+                          style: const TextStyle(fontSize: 12.5, color: AppColors.error),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: AppColors.surface,
+                  borderRadius: BorderRadius.circular(AppTokens.lucianRadiusLg),
+                  border: Border.all(color: AppColors.border),
+                  boxShadow: AppTokens.shadowSubtle,
+                ),
+                child: Column(
+                  children: [
+                    TextFormField(
+                      controller: _nameController,
+                      decoration: const InputDecoration(
+                        labelText: 'Họ và tên người đại diện *',
+                        prefixIcon: Icon(Icons.person_outline, size: 20, color: AppColors.primary),
+                      ),
+                      validator: (val) {
+                        if (val == null || val.trim().isEmpty) {
+                          return 'Vui lòng nhập họ và tên';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 14),
+                    TextFormField(
+                      controller: _phoneController,
+                      keyboardType: TextInputType.phone,
+                      decoration: const InputDecoration(
+                        labelText: 'Số điện thoại liên hệ *',
+                        prefixIcon: Icon(Icons.phone_outlined, size: 20, color: AppColors.primary),
+                      ),
+                      validator: (val) {
+                        if (val == null || val.trim().isEmpty) {
+                          return 'Vui lòng nhập số điện thoại';
+                        }
+                        if (val.trim().length < 9) {
+                          return 'Số điện thoại không hợp lệ';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 14),
+                    TextFormField(
+                      controller: _companyController,
+                      decoration: const InputDecoration(
+                        labelText: 'Tên công ty / Doanh nghiệp',
+                        prefixIcon: Icon(Icons.business_outlined, size: 20, color: AppColors.textSecondary),
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    TextFormField(
+                      controller: _emailController,
+                      readOnly: true,
+                      decoration: const InputDecoration(
+                        labelText: 'Email tài khoản (chỉ đọc)',
+                        prefixIcon: Icon(Icons.email_outlined, size: 20, color: AppColors.textMuted),
+                        filled: true,
+                        fillColor: AppColors.surfaceHover,
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    CustomButton(
+                      title: _isSaving ? 'Đang lưu thông tin...' : 'Lưu thay đổi',
+                      size: ButtonSize.large,
+                      width: double.infinity,
+                      loading: _isSaving,
+                      disabled: _isSaving,
+                      onPress: _handleSave,
+                    ),
+                  ],
+                ),
               ),
-              child: Column(
-                children: [
-                  TextField(
-                    controller: _nameController,
-                    decoration: const InputDecoration(labelText: 'Họ và tên người đại diện'),
-                  ),
-                  const SizedBox(height: 12),
-                  TextField(
-                    controller: _companyController,
-                    decoration: const InputDecoration(labelText: 'Tên công ty / Doanh nghiệp'),
-                  ),
-                  const SizedBox(height: 12),
-                  TextField(
-                    controller: _taxIdController,
-                    decoration: const InputDecoration(labelText: 'Mã số thuế (MST xuất hóa đơn)'),
-                  ),
-                  const SizedBox(height: 12),
-                  TextField(
-                    controller: _phoneController,
-                    decoration: const InputDecoration(labelText: 'Số điện thoại'),
-                  ),
-                  const SizedBox(height: 12),
-                  TextField(
-                    controller: _emailController,
-                    decoration: const InputDecoration(labelText: 'Email công ty'),
-                  ),
-                  const SizedBox(height: 24),
-                  CustomButton(
-                    title: 'Lưu thay đổi',
-                    size: ButtonSize.large,
-                    width: double.infinity,
-                    onPress: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Hồ sơ đã được lưu thành công!')),
-                      );
-                      Navigator.of(context).pop();
-                    },
-                  ),
-                ],
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

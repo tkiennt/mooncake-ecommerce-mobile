@@ -578,6 +578,16 @@ class _DriverTripDetailScreenState
               : ElevatedButton.icon(
                   onPressed: () {
                     ref.read(currentTripProvider.notifier).state = trip;
+                    if (!trip.isClaimed) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text(
+                              'Hãy nhận chuyến trước khi chụp ảnh bàn giao.'),
+                        ),
+                      );
+                      context.push('/driver/claim', extra: trip);
+                      return;
+                    }
                     context.push('/driver/proof', extra: trip);
                   },
                   style: ElevatedButton.styleFrom(
@@ -589,9 +599,11 @@ class _DriverTripDetailScreenState
                           BorderRadius.circular(AppTokens.radiusDefault),
                     ),
                   ),
-                  icon: const Icon(Icons.camera_alt, size: 22),
-                  label: const Text(
-                    'Chụp nghiệm thu PoD',
+                  icon: Icon(
+                      trip.isClaimed ? Icons.camera_alt : Icons.assignment_ind,
+                      size: 22),
+                  label: Text(
+                    trip.isClaimed ? 'Chụp nghiệm thu PoD' : 'Nhận chuyến',
                     style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                   ),
                 ),

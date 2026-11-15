@@ -127,7 +127,7 @@ class _VerifyEmailScreenState extends ConsumerState<VerifyEmailScreen> {
       backgroundColor: AppColors.background,
       appBar: const AppHeader(title: 'Xác Thực Email', showBack: true),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
         child: Column(
           children: [
             const SizedBox(height: 12),
@@ -161,7 +161,7 @@ class _VerifyEmailScreenState extends ConsumerState<VerifyEmailScreen> {
 
             // Card container
             Container(
-              padding: const EdgeInsets.all(20),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 20),
               decoration: BoxDecoration(
                 color: AppColors.surface,
                 borderRadius: BorderRadius.circular(AppTokens.lucianRadiusLg),
@@ -226,14 +226,17 @@ class _VerifyEmailScreenState extends ConsumerState<VerifyEmailScreen> {
                   const SizedBox(height: 24),
 
                   // 6-digit OTP input
-                  AntdOtpInput(
-                    length: 6,
-                    countdownSeconds: 60,
-                    onComplete: (otp) {
-                      _otpCode = otp;
-                      _handleVerify(otp);
-                    },
-                    onResend: _handleResend,
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: AntdOtpInput(
+                      length: 6,
+                      countdownSeconds: 60,
+                      onComplete: (otp) {
+                        _otpCode = otp;
+                        _handleVerify(otp);
+                      },
+                      onResend: _handleResend,
+                    ),
                   ),
                   const SizedBox(height: 24),
 

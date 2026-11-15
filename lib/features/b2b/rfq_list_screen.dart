@@ -222,29 +222,36 @@ class _RfqListScreenState extends ConsumerState<RfqListScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        rfq.rfqNumber.isNotEmpty ? rfq.rfqNumber : 'RFQ-${rfq.id.substring(0, 8)}',
-                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                      Expanded(
+                        child: Text(
+                          rfq.rfqNumber.isNotEmpty ? rfq.rfqNumber : 'RFQ-${rfq.id.substring(0, 8)}',
+                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                        ),
                       ),
-                      Row(
-                        children: [
-                          Container(
-                            margin: const EdgeInsets.only(right: 6),
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                            decoration: BoxDecoration(
-                              color: AppColors.accentGoldBg,
-                              borderRadius: BorderRadius.circular(4),
-                              border: Border.all(color: AppColors.accent, width: 0.8),
+                      const SizedBox(width: 8),
+                      Flexible(
+                        child: Wrap(
+                          alignment: WrapAlignment.end,
+                          spacing: 6,
+                          runSpacing: 4,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                              decoration: BoxDecoration(
+                                color: AppColors.accentGoldBg,
+                                borderRadius: BorderRadius.circular(4),
+                                border: Border.all(color: AppColors.accent, width: 0.8),
+                              ),
+                              child: Text(
+                                '$bidsCount xưởng nộp bid',
+                                style: const TextStyle(color: AppColors.accent, fontSize: 11, fontWeight: FontWeight.bold),
+                              ),
                             ),
-                            child: Text(
-                              '$bidsCount xưởng nộp bid',
-                              style: const TextStyle(color: AppColors.accent, fontSize: 11, fontWeight: FontWeight.bold),
-                            ),
-                          ),
-                          _buildStatusBadge(rfq.status),
-                        ],
+                            _buildStatusBadge(rfq.status),
+                          ],
+                        ),
                       ),
                     ],
                   ),
@@ -262,11 +269,16 @@ class _RfqListScreenState extends ConsumerState<RfqListScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(
-                        'Hạn giao: ${DateFormat('dd/MM/yyyy').format(rfq.expectedDeliveryDate)}',
-                        style: const TextStyle(fontSize: 11, color: AppColors.textMuted),
+                      Flexible(
+                        child: Text(
+                          'Hạn giao: ${DateFormat('dd/MM/yyyy').format(rfq.expectedDeliveryDate)}',
+                          style: const TextStyle(fontSize: 11, color: AppColors.textMuted),
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ),
+                      const SizedBox(width: 8),
                       const Row(
+                        mainAxisSize: MainAxisSize.min,
                         children: [
                           Text('Xem so sánh báo giá', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.primary)),
                           Icon(Icons.chevron_right, size: 16, color: AppColors.primary),

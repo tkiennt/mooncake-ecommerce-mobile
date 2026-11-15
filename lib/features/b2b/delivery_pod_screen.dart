@@ -429,23 +429,31 @@ class _DeliveryPoDScreenState extends ConsumerState<DeliveryPoDScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
+                  Wrap(
+                    alignment: WrapAlignment.spaceBetween,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    spacing: 8,
+                    runSpacing: 6,
                     children: [
-                      Icon(
-                        Icons.ac_unit,
-                        color: isTempSafe ? AppColors.info : AppColors.error,
-                        size: 22,
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.ac_unit,
+                            color: isTempSafe ? AppColors.info : AppColors.error,
+                            size: 22,
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            'Cảm Biến Xe Lạnh Vận Chuyển',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                              color: isTempSafe ? AppColors.info : AppColors.error,
+                            ),
+                          ),
+                        ],
                       ),
-                      const SizedBox(width: 8),
-                      Text(
-                        'Cảm Biến Xe Lạnh Vận Chuyển',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 14,
-                          color: isTempSafe ? AppColors.info : AppColors.error,
-                        ),
-                      ),
-                      const Spacer(),
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                         decoration: BoxDecoration(
@@ -531,9 +539,11 @@ class _DeliveryPoDScreenState extends ConsumerState<DeliveryPoDScreen> {
                     children: [
                       Icon(Icons.assignment_turned_in_outlined, color: AppColors.primary, size: 20),
                       SizedBox(width: 8),
-                      Text(
-                        'Chứng Từ & Ảnh Bàn Giao (PoD)',
-                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                      Expanded(
+                        child: Text(
+                          'Chứng Từ & Ảnh Bàn Giao (PoD)',
+                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                        ),
                       ),
                     ],
                   ),

@@ -7,7 +7,10 @@ import '../../core/theme/app_tokens.dart';
 import '../../data/models/rfq.dart';
 import '../../data/repositories/rfq_repository.dart';
 import '../../shared_widgets/common/app_header.dart';
-import '../../shared_widgets/common/custom_button.dart';
+import '../../shared_widgets/common/app_status_chip.dart';
+import '../../shared_widgets/common/app_skeleton.dart';
+import '../../shared_widgets/common/app_empty_state.dart';
+import '../../shared_widgets/common/app_error_state.dart';
 
 class RfqListScreen extends ConsumerStatefulWidget {
   const RfqListScreen({super.key});
@@ -23,7 +26,7 @@ class _RfqListScreenState extends ConsumerState<RfqListScreen> {
 
   @override
   void initState() {
-    super.initState();
+  super.initState();
     _loadRfqs();
   }
 
@@ -45,7 +48,7 @@ class _RfqListScreenState extends ConsumerState<RfqListScreen> {
     } catch (e) {
       if (mounted) {
         setState(() {
-          _errorMessage = e.toString();
+          _errorMessage = e.toString().replaceFirst('Exception: ', '');
           _isLoading = false;
         });
       }
@@ -56,144 +59,125 @@ class _RfqListScreenState extends ConsumerState<RfqListScreen> {
     return '${NumberFormat('#,###', 'vi_VN').format(amount)} ₫';
   }
 
-  Widget _buildStatusBadge(String status) {
-    String label;
-    Color bgColor;
-    Color textColor;
-    Color borderColor;
-
-    switch (status) {
-      case 'Draft':
-        label = 'Bản nháp';
-        bgColor = AppColors.background;
-        textColor = AppColors.textSecondary;
-        borderColor = AppColors.border;
-        break;
-      case 'Open':
-      case 'OpenForBidding':
-        label = 'Đang nhận báo giá';
-        bgColor = AppColors.accentGoldBg;
-        textColor = AppColors.accent;
-        borderColor = AppColors.accent;
-        break;
-      case 'UnderReview':
-        label = 'Đang xét thầu';
-        bgColor = AppColors.infoBg;
-        textColor = AppColors.info;
-        borderColor = AppColors.info;
-        break;
-      case 'Awarded':
-        label = 'Đã chọn xưởng';
-        bgColor = AppColors.successBg;
-        textColor = AppColors.success;
-        borderColor = AppColors.success;
-        break;
-      case 'Completed':
-        label = 'Hoàn tất';
-        bgColor = AppColors.successBg;
-        textColor = AppColors.success;
-        borderColor = AppColors.success;
-        break;
-      case 'Cancelled':
-        label = 'Đã hủy';
-        bgColor = AppColors.errorBg;
-        textColor = AppColors.error;
-        borderColor = AppColors.error;
-        break;
-      default:
-        label = status;
-        bgColor = AppColors.background;
-        textColor = AppColors.textSecondary;
-        borderColor = AppColors.border;
-    }
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-      decoration: BoxDecoration(
-        color: bgColor,
-        borderRadius: BorderRadius.circular(4),
-        border: Border.all(color: borderColor, width: 0.8),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(
-          color: textColor,
-          fontSize: 11,
-          fontWeight: FontWeight.bold,
-        ),
-      ),
+  Widget _buildLoadingSkeleton() {
+    return ListView.builder(
+      padding: const EdgeInsets.all(AppTokens.spaceLG),
+      itemCount: 4,
+      itemBuilder: (context, index) {
+        return Container(
+          margin: const EdgeInsets.only(bottom: AppTokens.spaceMD),
+          padding: const EdgeInsets.all(AppTokens.spaceLG),
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(AppTokens.radiusCard),
+            border: Border.all(color: AppColors.border),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  AppSkeleton.shimmer(
+                    child: Container(
+                      width: 110,
+                      height: 18,
+                      decoration: BoxDecoration(
+                        color: AppColors.surface,
+                        borderRadius: BorderRadius.circular(AppTokens.radiusSM),
+                      ),
+                    ),
+                  ),
+                  AppSkeleton.shimmer(
+                    child: Container(
+                      width: 90,
+                      height: 22,
+                      decoration: BoxDecoration(
+                        color: AppColors.surface,
+                        borderRadius: BorderRadius.circular(AppTokens.radiusPill),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: AppTokens.spaceMD),
+              AppSkeleton.shimmer(
+                child: Container(
+                  width: double.infinity,
+                  height: 16,
+                  decoration: BoxDecoration(
+                    color: AppColors.surface,
+                    borderRadius: BorderRadius.circular(AppTokens.radiusSM),
+                  ),
+                ),
+              ),
+              const SizedBox(height: AppTokens.spaceSM),
+              AppSkeleton.shimmer(
+                child: Container(
+                  width: 220,
+                  height: 14,
+                  decoration: BoxDecoration(
+                    color: AppColors.surface,
+                    borderRadius: BorderRadius.circular(AppTokens.radiusSM),
+                  ),
+                ),
+              ),
+              const SizedBox(height: AppTokens.spaceMD),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  AppSkeleton.shimmer(
+                    child: Container(
+                      width: 120,
+                      height: 14,
+                      decoration: BoxDecoration(
+                        color: AppColors.surface,
+                        borderRadius: BorderRadius.circular(AppTokens.radiusSM),
+                      ),
+                    ),
+                  ),
+                  AppSkeleton.shimmer(
+                    child: Container(
+                      width: 100,
+                      height: 14,
+                      decoration: BoxDecoration(
+                        color: AppColors.surface,
+                        borderRadius: BorderRadius.circular(AppTokens.radiusSM),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 
   Widget _buildContent() {
     if (_isLoading) {
-      return const Center(
-        child: CircularProgressIndicator(color: AppColors.primary),
-      );
+      return _buildLoadingSkeleton();
     }
 
     if (_errorMessage != null) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(Icons.cloud_off_outlined, size: 54, color: AppColors.error),
-              const SizedBox(height: 12),
-              const Text(
-                'Không thể tải danh sách RFQ',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
-              ),
-              const SizedBox(height: 6),
-              Text(
-                _errorMessage!,
-                textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 13, color: AppColors.textSecondary),
-              ),
-              const SizedBox(height: 16),
-              CustomButton(
-                title: 'Thử lại',
-                size: ButtonSize.medium,
-                variant: ButtonVariant.primary,
-                onPress: _loadRfqs,
-              ),
-            ],
-          ),
-        ),
+      return AppErrorState(
+        title: 'Không thể tải danh sách RFQ',
+        message: _errorMessage!,
+        onRetry: _loadRfqs,
+        retryLabel: 'Thử lại ngay',
       );
     }
 
     if (_rfqs.isEmpty) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(Icons.assignment_outlined, size: 64, color: AppColors.textMuted),
-              const SizedBox(height: 14),
-              const Text(
-                'Chưa có yêu cầu báo giá nào',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
-              ),
-              const SizedBox(height: 8),
-              const Text(
-                'Tạo yêu cầu báo giá (RFQ) để nhận báo giá sỉ cạnh tranh và ưu đãi thiết kế hộp từ các xưởng sản xuất uy tín.',
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 13, color: AppColors.textSecondary, height: 1.4),
-              ),
-              const SizedBox(height: 20),
-              CustomButton(
-                title: 'Tạo RFQ ngay',
-                size: ButtonSize.medium,
-                onPress: () => context.push('/create-rfq').then((res) {
-                  if (res == true) _loadRfqs();
-                }),
-              ),
-            ],
-          ),
-        ),
+      return AppEmptyState(
+        icon: Icons.assignment_outlined,
+        title: 'Chưa có yêu cầu báo giá nào',
+        message: 'Tạo yêu cầu báo giá (RFQ) để nhận báo giá sỉ cạnh tranh và ưu đãi thiết kế hộp từ các xưởng sản xuất uy tín.',
+        actionLabel: 'Tạo RFQ ngay',
+        onAction: () => context.push('/create-rfq').then((res) {
+          if (res == true) _loadRfqs();
+        }),
       );
     }
 
@@ -201,80 +185,185 @@ class _RfqListScreenState extends ConsumerState<RfqListScreen> {
       onRefresh: _loadRfqs,
       color: AppColors.primary,
       child: ListView.builder(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(AppTokens.spaceLG),
         itemCount: _rfqs.length,
         itemBuilder: (context, index) {
           final rfq = _rfqs[index];
           final bidsCount = rfq.bids.isNotEmpty ? rfq.bids.length : rfq.bidCount;
 
           return Container(
-            margin: const EdgeInsets.only(bottom: 12),
-            padding: const EdgeInsets.all(16),
+            margin: const EdgeInsets.only(bottom: AppTokens.spaceMD),
             decoration: BoxDecoration(
               color: AppColors.surface,
-              borderRadius: BorderRadius.circular(AppTokens.lucianRadiusLg),
-              border: Border.all(color: AppColors.border),
+              borderRadius: BorderRadius.circular(AppTokens.radiusCard),
+              border: Border.all(color: AppColors.border, width: 0.8),
               boxShadow: AppTokens.shadowSubtle,
             ),
-            child: InkWell(
-              onTap: () => context.push('/rfq-detail-bidding', extra: rfq).then((_) => _loadRfqs()),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                borderRadius: BorderRadius.circular(AppTokens.radiusCard),
+                onTap: () => context.push('/rfq-detail-bidding', extra: rfq).then((_) => _loadRfqs()),
+                child: Padding(
+                  padding: const EdgeInsets.all(AppTokens.spaceLG),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        rfq.rfqNumber.isNotEmpty ? rfq.rfqNumber : 'RFQ-${rfq.id.substring(0, 8)}',
-                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-                      ),
+                      // Header: RFQ number + Wrap status
                       Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Container(
-                            margin: const EdgeInsets.only(right: 6),
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                            decoration: BoxDecoration(
-                              color: AppColors.accentGoldBg,
-                              borderRadius: BorderRadius.circular(4),
-                              border: Border.all(color: AppColors.accent, width: 0.8),
-                            ),
+                          Expanded(
                             child: Text(
-                              '$bidsCount xưởng nộp bid',
-                              style: const TextStyle(color: AppColors.accent, fontSize: 11, fontWeight: FontWeight.bold),
+                              rfq.rfqNumber.isNotEmpty ? rfq.rfqNumber : 'RFQ-${rfq.id.length > 8 ? rfq.id.substring(0, 8) : rfq.id}',
+                              style: const TextStyle(
+                                fontFamily: 'Roboto',
+                                fontWeight: FontWeight.w700,
+                                fontSize: 14.5,
+                                color: AppColors.textPrimary,
+                              ),
                             ),
                           ),
-                          _buildStatusBadge(rfq.status),
+                          const SizedBox(width: AppTokens.spaceSM),
+                          Flexible(
+                            child: Wrap(
+                              alignment: WrapAlignment.end,
+                              spacing: 6,
+                              runSpacing: 4,
+                              children: [
+                                if (bidsCount > 0)
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                                    decoration: BoxDecoration(
+                                      color: AppColors.accentGoldBg,
+                                      borderRadius: BorderRadius.circular(AppTokens.radiusSM),
+                                      border: Border.all(color: AppColors.accent, width: 0.8),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        const Icon(Icons.gavel, size: 12, color: AppColors.accent),
+                                        const SizedBox(width: 4),
+                                        Text(
+                                          '$bidsCount báo giá',
+                                          style: const TextStyle(
+                                            fontFamily: 'Roboto',
+                                            color: AppColors.accent,
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.w700,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                AppStatusChip(
+                                  status: rfq.status,
+                                  type: AppStatusType.rfq,
+                                  size: AppStatusChipSize.small,
+                                ),
+                              ],
+                            ),
+                          ),
                         ],
                       ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    rfq.title,
-                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.primary),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    'Số lượng: ${rfq.targetQuantity} hộp · Dự toán: ${_formatCurrency(rfq.targetBudget ?? rfq.budgetRangeMax ?? 0)}',
-                    style: const TextStyle(fontSize: 12.5, color: AppColors.textSecondary),
-                  ),
-                  const SizedBox(height: 12),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
+                      const SizedBox(height: AppTokens.spaceMD),
+                      // Title
                       Text(
-                        'Hạn giao: ${DateFormat('dd/MM/yyyy').format(rfq.expectedDeliveryDate)}',
-                        style: const TextStyle(fontSize: 11, color: AppColors.textMuted),
+                        rfq.title,
+                        style: const TextStyle(
+                          fontFamily: 'Roboto',
+                          fontSize: 14.5,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.primary,
+                          height: 1.3,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                      const Row(
+                      const SizedBox(height: AppTokens.spaceSM),
+                      // Quantity & Budget
+                      Row(
                         children: [
-                          Text('Xem so sánh báo giá', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.primary)),
-                          Icon(Icons.chevron_right, size: 16, color: AppColors.primary),
+                          const Icon(Icons.inventory_2_outlined, size: 15, color: AppColors.textSecondary),
+                          const SizedBox(width: 4),
+                          Text(
+                            'Số lượng: ${rfq.targetQuantity} hộp',
+                            style: const TextStyle(
+                              fontFamily: 'Roboto',
+                              fontSize: 12.5,
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                          const SizedBox(width: AppTokens.spaceMD),
+                          const Icon(Icons.payments_outlined, size: 15, color: AppColors.textSecondary),
+                          const SizedBox(width: 4),
+                          Expanded(
+                            child: Text(
+                              'Dự toán: ${_formatCurrency(rfq.targetBudget ?? rfq.budgetRangeMax ?? 0)}',
+                              style: const TextStyle(
+                                fontFamily: 'Roboto',
+                                fontSize: 12.5,
+                                color: AppColors.textPrimary,
+                                fontWeight: FontWeight.w600,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: AppTokens.spaceMD),
+                      const Divider(height: 1, color: AppColors.border),
+                      const SizedBox(height: AppTokens.spaceMD),
+                      // Footer: Delivery Date & CTA
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Flexible(
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(Icons.event_outlined, size: 14, color: AppColors.textMuted),
+                                const SizedBox(width: 4),
+                                Flexible(
+                                  child: Text(
+                                    'Hạn giao: ${DateFormat('dd/MM/yyyy').format(rfq.expectedDeliveryDate)}',
+                                    style: const TextStyle(
+                                      fontFamily: 'Roboto',
+                                      fontSize: 11.5,
+                                      color: AppColors.textMuted,
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: AppTokens.spaceSM),
+                          Container(
+                            constraints: const BoxConstraints(minHeight: AppTokens.minTapTarget),
+                            alignment: Alignment.center,
+                            child: const Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  'So sánh báo giá',
+                                  style: TextStyle(
+                                    fontFamily: 'Roboto',
+                                    fontSize: 12.5,
+                                    fontWeight: FontWeight.w700,
+                                    color: AppColors.primary,
+                                  ),
+                                ),
+                                SizedBox(width: 2),
+                                Icon(Icons.chevron_right, size: 18, color: AppColors.primary),
+                              ],
+                            ),
+                          ),
                         ],
                       ),
                     ],
                   ),
-                ],
+                ),
               ),
             ),
           );
@@ -286,10 +375,11 @@ class _RfqListScreenState extends ConsumerState<RfqListScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.background,
       appBar: AppHeader(
         title: 'Yêu Cầu Báo Giá B2B',
         showBack: true,
-        rightIcon: Icons.add,
+        rightIcon: Icons.add_circle_outline,
         rightLabel: 'Tạo RFQ',
         onRightPress: () => context.push('/create-rfq').then((res) {
           if (res == true) _loadRfqs();

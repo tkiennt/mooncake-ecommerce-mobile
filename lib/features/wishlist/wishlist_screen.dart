@@ -4,12 +4,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_tokens.dart';
 import '../../data/models/product.dart';
 import '../../data/models/wishlist_item.dart';
 import '../../data/repositories/wishlist_repository.dart';
 import '../../providers/cart_provider.dart';
 import '../../shared_widgets/common/app_header.dart';
-import '../../shared_widgets/common/custom_button.dart';
+import '../../shared_widgets/common/app_skeleton.dart';
+import '../../shared_widgets/common/app_empty_state.dart';
+import '../../shared_widgets/common/app_error_state.dart';
 
 class WishlistScreen extends ConsumerStatefulWidget {
   const WishlistScreen({super.key});
@@ -45,7 +48,7 @@ class _WishlistScreenState extends ConsumerState<WishlistScreen> {
     } catch (e) {
       if (!mounted) return;
       setState(() {
-        _errorMessage = e.toString();
+        _errorMessage = e.toString().replaceFirst('Exception: ', '');
         _isLoading = false;
       });
     }
@@ -91,7 +94,7 @@ class _WishlistScreenState extends ConsumerState<WishlistScreen> {
         height: 80,
         decoration: BoxDecoration(
           color: AppColors.surfaceHover,
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(AppTokens.radiusDefault),
         ),
         child: const Icon(Icons.cake_outlined, color: AppColors.textMuted, size: 36),
       );
@@ -99,7 +102,7 @@ class _WishlistScreenState extends ConsumerState<WishlistScreen> {
 
     if (imageUrl.startsWith('assets/')) {
       return ClipRRect(
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(AppTokens.radiusDefault),
         child: Image.asset(
           imageUrl,
           width: 80,
@@ -116,7 +119,7 @@ class _WishlistScreenState extends ConsumerState<WishlistScreen> {
     }
 
     return ClipRRect(
-      borderRadius: BorderRadius.circular(8),
+      borderRadius: BorderRadius.circular(AppTokens.radiusDefault),
       child: CachedNetworkImage(
         imageUrl: imageUrl,
         width: 80,
@@ -147,6 +150,7 @@ class _WishlistScreenState extends ConsumerState<WishlistScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.background,
       appBar: AppHeader(
         title: 'Sản phẩm yêu thích',
         subtitle: _items.isNotEmpty ? '${_items.length} sản phẩm đã lưu' : null,
@@ -165,106 +169,42 @@ class _WishlistScreenState extends ConsumerState<WishlistScreen> {
 
   Widget _buildBody() {
     if (_isLoading) {
-      return const Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            CircularProgressIndicator(color: AppColors.primary),
-            SizedBox(height: 16),
-            Text(
-              'Đang tải danh sách yêu thích...',
-              style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
-            ),
-          ],
-        ),
-      );
+      return _buildSkeletonList();
     }
 
     if (_errorMessage != null) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(Icons.error_outline, size: 48, color: AppColors.error),
-              const SizedBox(height: 16),
-              const Text(
-                'Không thể tải danh sách yêu thích',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.primaryDark),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                _errorMessage!,
-                textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
-              ),
-              const SizedBox(height: 20),
-              CustomButton(
-                title: 'Thử lại',
-                variant: ButtonVariant.primary,
-                size: ButtonSize.small,
-                onPress: _loadWishlist,
-              ),
-            ],
-          ),
-        ),
+      return AppErrorState(
+        title: 'Không thể tải danh sách yêu thích',
+        message: _errorMessage,
+        onRetry: _loadWishlist,
       );
     }
 
     if (_items.isEmpty) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Container(
-                width: 80,
-                height: 80,
-                decoration: const BoxDecoration(
-                  color: AppColors.accentGoldBg,
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(Icons.favorite_border, size: 40, color: AppColors.accent),
-              ),
-              const SizedBox(height: 20),
-              const Text(
-                'Danh sách yêu thích trống',
-                style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: AppColors.primaryDark),
-              ),
-              const SizedBox(height: 8),
-              const Text(
-                'Bạn chưa lưu mẫu bánh nào. Hãy khám phá danh mục và bấm nút trái tim để lưu lại các mẫu bánh ưng ý!',
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 13, color: AppColors.textSecondary, height: 1.4),
-              ),
-              const SizedBox(height: 24),
-              CustomButton(
-                title: 'Khám phá sản phẩm',
-                icon: const Icon(Icons.search, color: Colors.white, size: 16),
-                onPress: () => context.go('/search'),
-              ),
-            ],
-          ),
-        ),
+      return AppEmptyState(
+        icon: Icons.favorite_border,
+        title: 'Danh sách yêu thích trống',
+        message: 'Bạn chưa lưu mẫu bánh nào. Hãy khám phá danh mục và bấm nút trái tim để lưu lại các mẫu bánh ưng ý!',
+        actionLabel: 'Khám phá sản phẩm',
+        onAction: () => context.go('/search'),
       );
     }
 
     return ListView.separated(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(AppTokens.spaceLG),
       itemCount: _items.length,
-      separatorBuilder: (_, __) => const SizedBox(height: 12),
+      separatorBuilder: (_, __) => const SizedBox(height: AppTokens.spaceMD),
       itemBuilder: (context, index) {
         final item = _items[index];
 
         return Container(
           decoration: BoxDecoration(
             color: AppColors.surface,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: AppColors.border),
+            borderRadius: BorderRadius.circular(AppTokens.radiusCard),
+            border: Border.all(color: AppColors.border, width: 0.8),
+            boxShadow: AppTokens.elevationSubtle,
           ),
-          padding: const EdgeInsets.all(12),
+          padding: const EdgeInsets.all(AppTokens.spaceMD),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -273,7 +213,7 @@ class _WishlistScreenState extends ConsumerState<WishlistScreen> {
                 onTap: () => _openProductDetail(item),
                 child: _buildProductThumbnail(item.imageUrl),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: AppTokens.spaceMD),
 
               // Info & Actions
               Expanded(
@@ -283,12 +223,13 @@ class _WishlistScreenState extends ConsumerState<WishlistScreen> {
                     if (item.shopName != null && item.shopName!.isNotEmpty)
                       Row(
                         children: [
-                          const Icon(Icons.storefront, size: 12, color: AppColors.accent),
+                          const Icon(Icons.storefront, size: 13, color: AppColors.accent),
                           const SizedBox(width: 4),
                           Expanded(
                             child: Text(
                               item.shopName!,
                               style: const TextStyle(
+                                fontFamily: 'Roboto',
                                 fontSize: 11,
                                 fontWeight: FontWeight.w600,
                                 color: AppColors.accent,
@@ -305,6 +246,7 @@ class _WishlistScreenState extends ConsumerState<WishlistScreen> {
                       child: Text(
                         item.productName,
                         style: const TextStyle(
+                          fontFamily: 'Roboto',
                           fontSize: 14,
                           fontWeight: FontWeight.bold,
                           color: AppColors.textPrimary,
@@ -317,6 +259,7 @@ class _WishlistScreenState extends ConsumerState<WishlistScreen> {
                     Text(
                       _formatPrice(item.price),
                       style: const TextStyle(
+                        fontFamily: 'Roboto',
                         fontSize: 15,
                         fontWeight: FontWeight.bold,
                         color: AppColors.primary,
@@ -327,16 +270,22 @@ class _WishlistScreenState extends ConsumerState<WishlistScreen> {
                       children: [
                         OutlinedButton.icon(
                           style: OutlinedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                            minimumSize: Size.zero,
-                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                            minimumSize: const Size(0, AppTokens.minTapTarget),
                             side: const BorderSide(color: AppColors.primary),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(AppTokens.radiusDefault),
+                            ),
                           ),
-                          icon: const Icon(Icons.add_shopping_cart, size: 13, color: AppColors.primary),
+                          icon: const Icon(Icons.add_shopping_cart, size: 15, color: AppColors.primary),
                           label: const Text(
                             'Thêm giỏ',
-                            style: TextStyle(fontSize: 11.5, color: AppColors.primary, fontWeight: FontWeight.bold),
+                            style: TextStyle(
+                              fontFamily: 'Roboto',
+                              fontSize: 12,
+                              color: AppColors.primary,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                           onPressed: () {
                             final dummyProduct = Product(
@@ -360,12 +309,16 @@ class _WishlistScreenState extends ConsumerState<WishlistScreen> {
                           },
                         ),
                         const Spacer(),
-                        IconButton(
-                          padding: EdgeInsets.zero,
-                          constraints: const BoxConstraints(),
-                          icon: const Icon(Icons.favorite, color: AppColors.error, size: 22),
-                          tooltip: 'Bỏ lưu yêu thích',
-                          onPressed: () => _removeItem(item),
+                        ConstrainedBox(
+                          constraints: const BoxConstraints(
+                            minWidth: AppTokens.minTapTarget,
+                            minHeight: AppTokens.minTapTarget,
+                          ),
+                          child: IconButton(
+                            icon: const Icon(Icons.favorite, color: AppColors.error, size: 22),
+                            tooltip: 'Bỏ lưu yêu thích',
+                            onPressed: () => _removeItem(item),
+                          ),
                         ),
                       ],
                     ),
@@ -373,6 +326,72 @@ class _WishlistScreenState extends ConsumerState<WishlistScreen> {
                 ),
               ),
             ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildSkeletonList() {
+    return ListView.separated(
+      padding: const EdgeInsets.all(AppTokens.spaceLG),
+      itemCount: 4,
+      separatorBuilder: (_, __) => const SizedBox(height: AppTokens.spaceMD),
+      itemBuilder: (context, index) {
+        return AppSkeleton.shimmer(
+          child: Container(
+            padding: const EdgeInsets.all(AppTokens.spaceMD),
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              borderRadius: BorderRadius.circular(AppTokens.radiusCard),
+              border: Border.all(color: AppColors.border),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 80,
+                  height: 80,
+                  decoration: BoxDecoration(
+                    color: AppColors.surfaceHover,
+                    borderRadius: BorderRadius.circular(AppTokens.radiusDefault),
+                  ),
+                ),
+                const SizedBox(width: AppTokens.spaceMD),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        width: 100,
+                        height: 12,
+                        decoration: BoxDecoration(
+                          color: AppColors.surfaceHover,
+                          borderRadius: BorderRadius.circular(AppTokens.radiusSM),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Container(
+                        width: double.infinity,
+                        height: 14,
+                        decoration: BoxDecoration(
+                          color: AppColors.surfaceHover,
+                          borderRadius: BorderRadius.circular(AppTokens.radiusSM),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Container(
+                        width: 80,
+                        height: 14,
+                        decoration: BoxDecoration(
+                          color: AppColors.surfaceHover,
+                          borderRadius: BorderRadius.circular(AppTokens.radiusSM),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
         );
       },

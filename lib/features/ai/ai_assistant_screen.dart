@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_tokens.dart';
-import '../../shared_widgets/common/app_header.dart';
 import '../../data/repositories/ai_repository.dart';
+import '../../shared_widgets/common/app_empty_state.dart';
+import '../../shared_widgets/common/app_error_state.dart';
+import '../../shared_widgets/common/app_header.dart';
+import '../../shared_widgets/common/app_skeleton.dart';
 
 class ChatMessage {
   final String text;
@@ -43,6 +47,7 @@ class _AiAssistantScreenState extends ConsumerState<AiAssistantScreen> {
     'Bánh ăn kiêng ít ngọt',
     'In logo ép kim từ 50 hộp',
     'Chính sách chiết khấu B2B',
+    'Bánh thập cẩm bào ngư vi cá',
   ];
 
   @override
@@ -89,16 +94,6 @@ class _AiAssistantScreenState extends ConsumerState<AiAssistantScreen> {
       setState(() {
         _isInitializing = false;
         _initError = e.toString().replaceFirst('Exception: ', '');
-        // Keep initial welcome message ready for fallback
-        if (_messages.isEmpty) {
-          _messages.add(
-            ChatMessage(
-              text: 'Kính chào Quý Doanh Nghiệp! Tôi là Trợ Lý Tư Vấn Quà Hoàng Gia Nguyệt Phố. Hệ thống AI đang ở chế độ dự phòng.',
-              isUser: false,
-              time: DateTime.now(),
-            ),
-          );
-        }
       });
     }
   }
@@ -169,6 +164,7 @@ class _AiAssistantScreenState extends ConsumerState<AiAssistantScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.background,
       appBar: const AppHeader(title: 'Trợ Lý Tư Vấn Quà AI', showBack: true),
       body: _buildContent(),
     );
@@ -176,17 +172,16 @@ class _AiAssistantScreenState extends ConsumerState<AiAssistantScreen> {
 
   Widget _buildContent() {
     if (_isInitializing) {
-      return const Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            CircularProgressIndicator(color: AppColors.primary),
-            SizedBox(height: 16),
-            Text(
-              'Đang khởi tạo phiên làm việc với Trợ lý AI...',
-              style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
-            ),
-          ],
+      return _buildSkeleton();
+    }
+
+    if (_initError != null && _messages.isEmpty) {
+      return Center(
+        child: AppErrorState(
+          title: 'Không thể kết nối trợ lý AI',
+          message: _initError,
+          retryLabel: 'Thử lại',
+          onRetry: _initSession,
         ),
       );
     }
@@ -195,52 +190,85 @@ class _AiAssistantScreenState extends ConsumerState<AiAssistantScreen> {
       children: [
         if (_initError != null) ...[
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppTokens.spaceLG,
+              vertical: AppTokens.spaceSM,
+            ),
             color: AppColors.warningBg,
             child: Row(
               children: [
                 const Icon(Icons.warning_amber_rounded, size: 18, color: AppColors.warning),
-                const SizedBox(width: 8),
+                const SizedBox(width: AppTokens.spaceSM),
                 Expanded(
                   child: Text(
-                    'Không kết nối được phiên AI: $_initError',
-                    style: const TextStyle(fontSize: 11.5, color: AppColors.warning),
+                    'Kết nối AI gặp gián đoạn: $_initError',
+                    style: const TextStyle(
+                      fontFamily: 'Roboto',
+                      fontSize: 11.5,
+                      color: AppColors.warning,
+                    ),
                   ),
                 ),
                 TextButton(
                   onPressed: _initSession,
-                  child: const Text('Thử lại', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.primary)),
+                  child: const Text(
+                    'Thử lại',
+                    style: TextStyle(
+                      fontFamily: 'Roboto',
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.primary,
+                    ),
+                  ),
                 ),
               ],
             ),
           ),
         ],
 
-        // Prompt suggestions
+        // Prompt suggestions with touch target >= 44px
         Container(
-          height: 44,
-          padding: const EdgeInsets.symmetric(vertical: 6),
+          height: 52,
+          padding: const EdgeInsets.symmetric(vertical: 4),
+          color: AppColors.surface,
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 16),
+            padding: const EdgeInsets.symmetric(horizontal: AppTokens.spaceMD),
             itemCount: promptPills.length,
-            separatorBuilder: (_, __) => const SizedBox(width: 8),
+            separatorBuilder: (_, __) => const SizedBox(width: AppTokens.spaceSM),
             itemBuilder: (context, index) {
               final pill = promptPills[index];
-              return InkWell(
-                onTap: _isSending ? null : () => _sendMessage(pill),
-                borderRadius: BorderRadius.circular(16),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                  decoration: BoxDecoration(
+              return Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(minHeight: AppTokens.minTapTarget),
+                  child: Material(
                     color: AppColors.accentGoldBg,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: AppColors.accent.withValues(alpha: 0.5)),
-                  ),
-                  child: Center(
-                    child: Text(
-                      pill,
-                      style: const TextStyle(fontSize: 11.5, color: AppColors.accent, fontWeight: FontWeight.w600),
+                    borderRadius: BorderRadius.circular(AppTokens.radiusPill),
+                    child: InkWell(
+                      onTap: _isSending ? null : () => _sendMessage(pill),
+                      borderRadius: BorderRadius.circular(AppTokens.radiusPill),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppTokens.spaceMD,
+                          vertical: AppTokens.spaceSM,
+                        ),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(AppTokens.radiusPill),
+                          border: Border.all(
+                            color: AppColors.accent.withValues(alpha: 0.4),
+                            width: 1,
+                          ),
+                        ),
+                        child: Text(
+                          pill,
+                          style: const TextStyle(
+                            fontFamily: 'Roboto',
+                            fontSize: 12,
+                            color: AppColors.accent,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
                     ),
                   ),
                 ),
@@ -249,43 +277,37 @@ class _AiAssistantScreenState extends ConsumerState<AiAssistantScreen> {
           ),
         ),
 
-        // Message history
+        const Divider(height: 1, color: AppColors.border),
+
+        // Message history or empty state
         Expanded(
           child: _messages.isEmpty
               ? Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(Icons.smart_toy_outlined, size: 48, color: AppColors.accent),
-                      const SizedBox(height: 12),
-                      const Text(
-                        'Trợ Lý AI Sẵn Sàng Hỗ Trợ',
-                        style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
-                      ),
-                      const SizedBox(height: 6),
-                      const Text(
-                        'Hỏi về set quà, ngân sách doanh nghiệp hoặc chiết khấu số lượng.',
-                        style: TextStyle(fontSize: 12.5, color: AppColors.textSecondary),
-                      ),
-                    ],
+                  child: AppEmptyState(
+                    icon: Icons.smart_toy_outlined,
+                    title: 'Trợ Lý AI Sẵn Sàng Hỗ Trợ',
+                    message: 'Hỏi về set quà trung thu, ngân sách doanh nghiệp hoặc chiết khấu số lượng lớn.',
                   ),
                 )
               : ListView.builder(
                   controller: _scrollController,
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(AppTokens.spaceLG),
                   itemCount: _messages.length + (_isSending ? 1 : 0),
                   itemBuilder: (context, index) {
                     if (index == _messages.length && _isSending) {
                       return Align(
                         alignment: Alignment.centerLeft,
                         child: Container(
-                          margin: const EdgeInsets.only(bottom: 12),
-                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                          margin: const EdgeInsets.only(bottom: AppTokens.spaceMD),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: AppTokens.spaceLG,
+                            vertical: AppTokens.spaceSM,
+                          ),
                           decoration: BoxDecoration(
                             color: AppColors.surface,
-                            borderRadius: BorderRadius.circular(AppTokens.lucianRadiusLg),
+                            borderRadius: BorderRadius.circular(AppTokens.radiusCard),
                             border: Border.all(color: AppColors.border),
-                            boxShadow: AppTokens.shadowSubtle,
+                            boxShadow: AppTokens.elevationSubtle,
                           ),
                           child: const Row(
                             mainAxisSize: MainAxisSize.min,
@@ -293,12 +315,20 @@ class _AiAssistantScreenState extends ConsumerState<AiAssistantScreen> {
                               SizedBox(
                                 width: 14,
                                 height: 14,
-                                child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary),
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: AppColors.primary,
+                                ),
                               ),
-                              SizedBox(width: 8),
+                              SizedBox(width: AppTokens.spaceSM),
                               Text(
                                 'Trợ lý AI đang soạn câu trả lời...',
-                                style: TextStyle(fontSize: 12, color: AppColors.textSecondary, fontStyle: FontStyle.italic),
+                                style: TextStyle(
+                                  fontFamily: 'Roboto',
+                                  fontSize: 12,
+                                  color: AppColors.textSecondary,
+                                  fontStyle: FontStyle.italic,
+                                ),
                               ),
                             ],
                           ),
@@ -307,31 +337,62 @@ class _AiAssistantScreenState extends ConsumerState<AiAssistantScreen> {
                     }
 
                     final msg = _messages[index];
+                    final isUser = msg.isUser;
+                    final timeStr = DateFormat('HH:mm').format(msg.time);
+
                     return Align(
-                      alignment: msg.isUser ? Alignment.centerRight : Alignment.centerLeft,
+                      alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
                       child: Container(
-                        margin: const EdgeInsets.only(bottom: 12),
-                        constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.8),
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                        margin: const EdgeInsets.only(bottom: AppTokens.spaceMD),
+                        constraints: BoxConstraints(
+                          maxWidth: MediaQuery.of(context).size.width * 0.78,
+                        ),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppTokens.spaceLG,
+                          vertical: AppTokens.spaceMD,
+                        ),
                         decoration: BoxDecoration(
-                          color: msg.isUser
+                          color: isUser
                               ? AppColors.primary
                               : (msg.isError ? AppColors.errorBg : AppColors.surface),
-                          borderRadius: BorderRadius.circular(AppTokens.lucianRadiusLg),
-                          border: msg.isUser
-                              ? null
-                              : Border.all(color: msg.isError ? AppColors.error : AppColors.border),
-                          boxShadow: AppTokens.shadowSubtle,
-                        ),
-                        child: Text(
-                          msg.text,
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: msg.isUser
-                                ? AppColors.textWhite
-                                : (msg.isError ? AppColors.error : AppColors.textPrimary),
-                            height: 1.4,
+                          borderRadius: BorderRadius.only(
+                            topLeft: const Radius.circular(AppTokens.radiusCard),
+                            topRight: const Radius.circular(AppTokens.radiusCard),
+                            bottomLeft: Radius.circular(isUser ? AppTokens.radiusCard : 2),
+                            bottomRight: Radius.circular(isUser ? 2 : AppTokens.radiusCard),
                           ),
+                          border: isUser
+                              ? null
+                              : Border.all(
+                                  color: msg.isError ? AppColors.error : AppColors.border,
+                                ),
+                          boxShadow: AppTokens.elevationSubtle,
+                        ),
+                        child: Column(
+                          crossAxisAlignment:
+                              isUser ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              msg.text,
+                              style: TextStyle(
+                                fontFamily: 'Roboto',
+                                fontSize: 13,
+                                color: isUser
+                                    ? AppColors.textWhite
+                                    : (msg.isError ? AppColors.error : AppColors.textPrimary),
+                                height: 1.4,
+                              ),
+                            ),
+                            const SizedBox(height: AppTokens.spaceXS),
+                            Text(
+                              timeStr,
+                              style: TextStyle(
+                                fontFamily: 'Roboto',
+                                fontSize: 10,
+                                color: isUser ? Colors.white70 : AppColors.textMuted,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     );
@@ -339,44 +400,151 @@ class _AiAssistantScreenState extends ConsumerState<AiAssistantScreen> {
                 ),
         ),
 
-        // Input Bar
+        // Sticky Bottom Input Bar with SafeArea
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppTokens.spaceMD,
+            vertical: AppTokens.spaceSM,
+          ),
           decoration: const BoxDecoration(
             color: AppColors.surface,
             border: Border(top: BorderSide(color: AppColors.border)),
+            boxShadow: AppTokens.elevationSticky,
           ),
           child: SafeArea(
+            top: false,
             child: Row(
               children: [
                 Expanded(
                   child: TextField(
                     controller: _textController,
                     enabled: !_isSending,
-                    decoration: const InputDecoration(
+                    decoration: InputDecoration(
                       hintText: 'Hỏi AI về vị bánh, chiết khấu, mẫu hộp...',
+                      hintStyle: const TextStyle(
+                        fontFamily: 'Roboto',
+                        fontSize: 12.5,
+                        color: AppColors.textMuted,
+                      ),
+                      filled: true,
+                      fillColor: AppColors.background,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(AppTokens.radiusInput),
+                        borderSide: const BorderSide(color: AppColors.border),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(AppTokens.radiusInput),
+                        borderSide: const BorderSide(color: AppColors.border),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(AppTokens.radiusInput),
+                        borderSide: const BorderSide(color: AppColors.primary),
+                      ),
                       isDense: true,
-                      contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: AppTokens.spaceMD,
+                        vertical: AppTokens.spaceMD,
+                      ),
                     ),
                     onSubmitted: _sendMessage,
                   ),
                 ),
-                const SizedBox(width: 8),
-                IconButton(
-                  icon: _isSending
-                      ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary),
-                        )
-                      : const Icon(Icons.send, color: AppColors.primary),
-                  onPressed: _isSending ? null : () => _sendMessage(_textController.text),
+                const SizedBox(width: AppTokens.spaceSM),
+                SizedBox(
+                  width: AppTokens.minTapTarget,
+                  height: AppTokens.minTapTarget,
+                  child: IconButton(
+                    padding: EdgeInsets.zero,
+                    icon: _isSending
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: AppColors.primary,
+                            ),
+                          )
+                        : const Icon(Icons.send, color: AppColors.primary, size: 22),
+                    onPressed: _isSending ? null : () => _sendMessage(_textController.text),
+                  ),
                 ),
               ],
             ),
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildSkeleton() {
+    return AppSkeleton.shimmer(
+      child: Column(
+        children: [
+          // Prompt pills skeleton
+          Container(
+            height: 48,
+            padding: const EdgeInsets.symmetric(vertical: 6, horizontal: AppTokens.spaceMD),
+            child: Row(
+              children: List.generate(
+                3,
+                (index) => Container(
+                  margin: const EdgeInsets.only(right: AppTokens.spaceSM),
+                  width: 110,
+                  height: 32,
+                  decoration: BoxDecoration(
+                    color: AppColors.surface,
+                    borderRadius: BorderRadius.circular(AppTokens.radiusPill),
+                  ),
+                ),
+              ),
+            ),
+          ),
+          const Divider(height: 1, color: AppColors.border),
+          // Messages skeleton
+          Expanded(
+            child: ListView(
+              padding: const EdgeInsets.all(AppTokens.spaceLG),
+              children: [
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Container(
+                    width: 240,
+                    height: 60,
+                    decoration: BoxDecoration(
+                      color: AppColors.surface,
+                      borderRadius: BorderRadius.circular(AppTokens.radiusCard),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: AppTokens.spaceLG),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: Container(
+                    width: 180,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: AppColors.surface,
+                      borderRadius: BorderRadius.circular(AppTokens.radiusCard),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: AppTokens.spaceLG),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Container(
+                    width: 260,
+                    height: 80,
+                    decoration: BoxDecoration(
+                      color: AppColors.surface,
+                      borderRadius: BorderRadius.circular(AppTokens.radiusCard),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

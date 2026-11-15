@@ -5,11 +5,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_tokens.dart';
-import '../../shared_widgets/common/app_header.dart';
-import '../../shared_widgets/common/custom_button.dart';
-import '../../providers/auth_provider.dart';
 import '../../data/repositories/order_repository.dart';
 import '../../data/repositories/rfq_repository.dart';
+import '../../providers/auth_provider.dart';
+import '../../shared_widgets/common/app_header.dart';
+import '../../shared_widgets/common/app_skeleton.dart';
+import '../../shared_widgets/common/custom_button.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
@@ -99,7 +100,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       builder: (dialogCtx) {
         return AlertDialog(
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppTokens.lucianRadiusLg),
+            borderRadius: BorderRadius.circular(AppTokens.radiusCard),
           ),
           titlePadding: const EdgeInsets.fromLTRB(20, 20, 20, 8),
           contentPadding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
@@ -171,6 +172,92 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     );
   }
 
+  Widget _buildStatsWidget() {
+    if (_isLoadingStats) {
+      return Container(
+        padding: const EdgeInsets.symmetric(vertical: AppTokens.spaceLG, horizontal: AppTokens.spaceMD),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(AppTokens.radiusCard),
+          border: Border.all(color: AppColors.border),
+        ),
+        child: AppSkeleton.shimmer(
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              Column(
+                children: [
+                  AppSkeleton.text(width: 36, height: 18),
+                  const SizedBox(height: 6),
+                  AppSkeleton.text(width: 60, height: 12),
+                ],
+              ),
+              Column(
+                children: [
+                  AppSkeleton.text(width: 36, height: 18),
+                  const SizedBox(height: 6),
+                  AppSkeleton.text(width: 70, height: 12),
+                ],
+              ),
+              Column(
+                children: [
+                  AppSkeleton.text(width: 36, height: 18),
+                  const SizedBox(height: 6),
+                  AppSkeleton.text(width: 65, height: 12),
+                ],
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 14),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppTokens.radiusCard),
+        border: Border.all(color: AppColors.border),
+        boxShadow: AppTokens.shadowSubtle,
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: [
+          _StatItem(
+            value: '$_orderCount',
+            label: 'Đơn hàng',
+            hasError: _statsError != null,
+          ),
+          _StatItem(
+            value: '$_rfqCount',
+            label: 'Yêu cầu RFQ',
+            hasError: _statsError != null,
+          ),
+          _StatItem(
+            value: '$_boxCount',
+            label: 'Hộp đã đặt',
+            hasError: _statsError != null,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildGroupTitle(String title) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(4, 16, 4, 8),
+      child: Text(
+        title.toUpperCase(),
+        style: const TextStyle(
+          fontSize: 11.5,
+          fontWeight: FontWeight.bold,
+          letterSpacing: 0.6,
+          color: AppColors.textMuted,
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final authState = ref.watch(authProvider);
@@ -186,15 +273,16 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         onRefresh: _loadStats,
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(AppTokens.spaceLG),
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               // User Header Card
               Container(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(AppTokens.spaceLG),
                 decoration: BoxDecoration(
                   color: AppColors.surface,
-                  borderRadius: BorderRadius.circular(AppTokens.lucianRadiusLg),
+                  borderRadius: BorderRadius.circular(AppTokens.radiusCard),
                   border: Border.all(color: AppColors.border),
                   boxShadow: AppTokens.shadowCard,
                 ),
@@ -209,7 +297,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       ),
                       child: const Icon(Icons.person, color: AppColors.primary, size: 32),
                     ),
-                    const SizedBox(width: 14),
+                    const SizedBox(width: AppTokens.spaceMD),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -217,122 +305,140 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                           Text(
                             user?.fullName ?? (authState.isAuthenticated ? 'Khách hàng Hoàng Gia' : 'Khách vãng lai'),
                             style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
                           const SizedBox(height: 3),
                           Text(
                             user?.companyName ?? (authState.isAuthenticated ? 'Doanh nghiệp B2B' : 'Chưa đăng nhập'),
                             style: const TextStyle(fontSize: 12.5, color: AppColors.textSecondary),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
                           const SizedBox(height: 2),
                           Text(
                             user?.phoneNumber ?? user?.email ?? 'Chưa cập nhật liên hệ',
                             style: const TextStyle(fontSize: 11.5, color: AppColors.textMuted),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ],
                       ),
                     ),
                     if (authState.isAuthenticated)
                       IconButton(
-                        icon: const Icon(Icons.edit_outlined, color: AppColors.primary, size: 20),
+                        icon: const Icon(Icons.edit_outlined, color: AppColors.primary, size: 22),
                         tooltip: 'Chỉnh sửa hồ sơ',
+                        constraints: const BoxConstraints(
+                          minWidth: AppTokens.minTapTarget,
+                          minHeight: AppTokens.minTapTarget,
+                        ),
                         onPressed: () => context.push('/edit-profile').then((_) => _loadStats()),
                       ),
                   ],
                 ),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: AppTokens.spaceMD),
 
               // Metrics Row
-              Container(
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                decoration: BoxDecoration(
-                  color: AppColors.surface,
-                  borderRadius: BorderRadius.circular(AppTokens.radiusDefault),
-                  border: Border.all(color: AppColors.border),
-                  boxShadow: AppTokens.shadowSubtle,
-                ),
-                child: _isLoadingStats
-                    ? const Center(
-                        child: Padding(
-                          padding: EdgeInsets.symmetric(vertical: 8),
-                          child: SizedBox(
-                            width: 24,
-                            height: 24,
-                            child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary),
-                          ),
-                        ),
-                      )
-                    : Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceAround,
-                        children: [
-                          _StatItem(
-                            value: '$_orderCount',
-                            label: 'Đơn hàng',
-                            hasError: _statsError != null,
-                          ),
-                          _StatItem(
-                            value: '$_rfqCount',
-                            label: 'Yêu cầu RFQ',
-                            hasError: _statsError != null,
-                          ),
-                          _StatItem(
-                            value: '$_boxCount',
-                            label: 'Hộp đã đặt',
-                            hasError: _statsError != null,
-                          ),
-                        ],
-                      ),
-              ),
+              _buildStatsWidget(),
               if (_statsError != null)
                 Padding(
-                  padding: const EdgeInsets.only(top: 6),
-                  child: Text(
-                    '$_statsError. Kéo xuống để tải lại.',
-                    style: const TextStyle(fontSize: 11, color: AppColors.textMuted),
+                  padding: const EdgeInsets.only(top: 6, left: 4),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.error_outline, size: 14, color: AppColors.textMuted),
+                      const SizedBox(width: 4),
+                      Text(
+                        '$_statsError. Kéo xuống để tải lại.',
+                        style: const TextStyle(fontSize: 11, color: AppColors.textMuted),
+                      ),
+                    ],
                   ),
                 ),
-              const SizedBox(height: 16),
 
-              // Navigation Menu
+              // NHÓM 1: Giao Dịch & Đơn Hàng B2B
+              _buildGroupTitle('Giao Dịch & Đơn Hàng B2B'),
               Container(
                 decoration: BoxDecoration(
                   color: AppColors.surface,
-                  borderRadius: BorderRadius.circular(AppTokens.lucianRadiusLg),
+                  borderRadius: BorderRadius.circular(AppTokens.radiusCard),
                   border: Border.all(color: AppColors.border),
                   boxShadow: AppTokens.shadowSubtle,
                 ),
                 child: Column(
                   children: [
                     _MenuItem(
+                      icon: Icons.receipt_long_outlined,
+                      title: 'Đơn Hàng Doanh Nghiệp',
+                      subtitle: 'Lịch sử đặt mua và theo dõi tiến độ',
+                      onTap: () => context.push('/order-history'),
+                    ),
+                    const Divider(height: 1, indent: 52, color: AppColors.border),
+                    _MenuItem(
                       icon: Icons.assignment_outlined,
                       title: 'Quản lý Hợp đồng B2B',
                       subtitle: 'Hợp đồng điện tử & Ký quỹ',
                       onTap: () => context.push('/contracts'),
                     ),
-                    const Divider(height: 1, indent: 50, color: AppColors.border),
+                    const Divider(height: 1, indent: 52, color: AppColors.border),
                     _MenuItem(
                       icon: Icons.local_shipping_outlined,
-                      title: 'Giao hàng & ColdChain',
-                      subtitle: 'Theo dõi nhiệt độ và PoD',
+                      title: 'Giao hàng & ColdChain PoD',
+                      subtitle: 'Theo dõi xe lạnh và ký nhận hàng',
                       onTap: () => context.push('/delivery-pod'),
                     ),
-                    const Divider(height: 1, indent: 50, color: AppColors.border),
+                  ],
+                ),
+              ),
+
+              // NHÓM 2: Doanh Nghiệp & Đối Tác
+              _buildGroupTitle('Doanh Nghiệp & Đối Tác'),
+              Container(
+                decoration: BoxDecoration(
+                  color: AppColors.surface,
+                  borderRadius: BorderRadius.circular(AppTokens.radiusCard),
+                  border: Border.all(color: AppColors.border),
+                  boxShadow: AppTokens.shadowSubtle,
+                ),
+                child: Column(
+                  children: [
+                    _MenuItem(
+                      icon: Icons.business_outlined,
+                      title: 'Thông Tin Doanh Nghiệp',
+                      subtitle: 'Cập nhật tên công ty, đại diện, điện thoại',
+                      onTap: () => context.push('/edit-profile').then((_) => _loadStats()),
+                    ),
+                    const Divider(height: 1, indent: 52, color: AppColors.border),
                     _MenuItem(
                       icon: Icons.storefront_outlined,
                       title: 'Đăng Ký Nhà Cung Cấp B2B',
                       subtitle: 'Mở xưởng bán sỉ trên cổng đối tác Web',
                       onTap: () => _showSupplierRegistrationDialog(context),
                     ),
-                    const Divider(height: 1, indent: 50, color: AppColors.border),
+                  ],
+                ),
+              ),
+
+              // NHÓM 3: Cài Đặt & Hệ Thống
+              _buildGroupTitle('Cài Đặt & Hệ Thống'),
+              Container(
+                decoration: BoxDecoration(
+                  color: AppColors.surface,
+                  borderRadius: BorderRadius.circular(AppTokens.radiusCard),
+                  border: Border.all(color: AppColors.border),
+                  boxShadow: AppTokens.shadowSubtle,
+                ),
+                child: Column(
+                  children: [
                     _MenuItem(
                       icon: Icons.campaign_outlined,
                       title: 'Cài đặt Thông báo',
                       subtitle: 'Thông báo báo giá và đơn hàng',
                       onTap: () => context.push('/notification-settings'),
                     ),
-                    // Only show UI Showcase in Debug Mode (D12)
                     if (kDebugMode) ...[
-                      const Divider(height: 1, indent: 50, color: AppColors.border),
+                      const Divider(height: 1, indent: 52, color: AppColors.border),
                       _MenuItem(
                         icon: Icons.widgets_outlined,
                         title: 'UI Showcase AntD & Lucian',
@@ -343,18 +449,19 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   ],
                 ),
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: AppTokens.space2XL),
 
               // Logout / Login Button
               CustomButton(
                 title: authState.isAuthenticated ? 'Đăng xuất tài khoản' : 'Đăng nhập tài khoản',
                 variant: ButtonVariant.outline,
                 width: double.infinity,
+                size: ButtonSize.large,
                 onPress: () {
                   if (authState.isAuthenticated) {
                     ref.read(authProvider.notifier).logout();
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Đã đăng xuất.')),
+                      const SnackBar(content: Text('Đã đăng xuất tài khoản.')),
                     );
                     _loadStats();
                   } else {
@@ -362,7 +469,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   }
                 },
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: AppTokens.space2XL),
             ],
           ),
         ),
@@ -412,12 +519,26 @@ class _MenuItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ListTile(
-      leading: Icon(icon, color: AppColors.primary, size: 22),
-      title: Text(title, style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600)),
-      subtitle: Text(subtitle, style: const TextStyle(fontSize: 11, color: AppColors.textMuted)),
-      trailing: const Icon(Icons.chevron_right, size: 18, color: AppColors.textMuted),
-      onTap: onTap,
+    return Material(
+      type: MaterialType.transparency,
+      child: ListTile(
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: AppTokens.spaceLG,
+          vertical: 2,
+        ),
+        minLeadingWidth: 24,
+        leading: Icon(icon, color: AppColors.primary, size: 22),
+        title: Text(
+          title,
+          style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+        ),
+        subtitle: Text(
+          subtitle,
+          style: const TextStyle(fontSize: 11, color: AppColors.textMuted),
+        ),
+        trailing: const Icon(Icons.chevron_right, size: 18, color: AppColors.textMuted),
+        onTap: onTap,
+      ),
     );
   }
 }

@@ -2,15 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_tokens.dart';
 import '../../data/models/product.dart';
+import '../../data/repositories/catalog_repository.dart';
 import '../../data/repositories/wishlist_repository.dart';
 import '../../providers/cart_provider.dart';
 import '../../shared_widgets/common/app_header.dart';
 import '../../shared_widgets/common/custom_button.dart';
 import '../../shared_widgets/lucian/b2b_price_calculator.dart';
 import '../../shared_widgets/lucian/tear_off_coupon.dart';
-import '../../shared_widgets/lucian/trust_security_badges.dart';
 
 class ProductDetailScreen extends ConsumerStatefulWidget {
   final Product product;
@@ -22,6 +24,7 @@ class ProductDetailScreen extends ConsumerStatefulWidget {
 }
 
 class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
+  late Product _product;
   ProductVariant? _selectedVariant;
   int _quantity = 1;
   bool _isWishlisted = false;
@@ -29,19 +32,38 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
   @override
   void initState() {
     super.initState();
-    if (widget.product.variants.isNotEmpty) {
-      _selectedVariant = widget.product.variants.first;
+    _product = widget.product;
+    if (_product.variants.isNotEmpty) {
+      _selectedVariant = _product.variants.first;
     }
-    _quantity = widget.product.minOrderQty;
+    _quantity = _product.minOrderQty;
     _checkWishlist();
+    _fetchUpdatedDetails();
+  }
+
+  Future<void> _fetchUpdatedDetails() async {
+    try {
+      final updated = await ref.read(catalogRepositoryProvider).getProductDetails(_product.id);
+      if (mounted) {
+        setState(() {
+          _product = updated;
+          if (_selectedVariant != null && updated.variants.isNotEmpty) {
+            final match = updated.variants.where((v) => v.id == _selectedVariant!.id).firstOrNull;
+            _selectedVariant = match ?? updated.variants.first;
+          }
+        });
+      }
+    } catch (_) {
+      // Use initialProduct if offline or cached
+    }
   }
 
   Future<void> _checkWishlist() async {
     try {
-      final map = await ref.read(wishlistRepositoryProvider).checkWishlist([widget.product.id]);
-      if (mounted && map.containsKey(widget.product.id)) {
+      final map = await ref.read(wishlistRepositoryProvider).checkWishlist([_product.id]);
+      if (mounted && map.containsKey(_product.id)) {
         setState(() {
-          _isWishlisted = map[widget.product.id] == true;
+          _isWishlisted = map[_product.id] == true;
         });
       }
     } catch (_) {}
@@ -49,7 +71,7 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
 
   Future<void> _toggleWishlist() async {
     try {
-      final isSaved = await ref.read(wishlistRepositoryProvider).toggleWishlist(widget.product.id);
+      final isSaved = await ref.read(wishlistRepositoryProvider).toggleWishlist(_product.id);
       if (!mounted) return;
       setState(() {
         _isWishlisted = isSaved;
@@ -77,14 +99,59 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
   }
 
   double get _currentUnitPrice {
-    return widget.product.basePrice + (_selectedVariant?.priceAdjustment ?? 0);
+    return _product.basePrice + (_selectedVariant?.priceAdjustment ?? 0);
+  }
+
+  Widget _buildProductHeroImage(Product p) {
+    final image = p.coverImage;
+    if (image == null || image.isEmpty) {
+      return Container(
+        color: AppColors.surfaceHover,
+        child: const Center(
+          child: Icon(Icons.cake_outlined, size: 64, color: AppColors.textMuted),
+        ),
+      );
+    }
+    if (image.startsWith('assets/')) {
+      return Image.asset(
+        image,
+        fit: BoxFit.cover,
+        errorBuilder: (_, __, ___) => Container(
+          color: AppColors.surfaceHover,
+          child: const Center(
+            child: Icon(Icons.cake_outlined, size: 64, color: AppColors.textMuted),
+          ),
+        ),
+      );
+    }
+    return CachedNetworkImage(
+      imageUrl: image,
+      fit: BoxFit.cover,
+      placeholder: (_, __) => Container(
+        color: AppColors.surfaceHover,
+        child: const Center(
+          child: SizedBox(
+            width: 28,
+            height: 28,
+            child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary),
+          ),
+        ),
+      ),
+      errorWidget: (_, __, ___) => Container(
+        color: AppColors.surfaceHover,
+        child: const Center(
+          child: Icon(Icons.cake_outlined, size: 64, color: AppColors.textMuted),
+        ),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    final p = widget.product;
+    final p = _product;
 
     return Scaffold(
+      backgroundColor: AppColors.background,
       appBar: AppHeader(
         title: p.name,
         showBack: true,
@@ -100,14 +167,7 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
               children: [
                 AspectRatio(
                   aspectRatio: 1.1,
-                  child: Image.asset(
-                    p.coverImage ?? 'assets/products/banh-nuong.jpg',
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => Container(
-                      color: AppColors.surfaceHover,
-                      child: const Icon(Icons.cake_outlined, size: 64, color: AppColors.textMuted),
-                    ),
-                  ),
+                  child: _buildProductHeroImage(p),
                 ),
                 Positioned(
                   top: 12,
@@ -123,14 +183,20 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
                         ),
                       ],
                     ),
-                    child: IconButton(
-                      icon: Icon(
-                        _isWishlisted ? Icons.favorite : Icons.favorite_border,
-                        color: _isWishlisted ? AppColors.error : AppColors.textSecondary,
-                        size: 24,
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(
+                        minWidth: AppTokens.minTapTarget,
+                        minHeight: AppTokens.minTapTarget,
                       ),
-                      tooltip: _isWishlisted ? 'Bỏ yêu thích' : 'Thêm yêu thích',
-                      onPressed: _toggleWishlist,
+                      child: IconButton(
+                        icon: Icon(
+                          _isWishlisted ? Icons.favorite : Icons.favorite_border,
+                          color: _isWishlisted ? AppColors.error : AppColors.textSecondary,
+                          size: 24,
+                        ),
+                        tooltip: _isWishlisted ? 'Bỏ yêu thích' : 'Thêm yêu thích',
+                        onPressed: _toggleWishlist,
+                      ),
                     ),
                   ),
                 ),
@@ -139,7 +205,7 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
 
             // Main Details Card
             Container(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(AppTokens.spaceLG),
               color: AppColors.surface,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -151,6 +217,7 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
                       Text(
                         _formatCurrency(_currentUnitPrice),
                         style: const TextStyle(
+                          fontFamily: 'Roboto',
                           fontSize: 22,
                           fontWeight: FontWeight.bold,
                           color: AppColors.primary,
@@ -159,7 +226,11 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
                       const SizedBox(width: 8),
                       Text(
                         '/${p.unit}',
-                        style: const TextStyle(fontSize: 13, color: AppColors.textSecondary),
+                        style: const TextStyle(
+                          fontFamily: 'Roboto',
+                          fontSize: 13,
+                          color: AppColors.textSecondary,
+                        ),
                       ),
                       const Spacer(),
                       if (p.isCustomPackagingSupported)
@@ -167,16 +238,22 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                           decoration: BoxDecoration(
                             color: AppColors.accentGoldBg,
-                            borderRadius: BorderRadius.circular(6),
+                            borderRadius: BorderRadius.circular(AppTokens.radiusSM),
                             border: Border.all(color: AppColors.accent),
                           ),
                           child: const Row(
+                            mainAxisSize: MainAxisSize.min,
                             children: [
                               Icon(Icons.palette_outlined, size: 12, color: AppColors.accent),
                               SizedBox(width: 4),
                               Text(
                                 'Hỗ trợ in Logo',
-                                style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.accent),
+                                style: TextStyle(
+                                  fontFamily: 'Roboto',
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.accent,
+                                ),
                               ),
                             ],
                           ),
@@ -188,6 +265,7 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
                   Text(
                     p.name,
                     style: const TextStyle(
+                      fontFamily: 'Roboto',
                       fontSize: 17,
                       fontWeight: FontWeight.bold,
                       color: AppColors.textPrimary,
@@ -201,22 +279,30 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
                       const SizedBox(width: 4),
                       Text(
                         '${p.rating}',
-                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                        style: const TextStyle(
+                          fontFamily: 'Roboto',
+                          fontWeight: FontWeight.bold,
+                          fontSize: 13,
+                        ),
                       ),
                       Text(
                         ' (${p.reviewCount} đánh giá) · Đã bán ${p.soldCount} hộp',
-                        style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                        style: const TextStyle(
+                          fontFamily: 'Roboto',
+                          fontSize: 12,
+                          color: AppColors.textSecondary,
+                        ),
                       ),
                     ],
                   ),
                 ],
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: AppTokens.spaceSM),
 
             // Workshop / Shop Link Card
             Container(
-              padding: const EdgeInsets.all(14),
+              padding: const EdgeInsets.all(AppTokens.spaceMD + 2),
               color: AppColors.surface,
               child: Row(
                 children: [
@@ -230,7 +316,7 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
                     ),
                     child: const Icon(Icons.storefront, color: AppColors.accent, size: 22),
                   ),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: AppTokens.spaceMD),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -241,6 +327,7 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
                               child: Text(
                                 p.shopName,
                                 style: const TextStyle(
+                                  fontFamily: 'Roboto',
                                   fontSize: 14,
                                   fontWeight: FontWeight.bold,
                                   color: AppColors.primaryDark,
@@ -258,58 +345,80 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
                         const SizedBox(height: 2),
                         const Text(
                           'Xưởng sản xuất đối tác chính thức',
-                          style: TextStyle(fontSize: 11, color: AppColors.textSecondary),
+                          style: TextStyle(
+                            fontFamily: 'Roboto',
+                            fontSize: 11,
+                            color: AppColors.textSecondary,
+                          ),
                         ),
                       ],
                     ),
                   ),
                   const SizedBox(width: 8),
-                  OutlinedButton.icon(
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                      minimumSize: Size.zero,
-                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      side: const BorderSide(color: AppColors.primary),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  ConstrainedBox(
+                    constraints: const BoxConstraints(minHeight: AppTokens.minTapTarget),
+                    child: OutlinedButton.icon(
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                        minimumSize: const Size(0, AppTokens.minTapTarget),
+                        side: const BorderSide(color: AppColors.primary),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(AppTokens.radiusDefault),
+                        ),
+                      ),
+                      icon: const Icon(Icons.store, size: 15, color: AppColors.primary),
+                      label: const Text(
+                        'Xem Shop',
+                        style: TextStyle(
+                          fontFamily: 'Roboto',
+                          fontSize: 12,
+                          color: AppColors.primary,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      onPressed: () {
+                        final slug = p.shopSlug ?? (p.shopId != null && p.shopId!.isNotEmpty ? p.shopId! : 'nguyet-pho');
+                        context.push('/shop/$slug');
+                      },
                     ),
-                    icon: const Icon(Icons.store, size: 14, color: AppColors.primary),
-                    label: const Text(
-                      'Xem Shop',
-                      style: TextStyle(fontSize: 12, color: AppColors.primary, fontWeight: FontWeight.bold),
-                    ),
-                    onPressed: () {
-                      final slug = p.shopSlug ?? (p.shopId != null && p.shopId!.isNotEmpty ? p.shopId! : 'nguyet-pho');
-                      context.push('/shop/$slug');
-                    },
                   ),
                   const SizedBox(width: 6),
-                  IconButton(
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(),
-                    icon: const Icon(Icons.chat_bubble_outline, color: AppColors.primary, size: 20),
-                    tooltip: 'Nhắn tin với xưởng',
-                    onPressed: () {
-                      context.push(
-                        '/chat?shopId=${p.shopId ?? ''}&shopName=${Uri.encodeComponent(p.shopName)}',
-                      );
-                    },
+                  ConstrainedBox(
+                    constraints: const BoxConstraints(
+                      minWidth: AppTokens.minTapTarget,
+                      minHeight: AppTokens.minTapTarget,
+                    ),
+                    child: IconButton(
+                      icon: const Icon(Icons.chat_bubble_outline, color: AppColors.primary, size: 22),
+                      tooltip: 'Nhắn tin với xưởng',
+                      onPressed: () {
+                        context.push(
+                          '/chat?shopId=${p.shopId ?? ''}&shopName=${Uri.encodeComponent(p.shopName)}',
+                        );
+                      },
+                    ),
                   ),
                 ],
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: AppTokens.spaceSM),
 
             // Variant Selector
             if (p.variants.isNotEmpty)
               Container(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(AppTokens.spaceLG),
                 color: AppColors.surface,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Text(
                       'Chọn Hương Vị / Biến Thể:',
-                      style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+                      style: TextStyle(
+                        fontFamily: 'Roboto',
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.textPrimary,
+                      ),
                     ),
                     const SizedBox(height: 10),
                     Wrap(
@@ -327,7 +436,11 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
                           selectedColor: AppColors.primaryTint,
                           backgroundColor: AppColors.surfaceHover,
                           side: BorderSide(color: isSelected ? AppColors.primary : AppColors.border),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(AppTokens.radiusPill),
+                          ),
                           labelStyle: TextStyle(
+                            fontFamily: 'Roboto',
                             fontSize: 12,
                             fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                             color: isSelected ? AppColors.primary : AppColors.textPrimary,
@@ -339,27 +452,45 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
                   ],
                 ),
               ),
-            const SizedBox(height: 8),
+            const SizedBox(height: AppTokens.spaceSM),
 
             // Description
             Container(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(AppTokens.spaceLG),
               color: AppColors.surface,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text(
                     'Mô Tả Sản Phẩm',
-                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+                    style: TextStyle(
+                      fontFamily: 'Roboto',
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.textPrimary,
+                    ),
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    p.description.isNotEmpty ? p.description : 'Bánh trung thu truyền thống thượng hạng của Nguyệt Phố.',
-                    style: const TextStyle(fontSize: 13.5, color: AppColors.textSecondary, height: 1.5),
+                    p.description.isNotEmpty
+                        ? p.description
+                        : 'Bánh trung thu truyền thống thượng hạng của Nguyệt Phố.',
+                    style: const TextStyle(
+                      fontFamily: 'Roboto',
+                      fontSize: 13.5,
+                      color: AppColors.textSecondary,
+                      height: 1.5,
+                    ),
                   ),
                 ],
               ),
             ),
+
+            // Bảng giá theo bậc (Tiered Pricing Table) theo D15, D16 & Mục 4 hàng #3
+            if (p.tierPricing.isNotEmpty)
+              _buildTieredPricingSection(p)
+            else
+              _buildRfqPromptSection(p),
 
             // Embedded Tear-Off Coupon
             const TearOffCoupon(),
@@ -373,52 +504,86 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
                   _quantity = result.quantity;
                 });
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Đã chọn mua ${result.quantity} hộp với chiết khấu ${result.effectiveDiscount.toInt()}%')),
+                  SnackBar(
+                    content: Text(
+                      'Đã chọn mua ${result.quantity} hộp với chiết khấu ${result.effectiveDiscount.toInt()}%',
+                    ),
+                  ),
                 );
               },
             ),
 
-            // Trust badges
-            const TrustSecurityBadges(),
-            const SizedBox(height: 20),
+            // Trust badges (Sửa tràn ngang 43px theo benchmark mục 4 #3)
+            _buildTrustBadges(),
+            const SizedBox(height: AppTokens.space2XL),
           ],
         ),
       ),
 
-      // Bottom Add to Cart & Buy Now Bar
+      // Bottom Add to Cart & Buy Now Bar (D16: thanh đáy giữ "Thêm vào giỏ")
       bottomNavigationBar: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppTokens.spaceLG,
+          vertical: AppTokens.spaceSM + 2,
+        ),
         decoration: const BoxDecoration(
           color: AppColors.surface,
+          boxShadow: AppTokens.elevationSticky,
           border: Border(top: BorderSide(color: AppColors.border)),
         ),
         child: SafeArea(
           child: Row(
             children: [
-              // Quantity stepper
-              Row(
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.remove_circle_outline, color: AppColors.primary),
-                    onPressed: () {
-                      if (_quantity > p.minOrderQty) {
-                        setState(() => _quantity--);
-                      }
-                    },
-                  ),
-                  Text(
-                    '$_quantity',
-                    style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.add_circle_outline, color: AppColors.primary),
-                    onPressed: () => setState(() => _quantity++),
-                  ),
-                ],
+              // Quantity stepper (tap target >= 44px)
+              Container(
+                decoration: BoxDecoration(
+                  border: Border.all(color: AppColors.border),
+                  borderRadius: BorderRadius.circular(AppTokens.radiusDefault),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    ConstrainedBox(
+                      constraints: const BoxConstraints(
+                        minWidth: AppTokens.minTapTarget,
+                        minHeight: AppTokens.minTapTarget,
+                      ),
+                      child: IconButton(
+                        icon: const Icon(Icons.remove, color: AppColors.primary, size: 18),
+                        onPressed: () {
+                          if (_quantity > p.minOrderQty) {
+                            setState(() => _quantity--);
+                          }
+                        },
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 4),
+                      child: Text(
+                        '$_quantity',
+                        style: const TextStyle(
+                          fontFamily: 'Roboto',
+                          fontSize: 15,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                    ConstrainedBox(
+                      constraints: const BoxConstraints(
+                        minWidth: AppTokens.minTapTarget,
+                        minHeight: AppTokens.minTapTarget,
+                      ),
+                      child: IconButton(
+                        icon: const Icon(Icons.add, color: AppColors.primary, size: 18),
+                        onPressed: () => setState(() => _quantity++),
+                      ),
+                    ),
+                  ],
+                ),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: AppTokens.spaceSM),
 
-              // Add to Cart
+              // Add to Cart Button (tap target >= 44px)
               Expanded(
                 child: CustomButton(
                   title: 'Thêm giỏ',
@@ -437,9 +602,9 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
                   },
                 ),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: AppTokens.spaceSM),
 
-              // Buy Now / RFQ
+              // Buy Now / Thanh toán ngay
               Expanded(
                 child: CustomButton(
                   title: 'Mua ngay',
@@ -453,6 +618,354 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildTieredPricingSection(Product p) {
+    return Container(
+      margin: const EdgeInsets.only(top: AppTokens.spaceSM),
+      padding: const EdgeInsets.all(AppTokens.spaceLG),
+      color: AppColors.surface,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Row(
+            children: [
+              Icon(Icons.table_chart_outlined, color: AppColors.primary, size: 20),
+              SizedBox(width: AppTokens.spaceSM),
+              Text(
+                'Bảng Giá Sỉ Theo Bậc Số Lượng',
+                style: TextStyle(
+                  fontFamily: 'Roboto',
+                  fontSize: 15,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.primaryDark,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          const Text(
+            'Giá sỉ chiết khấu trực tiếp từ xưởng theo số lượng đặt hàng',
+            style: TextStyle(
+              fontFamily: 'Roboto',
+              fontSize: 12,
+              color: AppColors.textSecondary,
+            ),
+          ),
+          const SizedBox(height: AppTokens.spaceMD),
+
+          // Bảng nấc giá
+          Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(AppTokens.radiusDefault),
+              border: Border.all(color: AppColors.border),
+            ),
+            clipBehavior: Clip.antiAlias,
+            child: Column(
+              children: [
+                // Header
+                Container(
+                  color: AppColors.surfaceHover,
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  child: const Row(
+                    children: [
+                      Expanded(
+                        flex: 3,
+                        child: Text(
+                          'Số lượng (hộp)',
+                          style: TextStyle(
+                            fontFamily: 'Roboto',
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
+                      ),
+                      Expanded(
+                        flex: 2,
+                        child: Text(
+                          'Chiết khấu',
+                          style: TextStyle(
+                            fontFamily: 'Roboto',
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.textPrimary,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                      Expanded(
+                        flex: 3,
+                        child: Text(
+                          'Đơn giá sỉ',
+                          style: TextStyle(
+                            fontFamily: 'Roboto',
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.textPrimary,
+                          ),
+                          textAlign: TextAlign.right,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const Divider(height: 1, color: AppColors.border),
+                ...p.tierPricing.map((tier) {
+                  final bool isCurrentTier = _quantity >= tier.minQty &&
+                      (tier.maxQty == null || _quantity <= tier.maxQty!);
+                  final wholesalePrice = (p.basePrice * (1.0 - tier.discountPercent / 100.0)).roundToDouble();
+
+                  final qtyText = tier.maxQty != null
+                      ? '${tier.minQty} - ${tier.maxQty}'
+                      : '≥ ${tier.minQty}';
+
+                  return InkWell(
+                    onTap: () {
+                      setState(() {
+                        _quantity = tier.minQty;
+                      });
+                    },
+                    child: Container(
+                      color: isCurrentTier ? AppColors.accentGoldBg : AppColors.surface,
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            flex: 3,
+                            child: Row(
+                              children: [
+                                if (isCurrentTier) ...[
+                                  const Icon(Icons.check_circle, size: 14, color: AppColors.accent),
+                                  const SizedBox(width: 4),
+                                ],
+                                Text(
+                                  qtyText,
+                                  style: TextStyle(
+                                    fontFamily: 'Roboto',
+                                    fontSize: 12.5,
+                                    fontWeight: isCurrentTier ? FontWeight.bold : FontWeight.w500,
+                                    color: isCurrentTier ? AppColors.accent : AppColors.textPrimary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Expanded(
+                            flex: 2,
+                            child: Center(
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: isCurrentTier ? AppColors.accent : AppColors.primaryTint,
+                                  borderRadius: BorderRadius.circular(AppTokens.radiusSM),
+                                ),
+                                child: Text(
+                                  '-${tier.discountPercent.toInt()}%',
+                                  style: TextStyle(
+                                    fontFamily: 'Roboto',
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.bold,
+                                    color: isCurrentTier ? AppColors.textWhite : AppColors.primary,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                          Expanded(
+                            flex: 3,
+                            child: Text(
+                              _formatCurrency(wholesalePrice),
+                              style: TextStyle(
+                                fontFamily: 'Roboto',
+                                fontSize: 12.5,
+                                fontWeight: isCurrentTier ? FontWeight.bold : FontWeight.w600,
+                                color: isCurrentTier ? AppColors.accent : AppColors.textPrimary,
+                              ),
+                              textAlign: TextAlign.right,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                }),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: AppTokens.spaceMD),
+
+          // D16: nút viền vàng "Nhận báo giá sỉ / in logo" dưới bảng giá → mở tạo RFQ điền sẵn sản phẩm
+          _buildRfqGoldButton(p),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRfqPromptSection(Product p) {
+    return Container(
+      margin: const EdgeInsets.only(top: AppTokens.spaceSM),
+      padding: const EdgeInsets.all(AppTokens.spaceLG),
+      color: AppColors.surface,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Row(
+            children: [
+              Icon(Icons.business_center_outlined, color: AppColors.accent, size: 20),
+              SizedBox(width: AppTokens.spaceSM),
+              Text(
+                'Đặt Hàng Doanh Nghiệp & In Logo',
+                style: TextStyle(
+                  fontFamily: 'Roboto',
+                  fontSize: 15,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.primaryDark,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          const Text(
+            'Nhận báo giá chiết khấu ưu đãi và làm mẫu in ấn bao bì miễn phí.',
+            style: TextStyle(
+              fontFamily: 'Roboto',
+              fontSize: 12,
+              color: AppColors.textSecondary,
+            ),
+          ),
+          const SizedBox(height: AppTokens.spaceMD),
+          _buildRfqGoldButton(p),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRfqGoldButton(Product p) {
+    return SizedBox(
+      width: double.infinity,
+      child: OutlinedButton.icon(
+        style: OutlinedButton.styleFrom(
+          foregroundColor: AppColors.accent,
+          backgroundColor: AppColors.accentGoldBg,
+          side: const BorderSide(color: AppColors.accent, width: 1.4),
+          minimumSize: const Size(double.infinity, AppTokens.minTapTarget),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppTokens.radiusDefault),
+          ),
+        ),
+        icon: const Icon(Icons.request_quote_outlined, size: 20, color: AppColors.accent),
+        label: const Text(
+          'Nhận báo giá sỉ / in logo (Tạo RFQ)',
+          style: TextStyle(
+            fontFamily: 'Roboto',
+            fontSize: 13.5,
+            fontWeight: FontWeight.bold,
+            color: AppColors.accent,
+          ),
+        ),
+        onPressed: () {
+          context.push(
+            '/create-rfq?productId=${p.id}&productName=${Uri.encodeComponent(p.name)}&quantity=$_quantity',
+            extra: {'product': p, 'quantity': _quantity},
+          );
+        },
+      ),
+    );
+  }
+
+  /// Sửa lỗi tràn ngang 43px tại TrustBadges (mục 4 hàng #3 benchmark)
+  Widget _buildTrustBadges() {
+    return Container(
+      margin: const EdgeInsets.symmetric(
+        horizontal: AppTokens.spaceLG,
+        vertical: AppTokens.spaceSM,
+      ),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppTokens.spaceMD,
+        vertical: AppTokens.spaceMD,
+      ),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppTokens.radiusCard),
+        border: Border.all(color: AppColors.border, width: 0.8),
+        boxShadow: AppTokens.elevationSubtle,
+      ),
+      child: const Wrap(
+        alignment: WrapAlignment.spaceAround,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        spacing: 8,
+        runSpacing: 10,
+        children: [
+          _TrustBadgeItem(
+            icon: Icons.verified_user_outlined,
+            title: 'Ký quỹ an toàn',
+            subtitle: 'Bảo vệ nguồn tiền',
+          ),
+          _TrustBadgeItem(
+            icon: Icons.ac_unit,
+            title: 'Giao xe lạnh',
+            subtitle: 'Chuẩn 20-25°C',
+          ),
+          _TrustBadgeItem(
+            icon: Icons.receipt_long_outlined,
+            title: 'Hóa đơn VAT',
+            subtitle: 'Đầy đủ chứng từ',
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _TrustBadgeItem extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String subtitle;
+
+  const _TrustBadgeItem({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return ConstrainedBox(
+      constraints: const BoxConstraints(minWidth: 95),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 18, color: AppColors.accent),
+          const SizedBox(width: 6),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                title,
+                style: const TextStyle(
+                  fontFamily: 'Roboto',
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+              Text(
+                subtitle,
+                style: const TextStyle(
+                  fontFamily: 'Roboto',
+                  fontSize: 9.5,
+                  color: AppColors.textMuted,
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }

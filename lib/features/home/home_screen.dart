@@ -2,15 +2,21 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_tokens.dart';
-import '../../shared_widgets/common/product_grid_card.dart';
+import '../../shared_widgets/common/app_section_header.dart';
+import '../../shared_widgets/common/app_product_card.dart';
+import '../../shared_widgets/common/app_skeleton.dart';
+import '../../shared_widgets/common/app_empty_state.dart';
+import '../../shared_widgets/common/app_error_state.dart';
+import '../../shared_widgets/common/app_price_tag.dart';
 import '../../shared_widgets/lucian/announcement_pill.dart';
-import '../../shared_widgets/lucian/recent_order_toast.dart';
 import '../../providers/catalog_provider.dart';
 import '../../providers/cart_provider.dart';
 import '../../providers/notification_provider.dart';
 import '../../data/models/category.dart';
+import '../../data/models/product.dart';
 import '../../data/repositories/catalog_repository.dart';
 
 final homeCategoriesProvider = FutureProvider<List<Category>>((ref) async {
@@ -20,8 +26,6 @@ final homeCategoriesProvider = FutureProvider<List<Category>>((ref) async {
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
-
-  static const List<double> imageRatios = [0.82, 1.0, 1.0, 0.82];
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -62,57 +66,51 @@ class HomeScreen extends ConsumerWidget {
                 child: _buildCategoriesSection(context, ref),
               ),
 
-              // Recent Order Notification Toast
-              const SliverToBoxAdapter(
-                child: RecentOrderToast(
-                  companyName: 'FPT Software',
-                  boxCount: 350,
-                  timeAgo: '12 phút trước',
+              // Gift Sets Carousel (Carousel set quà B2B theo mục 4 hàng #7)
+              if (catalogState.products.isNotEmpty)
+                SliverToBoxAdapter(
+                  child: _buildGiftSetsCarousel(context, catalogState.products),
                 ),
-              ),
 
-              // Section Header
+              // Main Products Section Header
               SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text(
-                        'Bánh Trung Thu Mùa Vụ 2026',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.primary,
-                        ),
-                      ),
-                      InkWell(
-                        onTap: () => context.push('/search'),
-                        child: const Row(
-                          children: [
-                            Text(
-                              'Xem tất cả',
-                              style: TextStyle(fontSize: 12.5, color: AppColors.textSecondary),
-                            ),
-                            Icon(Icons.chevron_right, size: 16, color: AppColors.textSecondary),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
+                child: AppSectionHeader(
+                  title: 'Bánh Trung Thu Mùa Vụ 2026',
+                  subtitle: 'Chiết khấu sỉ trực tiếp từ xưởng sản xuất',
+                  actionLabel: 'Xem tất cả',
+                  onAction: () => context.push('/search'),
                 ),
               ),
 
-              // Products Feed or Skeleton or Error
+              // Products Feed or Skeleton or Error or Empty
               if (catalogState.isLoading && catalogState.products.isEmpty)
                 _buildSkeletonFeed(context)
               else if (catalogState.errorMessage != null && catalogState.products.isEmpty)
-                _buildErrorFeed(context, ref, catalogState.errorMessage!)
+                SliverToBoxAdapter(
+                  child: AppErrorState(
+                    title: 'Không thể tải danh sách sản phẩm',
+                    message: catalogState.errorMessage,
+                    onRetry: () {
+                      ref.invalidate(homeCategoriesProvider);
+                      ref.read(catalogProvider.notifier).refresh();
+                    },
+                  ),
+                )
+              else if (catalogState.products.isEmpty)
+                SliverToBoxAdapter(
+                  child: AppEmptyState(
+                    icon: Icons.inventory_2_outlined,
+                    title: 'Chưa có sản phẩm',
+                    message: 'Hiện chưa có sản phẩm nào cho mùa vụ này. Vui lòng quay lại sau.',
+                    actionLabel: 'Tải lại',
+                    onAction: () => ref.read(catalogProvider.notifier).refresh(),
+                  ),
+                )
               else
                 _buildProductsFeed(context, catalogState),
 
               const SliverToBoxAdapter(
-                child: SizedBox(height: 24),
+                child: SizedBox(height: AppTokens.space2XL),
               ),
             ],
           ),
@@ -123,33 +121,41 @@ class HomeScreen extends ConsumerWidget {
 
   Widget _buildHeader(BuildContext context, int cartCount, int notifCount) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppTokens.spaceLG,
+        vertical: AppTokens.spaceSM + 2,
+      ),
       decoration: const BoxDecoration(
         color: AppColors.surface,
         border: Border(bottom: BorderSide(color: AppColors.border, width: 0.8)),
       ),
       child: Row(
         children: [
-          // Search Input Bar
+          // Search Input Bar (min tap target >= 44px)
           Expanded(
             child: InkWell(
               onTap: () => context.push('/search'),
-              borderRadius: BorderRadius.circular(20),
+              borderRadius: BorderRadius.circular(AppTokens.radiusPill),
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                constraints: const BoxConstraints(minHeight: AppTokens.minTapTarget),
+                padding: const EdgeInsets.symmetric(horizontal: AppTokens.spaceMD),
                 decoration: BoxDecoration(
                   color: AppColors.surfaceHover,
-                  borderRadius: BorderRadius.circular(20),
+                  borderRadius: BorderRadius.circular(AppTokens.radiusPill),
                   border: Border.all(color: AppColors.border),
                 ),
                 child: const Row(
                   children: [
                     Icon(Icons.search, size: 18, color: AppColors.textMuted),
-                    SizedBox(width: 8),
+                    SizedBox(width: AppTokens.spaceSM),
                     Expanded(
                       child: Text(
                         'Tìm bánh trung thu, xưởng...',
-                        style: TextStyle(fontSize: 13, color: AppColors.textMuted),
+                        style: TextStyle(
+                          fontFamily: 'Roboto',
+                          fontSize: 13,
+                          color: AppColors.textMuted,
+                        ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -159,15 +165,26 @@ class HomeScreen extends ConsumerWidget {
               ),
             ),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: AppTokens.spaceSM),
 
-          // Notification Bell
+          // Notification Bell (min tap target >= 44px)
           Stack(
             clipBehavior: Clip.none,
             children: [
-              IconButton(
-                icon: const Icon(Icons.notifications_none_outlined, color: AppColors.primary, size: 24),
-                onPressed: () => context.push('/notifications'),
+              ConstrainedBox(
+                constraints: const BoxConstraints(
+                  minWidth: AppTokens.minTapTarget,
+                  minHeight: AppTokens.minTapTarget,
+                ),
+                child: IconButton(
+                  icon: const Icon(
+                    Icons.notifications_none_outlined,
+                    color: AppColors.primary,
+                    size: 24,
+                  ),
+                  tooltip: 'Thông báo',
+                  onPressed: () => context.push('/notifications'),
+                ),
               ),
               if (notifCount > 0)
                 Positioned(
@@ -185,13 +202,24 @@ class HomeScreen extends ConsumerWidget {
             ],
           ),
 
-          // Cart Icon
+          // Cart Icon (min tap target >= 44px)
           Stack(
             clipBehavior: Clip.none,
             children: [
-              IconButton(
-                icon: const Icon(Icons.shopping_cart_outlined, color: AppColors.primary, size: 24),
-                onPressed: () => context.push('/cart'),
+              ConstrainedBox(
+                constraints: const BoxConstraints(
+                  minWidth: AppTokens.minTapTarget,
+                  minHeight: AppTokens.minTapTarget,
+                ),
+                child: IconButton(
+                  icon: const Icon(
+                    Icons.shopping_cart_outlined,
+                    color: AppColors.primary,
+                    size: 24,
+                  ),
+                  tooltip: 'Giỏ hàng',
+                  onPressed: () => context.push('/cart'),
+                ),
               ),
               if (cartCount > 0)
                 Positioned(
@@ -207,6 +235,7 @@ class HomeScreen extends ConsumerWidget {
                     child: Text(
                       cartCount > 99 ? '99+' : '$cartCount',
                       style: const TextStyle(
+                        fontFamily: 'Roboto',
                         color: AppColors.textWhite,
                         fontSize: 9.5,
                         fontWeight: FontWeight.bold,
@@ -231,37 +260,47 @@ class HomeScreen extends ConsumerWidget {
     ];
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppTokens.spaceLG,
+        vertical: AppTokens.spaceMD,
+      ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: shortcuts.map((s) {
           return InkWell(
             onTap: () => context.push(s['route'] as String),
-            borderRadius: BorderRadius.circular(12),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 48,
-                  height: 48,
-                  decoration: BoxDecoration(
-                    color: AppColors.surface,
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: AppColors.border, width: 0.8),
-                    boxShadow: AppTokens.shadowSubtle,
+            borderRadius: BorderRadius.circular(AppTokens.radiusCard),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(
+                minWidth: AppTokens.minTapTarget,
+                minHeight: AppTokens.minTapTarget,
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 48,
+                    height: 48,
+                    decoration: BoxDecoration(
+                      color: AppColors.surface,
+                      borderRadius: BorderRadius.circular(AppTokens.radiusCard),
+                      border: Border.all(color: AppColors.border, width: 0.8),
+                      boxShadow: AppTokens.elevationSubtle,
+                    ),
+                    child: Icon(s['icon'] as IconData, color: AppColors.primary, size: 22),
                   ),
-                  child: Icon(s['icon'] as IconData, color: AppColors.primary, size: 22),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  s['label'] as String,
-                  style: const TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w500,
-                    color: AppColors.textPrimary,
+                  const SizedBox(height: 6),
+                  Text(
+                    s['label'] as String,
+                    style: const TextStyle(
+                      fontFamily: 'Roboto',
+                      fontSize: 11,
+                      fontWeight: FontWeight.w500,
+                      color: AppColors.textPrimary,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           );
         }).toList(),
@@ -276,40 +315,22 @@ class HomeScreen extends ConsumerWidget {
       data: (categories) {
         if (categories.isEmpty) return const SizedBox.shrink();
         return Padding(
-          padding: const EdgeInsets.only(bottom: 8.0),
+          padding: const EdgeInsets.only(bottom: AppTokens.spaceSM),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 4, 16, 6),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text(
-                      'Danh Mục Nổi Bật',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.textPrimary,
-                      ),
-                    ),
-                    InkWell(
-                      onTap: () => context.push('/search'),
-                      child: const Text(
-                        'Tất cả',
-                        style: TextStyle(fontSize: 12, color: AppColors.primary),
-                      ),
-                    ),
-                  ],
-                ),
+              AppSectionHeader(
+                title: 'Danh Mục Nổi Bật',
+                actionLabel: 'Tất cả',
+                onAction: () => context.push('/search'),
               ),
               SizedBox(
-                height: 38,
+                height: 44,
                 child: ListView.separated(
                   scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  padding: const EdgeInsets.symmetric(horizontal: AppTokens.spaceLG),
                   itemCount: categories.length,
-                  separatorBuilder: (_, __) => const SizedBox(width: 8),
+                  separatorBuilder: (_, __) => const SizedBox(width: AppTokens.spaceSM),
                   itemBuilder: (context, index) {
                     final cat = categories[index];
                     return ActionChip(
@@ -317,12 +338,13 @@ class HomeScreen extends ConsumerWidget {
                       backgroundColor: AppColors.surface,
                       side: const BorderSide(color: AppColors.border, width: 0.8),
                       labelStyle: const TextStyle(
+                        fontFamily: 'Roboto',
                         fontSize: 12,
                         fontWeight: FontWeight.w500,
                         color: AppColors.textPrimary,
                       ),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(20),
+                        borderRadius: BorderRadius.circular(AppTokens.radiusPill),
                       ),
                       onPressed: () => context.push('/search'),
                     );
@@ -338,13 +360,230 @@ class HomeScreen extends ConsumerWidget {
     );
   }
 
+  Widget _buildGiftSetsCarousel(BuildContext context, List<Product> products) {
+    final giftSets = products.where((p) {
+      final cat = p.category.toLowerCase();
+      final name = p.name.toLowerCase();
+      return p.isCustomPackagingSupported ||
+          cat.contains('quà') ||
+          cat.contains('hộp') ||
+          name.contains('hộp') ||
+          name.contains('set');
+    }).toList();
+
+    final displayGiftSets = giftSets.isNotEmpty ? giftSets : products.take(6).toList();
+    if (displayGiftSets.isEmpty) return const SizedBox.shrink();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        AppSectionHeader(
+          title: 'Set Quà Doanh Nghiệp VIP',
+          subtitle: 'Khắc logo laser & thiệp tri ân thượng hạng',
+          actionLabel: 'Xem thêm',
+          onAction: () => context.push('/search'),
+        ),
+        SizedBox(
+          height: 258,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: AppTokens.spaceLG),
+            itemCount: displayGiftSets.length,
+            separatorBuilder: (_, __) => const SizedBox(width: AppTokens.spaceMD),
+            itemBuilder: (context, index) {
+              final product = displayGiftSets[index];
+              return _buildGiftSetCard(context, product);
+            },
+          ),
+        ),
+        const SizedBox(height: AppTokens.spaceMD),
+      ],
+    );
+  }
+
+  Widget _buildGiftSetCard(BuildContext context, Product product) {
+    final hasCustomPackaging = product.isCustomPackagingSupported;
+
+    TierPricing? bestTier;
+    for (final tier in product.tierPricing) {
+      if (tier.discountPercent > 0) {
+        if (bestTier == null || tier.discountPercent > bestTier.discountPercent) {
+          bestTier = tier;
+        }
+      }
+    }
+
+    return Container(
+      width: 172,
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppTokens.radiusCard),
+        border: Border.all(color: AppColors.border, width: 0.8),
+        boxShadow: AppTokens.elevationCard,
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () => context.push('/product-detail', extra: product),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Image
+              AspectRatio(
+                aspectRatio: 1.15,
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    _buildCardImage(product.coverImage),
+                    if (hasCustomPackaging)
+                      Positioned(
+                        top: 6,
+                        right: 6,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: AppColors.accentGoldBg,
+                            borderRadius: BorderRadius.circular(AppTokens.radiusSM),
+                            border: Border.all(color: AppColors.accent, width: 0.8),
+                          ),
+                          child: const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.auto_fix_high, size: 9, color: AppColors.accent),
+                              SizedBox(width: 3),
+                              Text(
+                                'In logo',
+                                style: TextStyle(
+                                  fontFamily: 'Roboto',
+                                  fontSize: 9.5,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.accent,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(AppTokens.spaceSM + 1),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      product.name,
+                      style: const TextStyle(
+                        fontFamily: 'Roboto',
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textPrimary,
+                        height: 1.25,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 4),
+                    AppPriceTag(
+                      price: product.basePrice,
+                      size: AppPriceTagSize.small,
+                      isBold: true,
+                    ),
+                    const SizedBox(height: 4),
+                    if (bestTier != null)
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1.5),
+                        decoration: BoxDecoration(
+                          color: AppColors.accentGoldBg,
+                          borderRadius: BorderRadius.circular(AppTokens.radiusSM),
+                          border: Border.all(
+                            color: AppColors.accent.withValues(alpha: 0.4),
+                            width: 0.6,
+                          ),
+                        ),
+                        child: Text(
+                          'Sỉ chiết khấu tới ${bestTier.discountPercent.toInt()}%',
+                          style: const TextStyle(
+                            fontFamily: 'Roboto',
+                            fontSize: 9.5,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.accent,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      )
+                    else
+                      Text(
+                        'Từ ${product.minOrderQty} ${product.unit.isNotEmpty ? product.unit : 'hộp'}',
+                        style: const TextStyle(
+                          fontFamily: 'Roboto',
+                          fontSize: 10.5,
+                          color: AppColors.textMuted,
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCardImage(String? image) {
+    if (image == null || image.isEmpty) {
+      return Container(
+        color: AppColors.surfaceHover,
+        child: const Center(
+          child: Icon(Icons.cake_outlined, color: AppColors.textMuted, size: 28),
+        ),
+      );
+    }
+    if (image.startsWith('assets/')) {
+      return Image.asset(
+        image,
+        fit: BoxFit.cover,
+        errorBuilder: (_, __, ___) => Container(
+          color: AppColors.surfaceHover,
+          child: const Center(
+            child: Icon(Icons.cake_outlined, color: AppColors.textMuted, size: 28),
+          ),
+        ),
+      );
+    }
+    return CachedNetworkImage(
+      imageUrl: image,
+      fit: BoxFit.cover,
+      placeholder: (_, __) => Container(
+        color: AppColors.surfaceHover,
+        child: const Center(
+          child: SizedBox(
+            width: 16,
+            height: 16,
+            child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary),
+          ),
+        ),
+      ),
+      errorWidget: (_, __, ___) => Container(
+        color: AppColors.surfaceHover,
+        child: const Center(
+          child: Icon(Icons.cake_outlined, color: AppColors.textMuted, size: 28),
+        ),
+      ),
+    );
+  }
+
   Widget _buildProductsFeed(BuildContext context, CatalogState catalogState) {
     return SliverPadding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: AppTokens.spaceLG, vertical: AppTokens.spaceSM),
       sliver: SliverMasonryGrid.count(
         crossAxisCount: 2,
-        mainAxisSpacing: 12,
-        crossAxisSpacing: 12,
+        mainAxisSpacing: AppTokens.spaceMD,
+        crossAxisSpacing: AppTokens.spaceMD,
         itemBuilder: (context, index) {
           // Index 0: Promo banner
           if (index == 0) {
@@ -355,14 +594,11 @@ class HomeScreen extends ConsumerWidget {
             return _buildRfqTile(context);
           }
 
-          // Products
           final productIndex = index - 2;
           if (productIndex < catalogState.products.length) {
             final product = catalogState.products[productIndex];
-            final ratio = imageRatios[productIndex % imageRatios.length];
-            return ProductGridCard(
+            return AppProductCard(
               product: product,
-              imageRatio: ratio,
               onPress: (p) => context.push('/product-detail', extra: p),
             );
           }
@@ -375,11 +611,11 @@ class HomeScreen extends ConsumerWidget {
 
   Widget _buildSkeletonFeed(BuildContext context) {
     return SliverPadding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: AppTokens.spaceLG, vertical: AppTokens.spaceSM),
       sliver: SliverMasonryGrid.count(
         crossAxisCount: 2,
-        mainAxisSpacing: 12,
-        crossAxisSpacing: 12,
+        mainAxisSpacing: AppTokens.spaceMD,
+        crossAxisSpacing: AppTokens.spaceMD,
         itemBuilder: (context, index) {
           if (index == 0) {
             return _buildPromoBanner(context);
@@ -387,89 +623,9 @@ class HomeScreen extends ConsumerWidget {
           if (index == 1) {
             return _buildRfqTile(context);
           }
-
-          final height = index % 2 == 0 ? 210.0 : 240.0;
-          return Container(
-            height: height,
-            decoration: BoxDecoration(
-              color: AppColors.surface,
-              borderRadius: BorderRadius.circular(AppTokens.lucianRadiusLg),
-              border: Border.all(color: AppColors.border, width: 0.8),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: Container(
-                    decoration: const BoxDecoration(
-                      color: AppColors.surfaceHover,
-                      borderRadius: BorderRadius.vertical(top: Radius.circular(AppTokens.lucianRadiusLg)),
-                    ),
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.all(10),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Container(
-                        width: double.infinity,
-                        height: 14,
-                        decoration: BoxDecoration(
-                          color: AppColors.surfaceHover,
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      Container(
-                        width: 80,
-                        height: 12,
-                        decoration: BoxDecoration(
-                          color: AppColors.surfaceHover,
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          );
+          return AppSkeleton.productCard();
         },
         childCount: 6,
-      ),
-    );
-  }
-
-  Widget _buildErrorFeed(BuildContext context, WidgetRef ref, String error) {
-    return SliverToBoxAdapter(
-      child: Padding(
-        padding: const EdgeInsets.all(24.0),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.cloud_off_outlined, size: 52, color: AppColors.textMuted),
-            const SizedBox(height: 14),
-            Text(
-              error,
-              textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 13.5, color: AppColors.textSecondary),
-            ),
-            const SizedBox(height: 14),
-            ElevatedButton.icon(
-              onPressed: () {
-                ref.invalidate(homeCategoriesProvider);
-                ref.read(catalogProvider.notifier).refresh();
-              },
-              icon: const Icon(Icons.refresh, size: 18),
-              label: const Text('Thử lại'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                foregroundColor: AppColors.textWhite,
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }
@@ -478,8 +634,8 @@ class HomeScreen extends ConsumerWidget {
     return Container(
       decoration: BoxDecoration(
         color: AppColors.primaryDark,
-        borderRadius: BorderRadius.circular(AppTokens.lucianRadiusLg),
-        boxShadow: AppTokens.shadowCard,
+        borderRadius: BorderRadius.circular(AppTokens.radiusCard),
+        boxShadow: AppTokens.elevationCard,
       ),
       clipBehavior: Clip.antiAlias,
       child: Stack(
@@ -512,17 +668,23 @@ class HomeScreen extends ConsumerWidget {
                   padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                   decoration: BoxDecoration(
                     color: AppColors.accent,
-                    borderRadius: BorderRadius.circular(4),
+                    borderRadius: BorderRadius.circular(AppTokens.radiusXS),
                   ),
                   child: const Text(
                     'Mùa trăng 2026',
-                    style: TextStyle(color: AppColors.textWhite, fontSize: 9.5, fontWeight: FontWeight.bold),
+                    style: TextStyle(
+                      fontFamily: 'Roboto',
+                      color: AppColors.textWhite,
+                      fontSize: 9.5,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
                 const SizedBox(height: 4),
                 const Text(
                   'Quà Doanh Nghiệp',
                   style: TextStyle(
+                    fontFamily: 'Roboto',
                     color: AppColors.textWhite,
                     fontSize: 14,
                     fontWeight: FontWeight.bold,
@@ -530,7 +692,11 @@ class HomeScreen extends ConsumerWidget {
                 ),
                 const Text(
                   'Chiết khấu tới 35% · In logo',
-                  style: TextStyle(color: AppColors.accentGoldLight, fontSize: 11),
+                  style: TextStyle(
+                    fontFamily: 'Roboto',
+                    color: AppColors.accentGoldLight,
+                    fontSize: 11,
+                  ),
                 ),
               ],
             ),
@@ -542,12 +708,12 @@ class HomeScreen extends ConsumerWidget {
 
   Widget _buildRfqTile(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(AppTokens.spaceMD + 2),
       decoration: BoxDecoration(
         color: AppColors.accentGoldBg,
-        borderRadius: BorderRadius.circular(AppTokens.lucianRadiusLg),
+        borderRadius: BorderRadius.circular(AppTokens.radiusCard),
         border: Border.all(color: AppColors.accent.withValues(alpha: 0.4), width: 1),
-        boxShadow: AppTokens.shadowSubtle,
+        boxShadow: AppTokens.elevationSubtle,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -564,6 +730,7 @@ class HomeScreen extends ConsumerWidget {
           const Text(
             'Đặt trên 500 hộp?',
             style: TextStyle(
+              fontFamily: 'Roboto',
               fontSize: 13.5,
               fontWeight: FontWeight.bold,
               color: AppColors.textPrimary,
@@ -572,17 +739,28 @@ class HomeScreen extends ConsumerWidget {
           const SizedBox(height: 4),
           const Text(
             'Gửi yêu cầu nhận ngay báo giá từ 10+ xưởng uy tín',
-            style: TextStyle(fontSize: 11, color: AppColors.textSecondary, height: 1.3),
+            style: TextStyle(
+              fontFamily: 'Roboto',
+              fontSize: 11,
+              color: AppColors.textSecondary,
+              height: 1.3,
+            ),
           ),
           const SizedBox(height: 12),
-          ElevatedButton(
-            onPressed: () => context.push('/create-rfq'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.accent,
-              foregroundColor: AppColors.textWhite,
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          ConstrainedBox(
+            constraints: const BoxConstraints(minHeight: AppTokens.minTapTarget),
+            child: ElevatedButton(
+              onPressed: () => context.push('/create-rfq'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.accent,
+                foregroundColor: AppColors.textWhite,
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(AppTokens.radiusDefault),
+                ),
+              ),
+              child: const Text('Tạo RFQ ngay', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
             ),
-            child: const Text('Tạo RFQ ngay', style: TextStyle(fontSize: 12)),
           ),
         ],
       ),

@@ -55,11 +55,11 @@ class CustomButton extends StatelessWidget {
     EdgeInsets getPadding() {
       switch (size) {
         case ButtonSize.small:
-          return const EdgeInsets.symmetric(horizontal: 12, vertical: 8);
+          return const EdgeInsets.symmetric(horizontal: AppTokens.spaceMD, vertical: AppTokens.spaceSM);
         case ButtonSize.medium:
-          return const EdgeInsets.symmetric(horizontal: 16, vertical: 12);
+          return const EdgeInsets.symmetric(horizontal: AppTokens.spaceLG, vertical: AppTokens.spaceMD);
         case ButtonSize.large:
-          return const EdgeInsets.symmetric(horizontal: 24, vertical: 15);
+          return const EdgeInsets.symmetric(horizontal: AppTokens.space2XL, vertical: 15);
       }
     }
 
@@ -80,14 +80,18 @@ class CustomButton extends StatelessWidget {
       width: width,
       child: Material(
         color: getBackgroundColor(),
-        borderRadius: BorderRadius.circular(AppTokens.radiusDefault),
+        borderRadius: BorderRadius.circular(AppTokens.radiusInput),
         child: InkWell(
           onTap: isClickable ? onPress : null,
-          borderRadius: BorderRadius.circular(AppTokens.radiusDefault),
+          borderRadius: BorderRadius.circular(AppTokens.radiusInput),
           child: Container(
+            constraints: const BoxConstraints(
+              minHeight: AppTokens.minTapTarget,
+              minWidth: AppTokens.minTapTarget,
+            ),
             padding: getPadding(),
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(AppTokens.radiusDefault),
+              borderRadius: BorderRadius.circular(AppTokens.radiusInput),
               border: variant == ButtonVariant.outline
                   ? Border.all(color: disabled ? AppColors.border : AppColors.primary, width: 1.5)
                   : null,
@@ -108,11 +112,12 @@ class CustomButton extends StatelessWidget {
                 else ...[
                   if (icon != null) ...[
                     icon!,
-                    const SizedBox(width: 8),
+                    const SizedBox(width: AppTokens.spaceSM),
                   ],
                   Text(
                     title,
                     style: TextStyle(
+                      fontFamily: 'Roboto',
                       color: getTextColor(),
                       fontSize: getFontSize(),
                       fontWeight: FontWeight.w600,

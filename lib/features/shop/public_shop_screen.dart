@@ -4,12 +4,16 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_tokens.dart';
 import '../../data/models/category.dart';
 import '../../data/models/product.dart';
 import '../../data/models/review.dart';
 import '../../data/models/shop.dart';
 import '../../data/repositories/shop_repository.dart';
+import '../../shared_widgets/common/app_empty_state.dart';
+import '../../shared_widgets/common/app_error_state.dart';
 import '../../shared_widgets/common/app_header.dart';
+import '../../shared_widgets/common/app_skeleton.dart';
 import '../../shared_widgets/common/custom_button.dart';
 import '../../shared_widgets/common/product_grid_card.dart';
 
@@ -115,104 +119,96 @@ class _PublicShopScreenState extends ConsumerState<PublicShopScreen>
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppHeader(
-        title: _shop?.name ?? 'Gian hàng B2B',
-        showBack: true,
-        onBack: () => context.pop(),
-        rightIcon: Icons.share_outlined,
-        onRightPress: () {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Đã sao chép liên kết gian hàng')),
-          );
-        },
-      ),
-      body: _buildBody(),
-    );
-  }
-
-  Widget _buildBody() {
     if (_isLoading && _shop == null) {
-      return const Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+      return Scaffold(
+        appBar: const AppHeader(
+          title: 'Gian Hàng Doanh Nghiệp',
+          showBack: true,
+        ),
+        body: ListView(
+          physics: const NeverScrollableScrollPhysics(),
           children: [
-            CircularProgressIndicator(color: AppColors.primary),
-            SizedBox(height: 16),
-            Text(
-              'Đang tải thông tin xưởng sản xuất...',
-              style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
+            AppSkeleton.shimmer(
+              child: Container(
+                height: 140,
+                color: AppColors.shimmerBase,
+              ),
             ),
+            Padding(
+              padding: const EdgeInsets.all(AppTokens.spaceLG),
+              child: AppSkeleton.listTile(),
+            ),
+            AppSkeleton.productGrid(count: 4),
           ],
         ),
       );
     }
 
     if (_errorMessage != null && _shop == null) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(Icons.storefront_outlined, size: 48, color: AppColors.error),
-              const SizedBox(height: 16),
-              const Text(
-                'Không tìm thấy gian hàng',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.primaryDark),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                _errorMessage!,
-                textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
-              ),
-              const SizedBox(height: 20),
-              CustomButton(
-                title: 'Thử lại',
-                size: ButtonSize.small,
-                onPress: _fetchShopData,
-              ),
-            ],
-          ),
+      return Scaffold(
+        appBar: const AppHeader(
+          title: 'Gian Hàng Doanh Nghiệp',
+          showBack: true,
+        ),
+        body: AppErrorState(
+          icon: Icons.storefront_outlined,
+          title: 'Không tìm thấy gian hàng',
+          message: _errorMessage,
+          retryLabel: 'Thử lại',
+          onRetry: _fetchShopData,
         ),
       );
     }
 
     final shop = _shop!;
 
-    return NestedScrollView(
-      headerSliverBuilder: (context, innerBoxIsScrolled) {
-        return [
-          SliverToBoxAdapter(
-            child: _buildShopHeader(shop),
-          ),
-          SliverPersistentHeader(
-            pinned: true,
-            delegate: _TabBarDelegate(
-              TabBar(
-                controller: _tabController,
-                labelColor: AppColors.primary,
-                unselectedLabelColor: AppColors.textSecondary,
-                indicatorColor: AppColors.primary,
-                indicatorWeight: 3,
-                tabs: [
-                  Tab(text: 'Sản phẩm (${_products.length})'),
-                  const Tab(text: 'Chứng nhận & ATTP'),
-                  Tab(text: 'Đánh giá (${_reviews.length})'),
-                ],
+    return Scaffold(
+      appBar: AppHeader(
+        title: shop.name,
+        showBack: true,
+        onBack: () => context.pop(),
+        rightIcon: Icons.share_outlined,
+        onRightPress: () {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Đã sao chép liên kết gian hàng chính thức!')),
+          );
+        },
+      ),
+      body: NestedScrollView(
+        headerSliverBuilder: (context, innerBoxIsScrolled) {
+          return [
+            SliverToBoxAdapter(
+              child: _buildShopHeader(shop),
+            ),
+            SliverPersistentHeader(
+              pinned: true,
+              delegate: _TabBarDelegate(
+                TabBar(
+                  controller: _tabController,
+                  labelColor: AppColors.primary,
+                  unselectedLabelColor: AppColors.textSecondary,
+                  indicatorColor: AppColors.primary,
+                  indicatorWeight: 3,
+                  labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                  unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.normal, fontSize: 13),
+                  tabs: [
+                    Tab(text: 'Sản phẩm (${_products.length})'),
+                    const Tab(text: 'Chứng nhận & ATTP'),
+                    Tab(text: 'Đánh giá (${_reviews.length})'),
+                  ],
+                ),
               ),
             ),
-          ),
-        ];
-      },
-      body: TabBarView(
-        controller: _tabController,
-        children: [
-          _buildProductsTab(),
-          _buildCertificationsTab(shop),
-          _buildReviewsTab(),
-        ],
+          ];
+        },
+        body: TabBarView(
+          controller: _tabController,
+          children: [
+            _buildProductsTab(),
+            _buildCertificationsTab(shop),
+            _buildReviewsTab(),
+          ],
+        ),
       ),
     );
   }
@@ -221,46 +217,69 @@ class _PublicShopScreenState extends ConsumerState<PublicShopScreen>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        // Banner Image
-        Stack(
-          children: [
-            AspectRatio(
-              aspectRatio: 2.4,
-              child: shop.bannerUrl != null && shop.bannerUrl!.isNotEmpty
+        // Cover Banner chuẩn hóa chiều cao 140px theo chuẩn Shopee Official Store (Benchmark mục 5)
+        SizedBox(
+          height: 140,
+          width: double.infinity,
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              shop.bannerUrl != null && shop.bannerUrl!.isNotEmpty
                   ? CachedNetworkImage(
                       imageUrl: shop.bannerUrl!,
                       fit: BoxFit.cover,
                       errorWidget: (_, __, ___) => _buildFallbackBanner(),
                     )
                   : _buildFallbackBanner(),
-            ),
-            Positioned(
-              left: 16,
-              bottom: 12,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              // Gradient che phủ tạo độ tương phản
+              Container(
                 decoration: BoxDecoration(
-                  color: Colors.black.withValues(alpha: 0.65),
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: const Row(
-                  children: [
-                    Icon(Icons.verified, size: 14, color: AppColors.accent),
-                    SizedBox(width: 4),
-                    Text(
-                      'Xưởng Bánh Trung Thu Chính Thức',
-                      style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold),
-                    ),
-                  ],
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Colors.black.withValues(alpha: 0.1),
+                      Colors.black.withValues(alpha: 0.65),
+                    ],
+                  ),
                 ),
               ),
-            ),
-          ],
+              // Huy hiệu Official Store Hoàng Gia
+              Positioned(
+                left: AppTokens.spaceLG,
+                bottom: AppTokens.spaceSM,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary,
+                    borderRadius: BorderRadius.circular(AppTokens.radiusDefault),
+                    boxShadow: AppTokens.shadowSubtle,
+                  ),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.verified, size: 14, color: AppColors.accentGoldLight),
+                      SizedBox(width: 6),
+                      Text(
+                        'OFFICIAL STORE • XƯỞNG BÁNH CHÍNH THỨC',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 10.5,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 0.4,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
 
         // Shop Profile Details
         Container(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(AppTokens.spaceLG),
           color: AppColors.surface,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -270,12 +289,12 @@ class _PublicShopScreenState extends ConsumerState<PublicShopScreen>
                 children: [
                   // Logo
                   Container(
-                    width: 60,
-                    height: 60,
+                    width: 54,
+                    height: 54,
                     decoration: BoxDecoration(
                       color: AppColors.accentGoldBg,
                       shape: BoxShape.circle,
-                      border: Border.all(color: AppColors.accent, width: 1.5),
+                      border: Border.all(color: AppColors.accent, width: 2),
                     ),
                     clipBehavior: Clip.antiAlias,
                     child: shop.logoUrl != null && shop.logoUrl!.isNotEmpty
@@ -285,16 +304,16 @@ class _PublicShopScreenState extends ConsumerState<PublicShopScreen>
                             errorWidget: (_, __, ___) => const Icon(
                               Icons.storefront,
                               color: AppColors.accent,
-                              size: 32,
+                              size: 28,
                             ),
                           )
                         : const Icon(
                             Icons.storefront,
                             color: AppColors.accent,
-                            size: 32,
+                            size: 28,
                           ),
                   ),
-                  const SizedBox(width: 14),
+                  const SizedBox(width: AppTokens.spaceMD),
 
                   // Name & Info
                   Expanded(
@@ -320,17 +339,22 @@ class _PublicShopScreenState extends ConsumerState<PublicShopScreen>
                           ],
                         ),
                         const SizedBox(height: 4),
-                        Row(
+                        Wrap(
+                          crossAxisAlignment: WrapCrossAlignment.center,
+                          spacing: 6,
+                          runSpacing: 4,
                           children: [
-                            const Icon(Icons.star, size: 14, color: AppColors.accent),
-                            const SizedBox(width: 4),
-                            Text(
-                              '${shop.rating.toStringAsFixed(1)} (${shop.reviewCount} đánh giá)',
-                              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(Icons.star, size: 14, color: AppColors.accent),
+                                const SizedBox(width: 4),
+                                Text(
+                                  '${shop.rating.toStringAsFixed(1)} (${shop.reviewCount} đánh giá)',
+                                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                                ),
+                              ],
                             ),
-                            const SizedBox(width: 8),
-                            const Text('·', style: TextStyle(color: AppColors.border)),
-                            const SizedBox(width: 8),
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                               decoration: BoxDecoration(
@@ -370,22 +394,23 @@ class _PublicShopScreenState extends ConsumerState<PublicShopScreen>
                   ),
                 ],
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: AppTokens.spaceSM),
 
               if (shop.description != null && shop.description!.isNotEmpty)
                 Text(
                   shop.description!,
                   style: const TextStyle(fontSize: 12.5, color: AppColors.textSecondary, height: 1.4),
                 ),
-              const SizedBox(height: 14),
+              const SizedBox(height: AppTokens.spaceMD),
 
-              // Chat action button
+              // Chat and B2B Action Buttons
               Row(
                 children: [
                   Expanded(
                     child: CustomButton(
                       title: 'Nhắn tin với xưởng',
                       icon: const Icon(Icons.chat_bubble_outline, color: Colors.white, size: 16),
+                      size: ButtonSize.medium,
                       onPress: () {
                         context.push(
                           '/chat?shopId=${shop.id}&shopName=${Uri.encodeComponent(shop.name)}',
@@ -398,7 +423,7 @@ class _PublicShopScreenState extends ConsumerState<PublicShopScreen>
             ],
           ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: AppTokens.spaceSM),
       ],
     );
   }
@@ -429,19 +454,25 @@ class _PublicShopScreenState extends ConsumerState<PublicShopScreen>
         if (_categories.isNotEmpty)
           Container(
             color: AppColors.surface,
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            padding: const EdgeInsets.symmetric(horizontal: AppTokens.spaceLG, vertical: 8),
             child: SingleChildScrollView(
               scrollDirection: Axis.horizontal,
               child: Row(
                 children: [
-                  ChoiceChip(
-                    label: const Text('Tất cả'),
-                    selected: _selectedCategoryId == null,
-                    selectedColor: AppColors.primaryTint,
-                    backgroundColor: AppColors.surfaceHover,
-                    onSelected: (_) => _filterByCategory(null),
+                  Padding(
+                    padding: const EdgeInsets.only(right: 8),
+                    child: ChoiceChip(
+                      label: const Text('Tất cả'),
+                      selected: _selectedCategoryId == null,
+                      selectedColor: AppColors.primaryTint,
+                      backgroundColor: AppColors.surfaceHover,
+                      labelStyle: TextStyle(
+                        color: _selectedCategoryId == null ? AppColors.primary : AppColors.textPrimary,
+                        fontWeight: _selectedCategoryId == null ? FontWeight.bold : FontWeight.normal,
+                      ),
+                      onSelected: (_) => _filterByCategory(null),
+                    ),
                   ),
-                  const SizedBox(width: 8),
                   ..._categories.map((c) {
                     final isSelected = _selectedCategoryId == c.id;
                     return Padding(
@@ -451,6 +482,10 @@ class _PublicShopScreenState extends ConsumerState<PublicShopScreen>
                         selected: isSelected,
                         selectedColor: AppColors.primaryTint,
                         backgroundColor: AppColors.surfaceHover,
+                        labelStyle: TextStyle(
+                          color: isSelected ? AppColors.primary : AppColors.textPrimary,
+                          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                        ),
                         onSelected: (_) => _filterByCategory(c.id),
                       ),
                     );
@@ -463,24 +498,17 @@ class _PublicShopScreenState extends ConsumerState<PublicShopScreen>
         // Products Grid
         Expanded(
           child: _products.isEmpty
-              ? const Center(
-                  child: Padding(
-                    padding: EdgeInsets.all(24),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.inventory_2_outlined, size: 48, color: AppColors.textMuted),
-                        SizedBox(height: 12),
-                        Text(
-                          'Xưởng chưa đăng sản phẩm thuộc mục này',
-                          style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
-                        ),
-                      ],
-                    ),
-                  ),
+              ? AppEmptyState(
+                  icon: Icons.inventory_2_outlined,
+                  title: 'Chưa có sản phẩm',
+                  message: _selectedCategoryId != null
+                      ? 'Xưởng chưa đăng sản phẩm nào trong danh mục này.'
+                      : 'Xưởng hiện đang cập nhật danh mục sản phẩm bánh trung thu mới.',
+                  actionLabel: _selectedCategoryId != null ? 'Xem tất cả sản phẩm' : null,
+                  onAction: _selectedCategoryId != null ? () => _filterByCategory(null) : null,
                 )
               : GridView.builder(
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(AppTokens.spaceLG),
                   gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: 2,
                     childAspectRatio: 0.68,
@@ -503,15 +531,16 @@ class _PublicShopScreenState extends ConsumerState<PublicShopScreen>
 
   Widget _buildCertificationsTab(ShopModel shop) {
     return ListView(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(AppTokens.spaceLG),
       children: [
         // ATTP Certification Card
         Container(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(AppTokens.spaceLG),
           decoration: BoxDecoration(
             color: AppColors.surface,
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(AppTokens.radiusCard),
             border: Border.all(color: AppColors.border),
+            boxShadow: AppTokens.shadowSubtle,
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -520,12 +549,14 @@ class _PublicShopScreenState extends ConsumerState<PublicShopScreen>
                 children: [
                   Icon(Icons.security, color: AppColors.success, size: 22),
                   SizedBox(width: 8),
-                  Text(
-                    'Chứng nhận An toàn Vệ sinh Thực phẩm (ATTP)',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.primaryDark,
+                  Expanded(
+                    child: Text(
+                      'Chứng nhận An toàn Thực phẩm (ATTP)',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.primaryDark,
+                      ),
                     ),
                   ),
                 ],
@@ -535,29 +566,30 @@ class _PublicShopScreenState extends ConsumerState<PublicShopScreen>
                 'Cơ sở sản xuất đã được thẩm định đạt tiêu chuẩn Quốc Gia về điều kiện vệ sinh ATTP số ATTP-2026/HN-0899 do Cục ATTP cấp.',
                 style: TextStyle(fontSize: 12.5, color: AppColors.textSecondary, height: 1.4),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 14),
               Wrap(
                 spacing: 8,
                 runSpacing: 8,
                 children: [
                   _buildBadge(Icons.check_circle_outline, 'Đạt chuẩn ISO 22000:2018'),
-                  _buildBadge(Icons.ac_unit, 'Quy trình kiểm soát Cold-Chain 18-22°C'),
-                  _buildBadge(Icons.verified_user_outlined, 'HACCP Codified Process'),
-                  _buildBadge(Icons.assignment_turned_in_outlined, 'Xuất hóa đơn VAT & Hợp đồng B2B'),
+                  _buildBadge(Icons.ac_unit, 'Kiểm soát Cold-Chain 18-22°C'),
+                  _buildBadge(Icons.verified_user_outlined, 'Quy trình chuẩn HACCP'),
+                  _buildBadge(Icons.assignment_turned_in_outlined, 'Hóa đơn VAT & Hợp đồng B2B'),
                 ],
               ),
             ],
           ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: AppTokens.spaceMD),
 
         // Workshop Capability Card
         Container(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(AppTokens.spaceLG),
           decoration: BoxDecoration(
             color: AppColors.surface,
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(AppTokens.radiusCard),
             border: Border.all(color: AppColors.border),
+            boxShadow: AppTokens.shadowSubtle,
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -610,12 +642,12 @@ class _PublicShopScreenState extends ConsumerState<PublicShopScreen>
 
   Widget _buildInfoRow(String label, String value) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
+      padding: const EdgeInsets.symmetric(vertical: 5),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           SizedBox(
-            width: 140,
+            width: 135,
             child: Text(
               label,
               style: const TextStyle(fontSize: 12.5, color: AppColors.textSecondary),
@@ -634,26 +666,15 @@ class _PublicShopScreenState extends ConsumerState<PublicShopScreen>
 
   Widget _buildReviewsTab() {
     if (_reviews.isEmpty) {
-      return const Center(
-        child: Padding(
-          padding: EdgeInsets.all(24),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.rate_review_outlined, size: 48, color: AppColors.textMuted),
-              SizedBox(height: 12),
-              Text(
-                'Chưa có đánh giá nào cho gian hàng này',
-                style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
-              ),
-            ],
-          ),
-        ),
+      return const AppEmptyState(
+        icon: Icons.rate_review_outlined,
+        title: 'Chưa có đánh giá',
+        message: 'Gian hàng chưa nhận được đánh giá nào từ khách hàng.',
       );
     }
 
     return ListView.separated(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(AppTokens.spaceLG),
       itemCount: _reviews.length,
       separatorBuilder: (_, __) => const SizedBox(height: 12),
       itemBuilder: (context, index) {
@@ -664,8 +685,9 @@ class _PublicShopScreenState extends ConsumerState<PublicShopScreen>
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
             color: AppColors.surface,
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(AppTokens.radiusCard),
             border: Border.all(color: AppColors.border),
+            boxShadow: AppTokens.shadowSubtle,
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -717,7 +739,7 @@ class _PublicShopScreenState extends ConsumerState<PublicShopScreen>
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
                     color: AppColors.surfaceHover,
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(AppTokens.radiusDefault),
                     border: const Border(
                       left: BorderSide(color: AppColors.accent, width: 3),
                     ),

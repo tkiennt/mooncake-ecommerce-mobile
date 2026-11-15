@@ -200,7 +200,7 @@ class _B2BPriceCalculatorState extends State<B2BPriceCalculator> {
                 ),
                 Switch(
                   value: _isEarlyBird,
-                  activeColor: AppColors.accent,
+                  activeTrackColor: AppColors.accent,
                   onChanged: (val) => setState(() => _isEarlyBird = val),
                 ),
               ],
@@ -263,18 +263,26 @@ class _QtyButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: 28,
-      height: 28,
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: AppColors.border),
+    return ConstrainedBox(
+      constraints: const BoxConstraints(
+        minWidth: AppTokens.minTapTarget,
+        minHeight: AppTokens.minTapTarget,
       ),
-      child: IconButton(
-        icon: Icon(icon, size: 14, color: AppColors.primary),
-        onPressed: onPressed,
-        padding: EdgeInsets.zero,
+      child: Center(
+        child: Container(
+          width: 32,
+          height: 32,
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(6),
+            border: Border.all(color: AppColors.border),
+          ),
+          child: IconButton(
+            icon: Icon(icon, size: 16, color: AppColors.primary),
+            onPressed: onPressed,
+            padding: EdgeInsets.zero,
+          ),
+        ),
       ),
     );
   }

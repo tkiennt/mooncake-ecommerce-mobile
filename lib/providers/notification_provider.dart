@@ -3,6 +3,7 @@ import '../core/constants/api_endpoints.dart';
 import '../core/network/api_client.dart';
 import '../core/realtime/signalr_service.dart';
 import '../data/models/notification_item.dart';
+import 'auth_provider.dart';
 
 class NotificationState {
   final List<NotificationItem> notifications;
@@ -34,15 +35,34 @@ class NotificationState {
 class NotificationNotifier extends StateNotifier<NotificationState> {
   final ApiClient _apiClient;
   final SignalRService _signalRService;
+  final AuthState? _authState;
+  SignalRNotificationCallback? _signalRCallback;
 
-  NotificationNotifier(this._apiClient, this._signalRService)
-      : super(const NotificationState(isLoading: true)) {
-    loadNotifications();
-    _initSignalR();
+  NotificationNotifier(
+    this._apiClient,
+    this._signalRService, [
+    this._authState,
+  ]) : super(NotificationState(isLoading: _authState?.isAuthenticated ?? false)) {
+    if (_authState?.isAuthenticated ?? false) {
+      loadNotifications();
+      _initSignalR();
+    } else {
+      _signalRService.stopConnection();
+    }
   }
 
   /// Loads real notifications from backend
   Future<void> loadNotifications() async {
+    final isAuthenticated = _authState?.isAuthenticated ?? false;
+    if (!isAuthenticated) {
+      state = state.copyWith(
+        notifications: const [],
+        isLoading: false,
+        clearError: true,
+      );
+      return;
+    }
+
     state = state.copyWith(isLoading: true, clearError: true);
     try {
       final response = await _apiClient.dio.get(ApiEndpoints.notifications);
@@ -74,7 +94,10 @@ class NotificationNotifier extends StateNotifier<NotificationState> {
   }
 
   void _initSignalR() {
-    _signalRService.addListener((payload) {
+    final isAuthenticated = _authState?.isAuthenticated ?? false;
+    if (!isAuthenticated) return;
+
+    _signalRCallback = (payload) {
       final notif = NotificationItem(
         id: payload['id']?.toString() ?? 'notif-${DateTime.now().millisecondsSinceEpoch}',
         title: payload['title']?.toString() ?? 'Thông báo mới',
@@ -88,13 +111,17 @@ class NotificationNotifier extends StateNotifier<NotificationState> {
       state = state.copyWith(
         notifications: [notif, ...state.notifications],
       );
-    });
+    };
 
+    _signalRService.addListener(_signalRCallback!);
     _signalRService.startConnection();
   }
 
   /// Marks a notification as read both locally and in backend
   Future<void> markAsRead(String id) async {
+    final isAuthenticated = _authState?.isAuthenticated ?? false;
+    if (!isAuthenticated) return;
+
     // Optimistic local update
     state = state.copyWith(
       notifications: state.notifications.map((n) {
@@ -114,6 +141,9 @@ class NotificationNotifier extends StateNotifier<NotificationState> {
 
   /// Marks all notifications as read both locally and in backend
   Future<void> markAllAsRead() async {
+    final isAuthenticated = _authState?.isAuthenticated ?? false;
+    if (!isAuthenticated) return;
+
     state = state.copyWith(
       notifications: state.notifications.map((n) => n.copyWith(isRead: true)).toList(),
     );
@@ -134,6 +164,14 @@ class NotificationNotifier extends StateNotifier<NotificationState> {
   Future<void> refresh() async {
     await loadNotifications();
   }
+
+  @override
+  void dispose() {
+    if (_signalRCallback != null) {
+      _signalRService.removeListener(_signalRCallback!);
+    }
+    super.dispose();
+  }
 }
 
 final signalRServiceProvider = Provider<SignalRService>((ref) => SignalRService());
@@ -141,5 +179,6 @@ final signalRServiceProvider = Provider<SignalRService>((ref) => SignalRService(
 final notificationProvider = StateNotifierProvider<NotificationNotifier, NotificationState>((ref) {
   final apiClient = ref.watch(apiClientProvider);
   final signalR = ref.watch(signalRServiceProvider);
-  return NotificationNotifier(apiClient, signalR);
+  final authState = ref.watch(authProvider);
+  return NotificationNotifier(apiClient, signalR, authState);
 });

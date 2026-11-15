@@ -1,16 +1,32 @@
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:signalr_netcore/signalr_client.dart';
 import '../../core/constants/api_endpoints.dart';
+import '../../core/network/api_client.dart';
 import '../../core/storage/storage_service.dart';
 import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_tokens.dart';
 import '../../data/models/chat.dart';
 import '../../data/repositories/chat_repository.dart';
 import '../../providers/auth_provider.dart';
+import '../../shared_widgets/common/app_empty_state.dart';
+import '../../shared_widgets/common/app_error_state.dart';
 import '../../shared_widgets/common/app_header.dart';
-import '../../shared_widgets/common/custom_button.dart';
+import '../../shared_widgets/common/app_skeleton.dart';
+
+enum _ChatContextCategory {
+  order('Đơn hàng', Icons.local_shipping_outlined),
+  pricing('Báo giá sỉ', Icons.sell_outlined),
+  packaging('In ấn bao bì', Icons.card_giftcard_outlined),
+  contract('Hợp đồng & VAT', Icons.assignment_outlined);
+
+  final String label;
+  final IconData icon;
+  const _ChatContextCategory(this.label, this.icon);
+}
 
 class ChatScreen extends ConsumerStatefulWidget {
   final String? threadId;
@@ -38,18 +54,41 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   bool _isSending = false;
   String? _errorMessage;
 
+  _ChatContextCategory _selectedCategory = _ChatContextCategory.order;
+
   final TextEditingController _textController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   final StorageService _storage = StorageService();
 
   HubConnection? _hubConnection;
 
-  static const List<String> _quickPrompts = [
-    'Tư vấn báo giá sỉ 100+ hộp',
-    'Yêu cầu quy cách in logo hộp quà',
-    'Thời hạn giao hàng và chính sách vận chuyển',
-    'Hóa đơn VAT & hợp đồng mua bán B2B',
-  ];
+  // Contextual question prompts (pattern ShopeeFood)
+  static const Map<_ChatContextCategory, List<String>> _contextualPrompts = {
+    _ChatContextCategory.order: [
+      'Tiến độ sản xuất đơn hàng của tôi đến đâu rồi?',
+      'Đơn hàng khi nào xuất kho và giao đến nơi?',
+      'Xưởng gửi giúp ảnh chụp kiện hàng thực tế và tem niêm phong',
+      'Đơn hàng vận chuyển bằng xe lạnh hay xe thường?',
+      'Tôi muốn cập nhật thông tin nhận hàng của đơn này',
+    ],
+    _ChatContextCategory.pricing: [
+      'Tư vấn báo giá sỉ cho số lượng từ 100 hộp',
+      'Mức chiết khấu cho đơn doanh nghiệp 500+ hộp',
+      'Gửi giúp tôi catalogue và bảng giá bánh trung thu 2026',
+      'Chính sách thanh toán và đặt cọc chia 3 đợt',
+    ],
+    _ChatContextCategory.packaging: [
+      'Yêu cầu quy cách in logo ép kim nhũ vàng lên hộp',
+      'Thời gian duyệt maket thiết kế bao bì là bao lâu?',
+      'Có hỗ trợ làm thiệp chúc mừng riêng từng hộp không?',
+      'Xưởng có mẫu hộp 4 bánh và 6 bánh sẵn không?',
+    ],
+    _ChatContextCategory.contract: [
+      'Yêu cầu lập hợp đồng mua bán pháp nhân',
+      'Cung cấp thông tin để xuất hóa đơn điện tử VAT',
+      'Giấy chứng nhận an toàn thực phẩm ISO 22000 / HACCP',
+    ],
+  };
 
   @override
   void initState() {
@@ -97,35 +136,103 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     } catch (e) {
       if (!mounted) return;
       setState(() {
-        _errorMessage = e.toString();
+        _errorMessage = e.toString().replaceFirst('Exception: ', '');
         _isLoading = false;
       });
     }
   }
 
+  String _generateUuid() {
+    final random = Random.secure();
+    final values = List<int>.generate(16, (i) => random.nextInt(256));
+    values[6] = (values[6] & 0x0f) | 0x40; // version 4
+    values[8] = (values[8] & 0x3f) | 0x80; // variant
+    return [
+      values.sublist(0, 4).map((b) => b.toRadixString(16).padLeft(2, '0')).join(),
+      values.sublist(4, 6).map((b) => b.toRadixString(16).padLeft(2, '0')).join(),
+      values.sublist(6, 8).map((b) => b.toRadixString(16).padLeft(2, '0')).join(),
+      values.sublist(8, 10).map((b) => b.toRadixString(16).padLeft(2, '0')).join(),
+      values.sublist(10, 16).map((b) => b.toRadixString(16).padLeft(2, '0')).join(),
+    ].join('-');
+  }
+
+  Future<void> _markRead(String threadId, String messageId) async {
+    if (messageId.isEmpty) return;
+    try {
+      final client = ref.read(apiClientProvider);
+      await client.dio.post(
+        ApiEndpoints.chatRead(threadId),
+        data: {
+          'messageId': messageId,
+        },
+      );
+    } catch (_) {
+      // Non-blocking read receipt update
+    }
+  }
+
   Future<void> _loadMessages(String threadId) async {
-    final repo = ref.read(chatRepositoryProvider);
+    final client = ref.read(apiClientProvider);
     final user = ref.read(authProvider).user;
 
-    final msgs = await repo.getMessages(threadId, currentUserId: user?.id);
-    await repo.markThreadRead(threadId);
+    try {
+      final response = await client.dio.get(
+        ApiEndpoints.chatMessages(threadId),
+        queryParameters: {'pageSize': 50},
+      );
+      final data = ApiClient.unwrap(response);
+      final rawList = data is Map ? (data['items'] as List? ?? []) : (data as List? ?? []);
 
-    if (!mounted) return;
-    setState(() {
-      _messages = msgs;
-      _isLoading = false;
-    });
+      final msgs = rawList.map((m) {
+        final map = m is Map<String, dynamic> ? m : Map<String, dynamic>.from(m as Map);
+        final sId = map['senderId']?.toString() ?? map['userId']?.toString() ?? '';
+        return ChatMessage(
+          id: map['id']?.toString() ?? map['messageId']?.toString() ?? '',
+          threadId: map['threadId']?.toString() ?? threadId,
+          senderId: sId,
+          senderName: map['senderName']?.toString() ?? map['sender']?['fullName']?.toString(),
+          content: map['body']?.toString() ?? map['content']?.toString() ?? map['message']?.toString() ?? '',
+          createdAt: map['createdAt'] != null
+              ? DateTime.tryParse(map['createdAt'].toString()) ?? DateTime.now()
+              : DateTime.now(),
+          isFromMe: user?.id != null && sId == user!.id,
+        );
+      }).toList();
 
-    _scrollToBottom();
+      if (msgs.isNotEmpty) {
+        final lastMsg = msgs.last;
+        if (lastMsg.id.isNotEmpty) {
+          await _markRead(threadId, lastMsg.id);
+        }
+      }
+
+      if (!mounted) return;
+      setState(() {
+        _messages = msgs;
+        _isLoading = false;
+      });
+
+      _scrollToBottom();
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _errorMessage = e.toString().replaceFirst('Exception: ', '');
+        _isLoading = false;
+      });
+    }
   }
 
   Future<void> _connectSignalR() async {
     if (_activeThread == null) return;
 
     try {
+      final hubUrl = ApiEndpoints.chatHubUrl.contains('/api/v1')
+          ? ApiEndpoints.chatHubUrl
+          : '${ApiEndpoints.baseUrl}/hubs/chat';
+
       _hubConnection = HubConnectionBuilder()
           .withUrl(
-            ApiEndpoints.chatHubUrl,
+            hubUrl,
             options: HttpConnectionOptions(
               accessTokenFactory: () async => (await _storage.getAccessToken()) ?? '',
             ),
@@ -138,7 +245,18 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
           final data = arguments.first;
           final jsonMap = data is Map<String, dynamic> ? data : Map<String, dynamic>.from(data as Map);
           final user = ref.read(authProvider).user;
-          final newMsg = ChatMessage.fromJson(jsonMap, currentUserId: user?.id);
+          final sId = jsonMap['senderId']?.toString() ?? jsonMap['userId']?.toString() ?? '';
+          final newMsg = ChatMessage(
+            id: jsonMap['id']?.toString() ?? jsonMap['messageId']?.toString() ?? '',
+            threadId: jsonMap['threadId']?.toString() ?? '',
+            senderId: sId,
+            senderName: jsonMap['senderName']?.toString() ?? jsonMap['sender']?['fullName']?.toString(),
+            content: jsonMap['body']?.toString() ?? jsonMap['content']?.toString() ?? jsonMap['message']?.toString() ?? '',
+            createdAt: jsonMap['createdAt'] != null
+                ? DateTime.tryParse(jsonMap['createdAt'].toString()) ?? DateTime.now()
+                : DateTime.now(),
+            isFromMe: user?.id != null && sId == user!.id,
+          );
 
           if (newMsg.threadId == _activeThread?.id) {
             if (!mounted) return;
@@ -148,6 +266,10 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
               }
             });
             _scrollToBottom();
+
+            if (!newMsg.isFromMe && newMsg.id.isNotEmpty) {
+              _markRead(_activeThread!.id, newMsg.id);
+            }
           }
         }
       });
@@ -190,14 +312,37 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
 
     setState(() => _isSending = true);
 
-    final repo = ref.read(chatRepositoryProvider);
+    final client = ref.read(apiClientProvider);
     final user = ref.read(authProvider).user;
+    final clientMsgId = _generateUuid();
 
     try {
-      final newMsg = await repo.sendMessage(
-        _activeThread!.id,
-        content: text,
-        currentUserId: user?.id,
+      final response = await client.dio.post(
+        ApiEndpoints.chatMessages(_activeThread!.id),
+        data: {
+          'clientMessageId': clientMsgId,
+          'body': text,
+        },
+      );
+
+      final data = ApiClient.unwrap(response);
+      final respMap = data is Map<String, dynamic>
+          ? data
+          : (data is Map ? Map<String, dynamic>.from(data) : null);
+
+      final sId = respMap?['senderId']?.toString() ?? user?.id ?? '';
+      final newMsg = ChatMessage(
+        id: respMap?['id']?.toString() ?? clientMsgId,
+        threadId: _activeThread!.id,
+        senderId: sId,
+        senderName: respMap?['senderName']?.toString() ?? user?.fullName,
+        content: respMap?['body']?.toString() ??
+            respMap?['content']?.toString() ??
+            text,
+        createdAt: respMap?['createdAt'] != null
+            ? DateTime.tryParse(respMap!['createdAt'].toString()) ?? DateTime.now()
+            : DateTime.now(),
+        isFromMe: true,
       );
 
       if (!mounted) return;
@@ -208,12 +353,16 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
         _isSending = false;
       });
       _scrollToBottom();
+
+      if (newMsg.id.isNotEmpty) {
+        _markRead(_activeThread!.id, newMsg.id);
+      }
     } catch (e) {
       if (!mounted) return;
       setState(() => _isSending = false);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Không gửi được tin nhắn: $e'),
+          content: Text('Không gửi được tin nhắn: ${ApiClient.handleError(e)}'),
           backgroundColor: AppColors.error,
         ),
       );
@@ -233,7 +382,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     } catch (e) {
       if (!mounted) return;
       setState(() {
-        _errorMessage = e.toString();
+        _errorMessage = e.toString().replaceFirst('Exception: ', '');
         _isLoading = false;
       });
     }
@@ -251,150 +400,180 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   // --- Inbox View ---
   Widget _buildInboxScreen() {
     return Scaffold(
+      backgroundColor: AppColors.background,
       appBar: AppHeader(
-        title: 'Tin nhắn với xưởng bánh',
+        title: 'Tin Nhắn Với Xưởng Bánh',
         showBack: true,
         onBack: () => context.pop(),
       ),
-      body: _isLoading
-          ? const Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  CircularProgressIndicator(color: AppColors.primary),
-                  SizedBox(height: 16),
-                  Text('Đang tải danh sách cuộc trò chuyện...', style: TextStyle(color: AppColors.textSecondary)),
-                ],
+      body: _buildInboxBody(),
+    );
+  }
+
+  Widget _buildInboxBody() {
+    if (_isLoading) {
+      return _buildInboxSkeleton();
+    }
+
+    if (_errorMessage != null) {
+      return Center(
+        child: AppErrorState(
+          title: 'Không thể tải cuộc trò chuyện',
+          message: _errorMessage,
+          retryLabel: 'Thử lại',
+          onRetry: _initChat,
+        ),
+      );
+    }
+
+    if (_threads.isEmpty) {
+      return Center(
+        child: AppEmptyState(
+          icon: Icons.chat_bubble_outline,
+          title: 'Chưa có cuộc trò chuyện nào',
+          message:
+              'Bạn có thể vào trang chi tiết sản phẩm hoặc gian hàng xưởng bánh để bắt đầu trao đổi, hỏi giá sỉ và mẫu hộp quà.',
+          actionLabel: 'Khám phá sản phẩm',
+          onAction: () => context.go('/search'),
+        ),
+      );
+    }
+
+    return RefreshIndicator(
+      onRefresh: _initChat,
+      color: AppColors.primary,
+      child: ListView.separated(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppTokens.spaceLG,
+          vertical: AppTokens.spaceMD,
+        ),
+        itemCount: _threads.length,
+        separatorBuilder: (_, __) => const Divider(height: 1, color: AppColors.border),
+        itemBuilder: (context, index) {
+          final t = _threads[index];
+          final timeStr = t.lastMessageAt != null
+              ? DateFormat('HH:mm dd/MM').format(t.lastMessageAt!)
+              : '';
+
+          return Material(
+            color: Colors.transparent,
+            child: ListTile(
+              minVerticalPadding: AppTokens.spaceMD,
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: AppTokens.spaceSM,
+                vertical: AppTokens.spaceXS,
               ),
-            )
-          : _errorMessage != null
-              ? Center(
-                  child: Padding(
-                    padding: const EdgeInsets.all(24),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(Icons.chat_bubble_outline, size: 48, color: AppColors.error),
-                        const SizedBox(height: 16),
-                        const Text('Không thể tải tin nhắn', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                        const SizedBox(height: 8),
-                        Text(_errorMessage!, textAlign: TextAlign.center, style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
-                        const SizedBox(height: 16),
-                        CustomButton(title: 'Thử lại', size: ButtonSize.small, onPress: _initChat),
-                      ],
+              leading: const CircleAvatar(
+                radius: 24,
+                backgroundColor: AppColors.accentGoldBg,
+                child: Icon(Icons.storefront, color: AppColors.accent, size: 24),
+              ),
+              title: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      t.shopName,
+                      style: const TextStyle(
+                        fontFamily: 'Roboto',
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                        color: AppColors.textPrimary,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
-                )
-              : _threads.isEmpty
-                  ? Center(
-                      child: Padding(
-                        padding: const EdgeInsets.all(24),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Container(
-                              width: 72,
-                              height: 72,
-                              decoration: const BoxDecoration(
-                                color: AppColors.accentGoldBg,
-                                shape: BoxShape.circle,
-                              ),
-                              child: const Icon(Icons.chat_bubble_outline, size: 36, color: AppColors.accent),
-                            ),
-                            const SizedBox(height: 16),
-                            const Text('Chưa có cuộc trò chuyện nào', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.primaryDark)),
-                            const SizedBox(height: 8),
-                            const Text(
-                              'Bạn có thể vào trang chi tiết sản phẩm hoặc gian hàng xưởng bánh để bắt đầu trao đổi, hỏi giá sỉ và mẫu hộp quà.',
-                              textAlign: TextAlign.center,
-                              style: TextStyle(fontSize: 13, color: AppColors.textSecondary, height: 1.4),
-                            ),
-                            const SizedBox(height: 20),
-                            CustomButton(
-                              title: 'Khám phá sản phẩm',
-                              size: ButtonSize.small,
-                              onPress: () => context.go('/search'),
-                            ),
-                          ],
+                  if (timeStr.isNotEmpty)
+                    Text(
+                      timeStr,
+                      style: const TextStyle(
+                        fontFamily: 'Roboto',
+                        fontSize: 11,
+                        color: AppColors.textMuted,
+                      ),
+                    ),
+                ],
+              ),
+              subtitle: Padding(
+                padding: const EdgeInsets.only(top: AppTokens.spaceXS),
+                child: Text(
+                  t.lastMessage ?? 'Nhấn để bắt đầu trao đổi với xưởng...',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontFamily: 'Roboto',
+                    fontSize: 12.5,
+                    color: t.unreadCount > 0 ? AppColors.textPrimary : AppColors.textSecondary,
+                    fontWeight: t.unreadCount > 0 ? FontWeight.bold : FontWeight.normal,
+                  ),
+                ),
+              ),
+              trailing: t.unreadCount > 0
+                  ? Container(
+                      padding: const EdgeInsets.all(AppTokens.spaceXS + 2),
+                      decoration: const BoxDecoration(
+                        color: AppColors.primary,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Text(
+                        '${t.unreadCount}',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
                     )
-                  : RefreshIndicator(
-                      onRefresh: _initChat,
-                      color: AppColors.primary,
-                      child: ListView.separated(
-                        padding: const EdgeInsets.all(16),
-                        itemCount: _threads.length,
-                        separatorBuilder: (_, __) => const Divider(height: 1, color: AppColors.border),
-                        itemBuilder: (context, index) {
-                          final t = _threads[index];
-                          final timeStr = t.lastMessageAt != null
-                              ? DateFormat('HH:mm dd/MM').format(t.lastMessageAt!)
-                              : '';
+                  : null,
+              onTap: () => _selectThread(t),
+            ),
+          );
+        },
+      ),
+    );
+  }
 
-                          return ListTile(
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-                            leading: CircleAvatar(
-                              radius: 24,
-                              backgroundColor: AppColors.accentGoldBg,
-                              child: const Icon(Icons.storefront, color: AppColors.accent, size: 24),
-                            ),
-                            title: Row(
-                              children: [
-                                Expanded(
-                                  child: Text(
-                                    t.shopName,
-                                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                                if (timeStr.isNotEmpty)
-                                  Text(
-                                    timeStr,
-                                    style: const TextStyle(fontSize: 11, color: AppColors.textMuted),
-                                  ),
-                              ],
-                            ),
-                            subtitle: Padding(
-                              padding: const EdgeInsets.only(top: 4),
-                              child: Text(
-                                t.lastMessage ?? 'Nhấn để bắt đầu trao đổi với xưởng...',
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(
-                                  fontSize: 12.5,
-                                  color: t.unreadCount > 0 ? AppColors.textPrimary : AppColors.textSecondary,
-                                  fontWeight: t.unreadCount > 0 ? FontWeight.bold : FontWeight.normal,
-                                ),
-                              ),
-                            ),
-                            trailing: t.unreadCount > 0
-                                ? Container(
-                                    padding: const EdgeInsets.all(6),
-                                    decoration: const BoxDecoration(
-                                      color: AppColors.primary,
-                                      shape: BoxShape.circle,
-                                    ),
-                                    child: Text(
-                                      '${t.unreadCount}',
-                                      style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
-                                    ),
-                                  )
-                                : null,
-                            onTap: () => _selectThread(t),
-                          );
-                        },
-                      ),
+  Widget _buildInboxSkeleton() {
+    return AppSkeleton.shimmer(
+      child: ListView.separated(
+        padding: const EdgeInsets.all(AppTokens.spaceLG),
+        itemCount: 6,
+        separatorBuilder: (_, __) => const Divider(height: 1, color: AppColors.border),
+        itemBuilder: (_, __) => Padding(
+          padding: const EdgeInsets.symmetric(vertical: AppTokens.spaceMD),
+          child: Row(
+            children: [
+              const AppSkeleton.circle(radius: 24),
+              const SizedBox(width: AppTokens.spaceMD),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: const [
+                        AppSkeleton(width: 140, height: 14),
+                        AppSkeleton(width: 50, height: 10),
+                      ],
                     ),
+                    const SizedBox(height: AppTokens.spaceSM),
+                    const AppSkeleton.text(height: 12),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 
   // --- Active 1-1 Conversation View ---
   Widget _buildConversationScreen() {
-    final shopName = _activeThread?.shopName ?? widget.shopName ?? 'Xưởng bánh';
+    final shopName = _activeThread?.shopName ?? widget.shopName ?? 'Xưởng bánh đối tác';
 
     return Scaffold(
+      backgroundColor: AppColors.background,
       appBar: AppHeader(
         title: shopName,
         subtitle: 'Xưởng sản xuất đối tác · Trực tuyến',
@@ -412,123 +591,251 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
       ),
       body: Column(
         children: [
-          // Messages list
+          // Messages list or loading/empty state
           Expanded(
-            child: _isLoading
-                ? const Center(
-                    child: CircularProgressIndicator(color: AppColors.primary),
-                  )
-                : _messages.isEmpty
-                    ? Center(
-                        child: Padding(
-                          padding: const EdgeInsets.all(24),
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              const Icon(Icons.chat_outlined, size: 44, color: AppColors.textMuted),
-                              const SizedBox(height: 12),
-                              Text(
-                                'Bắt đầu cuộc trò chuyện với $shopName',
-                                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: AppColors.primaryDark),
-                              ),
-                              const SizedBox(height: 6),
-                              const Text(
-                                'Hãy gửi câu hỏi về chiết khấu sỉ, quy cách bao bì hoặc thời gian sản xuất bánh.',
-                                textAlign: TextAlign.center,
-                                style: TextStyle(fontSize: 12.5, color: AppColors.textSecondary),
-                              ),
-                            ],
+            child: _buildMessagesArea(shopName),
+          ),
+
+          // Contextual prompt chips (ShopeeFood pattern)
+          _buildContextualPromptChips(),
+
+          // Bottom Input Bar with SafeArea
+          _buildBottomInputBar(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMessagesArea(String shopName) {
+    if (_isLoading) {
+      return _buildMessagesSkeleton();
+    }
+
+    if (_errorMessage != null && _messages.isEmpty) {
+      return Center(
+        child: AppErrorState(
+          title: 'Không thể tải tin nhắn',
+          message: _errorMessage,
+          retryLabel: 'Thử lại',
+          onRetry: () => _activeThread != null ? _loadMessages(_activeThread!.id) : _initChat(),
+        ),
+      );
+    }
+
+    if (_messages.isEmpty) {
+      return Center(
+        child: AppEmptyState(
+          icon: Icons.chat_outlined,
+          title: 'Bắt đầu cuộc trò chuyện với $shopName',
+          message:
+              'Gửi câu hỏi về tiến độ đơn hàng, chiết khấu sỉ, quy cách bao bì hoặc thời gian sản xuất bánh.',
+        ),
+      );
+    }
+
+    return ListView.builder(
+      controller: _scrollController,
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppTokens.spaceLG,
+        vertical: AppTokens.spaceMD,
+      ),
+      itemCount: _messages.length,
+      itemBuilder: (context, index) {
+        final msg = _messages[index];
+        return _buildMessageBubble(msg);
+      },
+    );
+  }
+
+  Widget _buildContextualPromptChips() {
+    final currentPrompts = _contextualPrompts[_selectedCategory] ?? [];
+
+    return Container(
+      decoration: const BoxDecoration(
+        color: AppColors.surface,
+        border: Border(
+          top: BorderSide(color: AppColors.border, width: 0.8),
+        ),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Horizontal Context Categories (ShopeeFood tabs)
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppTokens.spaceMD,
+              vertical: AppTokens.spaceXS,
+            ),
+            child: Row(
+              children: _ChatContextCategory.values.map((cat) {
+                final isSelected = cat == _selectedCategory;
+                return Padding(
+                  padding: const EdgeInsets.only(right: AppTokens.spaceSM),
+                  child: InkWell(
+                    onTap: () => setState(() => _selectedCategory = cat),
+                    borderRadius: BorderRadius.circular(AppTokens.radiusPill),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppTokens.spaceMD,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: isSelected ? AppColors.primary : AppColors.surfaceHover,
+                        borderRadius: BorderRadius.circular(AppTokens.radiusPill),
+                        border: Border.all(
+                          color: isSelected ? AppColors.primary : AppColors.border,
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            cat.icon,
+                            size: 14,
+                            color: isSelected ? AppColors.textWhite : AppColors.textSecondary,
+                          ),
+                          const SizedBox(width: AppTokens.spaceXS),
+                          Text(
+                            cat.label,
+                            style: TextStyle(
+                              fontFamily: 'Roboto',
+                              fontSize: 11.5,
+                              fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                              color: isSelected ? AppColors.textWhite : AppColors.textSecondary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+              }).toList(),
+            ),
+          ),
+
+          // Contextual question chips with min tap target >= 44px
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.only(
+              left: AppTokens.spaceMD,
+              right: AppTokens.spaceMD,
+              bottom: AppTokens.spaceSM,
+            ),
+            child: Row(
+              children: currentPrompts.map((prompt) {
+                return Padding(
+                  padding: const EdgeInsets.only(right: AppTokens.spaceSM),
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(minHeight: AppTokens.minTapTarget),
+                    child: Center(
+                      child: ActionChip(
+                        avatar: const Icon(
+                          Icons.chat_bubble_outline,
+                          size: 14,
+                          color: AppColors.accent,
+                        ),
+                        label: Text(
+                          prompt,
+                          style: const TextStyle(
+                            fontFamily: 'Roboto',
+                            fontSize: 11.5,
+                            color: AppColors.primaryDark,
+                            fontWeight: FontWeight.w500,
                           ),
                         ),
-                      )
-                    : ListView.builder(
-                        controller: _scrollController,
-                        padding: const EdgeInsets.all(16),
-                        itemCount: _messages.length,
-                        itemBuilder: (context, index) {
-                          final msg = _messages[index];
-                          return _buildMessageBubble(msg);
-                        },
-                      ),
-          ),
-
-          // Quick prompt chips
-          Container(
-            color: AppColors.surface,
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
-                children: _quickPrompts.map((prompt) {
-                  return Padding(
-                    padding: const EdgeInsets.only(right: 8),
-                    child: ActionChip(
-                      label: Text(
-                        prompt,
-                        style: const TextStyle(fontSize: 11, color: AppColors.primaryDark),
-                      ),
-                      backgroundColor: AppColors.surfaceHover,
-                      side: const BorderSide(color: AppColors.border),
-                      onPressed: () => _sendMessage(prompt),
-                    ),
-                  );
-                }).toList(),
-              ),
-            ),
-          ),
-
-          // Bottom Input Bar
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            decoration: const BoxDecoration(
-              color: AppColors.surface,
-              border: Border(top: BorderSide(color: AppColors.border)),
-            ),
-            child: SafeArea(
-              child: Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      controller: _textController,
-                      decoration: InputDecoration(
-                        hintText: 'Nhập tin nhắn trao đổi với xưởng...',
-                        hintStyle: const TextStyle(fontSize: 13, color: AppColors.textMuted),
-                        filled: true,
-                        fillColor: AppColors.background,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(20),
-                          borderSide: const BorderSide(color: AppColors.border),
+                        backgroundColor: AppColors.accentGoldBg,
+                        side: BorderSide(
+                          color: AppColors.accent.withValues(alpha: 0.4),
+                          width: 0.8,
                         ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(20),
-                          borderSide: const BorderSide(color: AppColors.border),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppTokens.spaceSM,
+                          vertical: AppTokens.spaceSM,
                         ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(20),
-                          borderSide: const BorderSide(color: AppColors.primary),
-                        ),
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                        onPressed: _isSending ? null : () => _sendMessage(prompt),
                       ),
-                      textInputAction: TextInputAction.send,
-                      onSubmitted: (_) => _sendMessage(),
                     ),
                   ),
-                  const SizedBox(width: 8),
-                  IconButton(
-                    icon: _isSending
-                        ? const SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary),
-                          )
-                        : const Icon(Icons.send_rounded, color: AppColors.primary, size: 24),
-                    onPressed: _isSending ? null : () => _sendMessage(),
-                  ),
-                ],
-              ),
+                );
+              }).toList(),
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildBottomInputBar() {
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppTokens.spaceMD,
+        vertical: AppTokens.spaceSM,
+      ),
+      decoration: const BoxDecoration(
+        color: AppColors.surface,
+        border: Border(top: BorderSide(color: AppColors.border, width: 0.8)),
+        boxShadow: AppTokens.elevationSticky,
+      ),
+      child: SafeArea(
+        top: false,
+        child: Row(
+          children: [
+            Expanded(
+              child: TextField(
+                controller: _textController,
+                decoration: InputDecoration(
+                  hintText: 'Nhập tin nhắn trao đổi với xưởng...',
+                  hintStyle: const TextStyle(
+                    fontFamily: 'Roboto',
+                    fontSize: 12.5,
+                    color: AppColors.textMuted,
+                  ),
+                  filled: true,
+                  fillColor: AppColors.background,
+                  isDense: true,
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: AppTokens.spaceLG,
+                    vertical: AppTokens.spaceMD,
+                  ),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(AppTokens.radiusPill),
+                    borderSide: const BorderSide(color: AppColors.border),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(AppTokens.radiusPill),
+                    borderSide: const BorderSide(color: AppColors.border),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(AppTokens.radiusPill),
+                    borderSide: const BorderSide(color: AppColors.primary),
+                  ),
+                ),
+                textInputAction: TextInputAction.send,
+                onSubmitted: (_) => _sendMessage(),
+              ),
+            ),
+            const SizedBox(width: AppTokens.spaceSM),
+            SizedBox(
+              width: AppTokens.minTapTarget,
+              height: AppTokens.minTapTarget,
+              child: IconButton(
+                padding: EdgeInsets.zero,
+                icon: _isSending
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: AppColors.primary,
+                        ),
+                      )
+                    : const Icon(Icons.send_rounded, color: AppColors.primary, size: 24),
+                onPressed: _isSending ? null : () => _sendMessage(),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -538,31 +845,38 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     final timeStr = DateFormat('HH:mm').format(msg.createdAt);
 
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
+      padding: const EdgeInsets.symmetric(vertical: AppTokens.spaceXS),
       child: Row(
         mainAxisAlignment: isMe ? MainAxisAlignment.end : MainAxisAlignment.start,
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
           if (!isMe) ...[
-            CircleAvatar(
+            const CircleAvatar(
               radius: 14,
               backgroundColor: AppColors.accentGoldBg,
-              child: const Icon(Icons.storefront, size: 14, color: AppColors.accent),
+              child: Icon(Icons.storefront, size: 14, color: AppColors.accent),
             ),
-            const SizedBox(width: 6),
+            const SizedBox(width: AppTokens.spaceSM),
           ],
           Flexible(
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              constraints: BoxConstraints(
+                maxWidth: MediaQuery.of(context).size.width * 0.75,
+              ),
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppTokens.spaceMD,
+                vertical: AppTokens.spaceSM + 2,
+              ),
               decoration: BoxDecoration(
                 color: isMe ? AppColors.primary : AppColors.surface,
                 borderRadius: BorderRadius.only(
-                  topLeft: const Radius.circular(14),
-                  topRight: const Radius.circular(14),
-                  bottomLeft: Radius.circular(isMe ? 14 : 2),
-                  bottomRight: Radius.circular(isMe ? 2 : 14),
+                  topLeft: const Radius.circular(AppTokens.radiusCard),
+                  topRight: const Radius.circular(AppTokens.radiusCard),
+                  bottomLeft: Radius.circular(isMe ? AppTokens.radiusCard : 2),
+                  bottomRight: Radius.circular(isMe ? 2 : AppTokens.radiusCard),
                 ),
                 border: isMe ? null : Border.all(color: AppColors.border),
+                boxShadow: AppTokens.elevationSubtle,
               ),
               child: Column(
                 crossAxisAlignment: isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
@@ -570,15 +884,17 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                   Text(
                     msg.content,
                     style: TextStyle(
-                      fontSize: 13.5,
+                      fontFamily: 'Roboto',
+                      fontSize: 13,
                       color: isMe ? Colors.white : AppColors.textPrimary,
                       height: 1.35,
                     ),
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: AppTokens.spaceXS),
                   Text(
                     timeStr,
                     style: TextStyle(
+                      fontFamily: 'Roboto',
                       fontSize: 10,
                       color: isMe ? Colors.white70 : AppColors.textMuted,
                     ),
@@ -587,7 +903,52 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
               ),
             ),
           ),
-          if (isMe) const SizedBox(width: 4),
+          if (isMe) const SizedBox(width: AppTokens.spaceXS),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMessagesSkeleton() {
+    return AppSkeleton.shimmer(
+      child: ListView(
+        padding: const EdgeInsets.all(AppTokens.spaceLG),
+        children: [
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Container(
+              width: 220,
+              height: 52,
+              decoration: BoxDecoration(
+                color: AppColors.surface,
+                borderRadius: BorderRadius.circular(AppTokens.radiusCard),
+              ),
+            ),
+          ),
+          const SizedBox(height: AppTokens.spaceLG),
+          Align(
+            alignment: Alignment.centerRight,
+            child: Container(
+              width: 170,
+              height: 40,
+              decoration: BoxDecoration(
+                color: AppColors.surface,
+                borderRadius: BorderRadius.circular(AppTokens.radiusCard),
+              ),
+            ),
+          ),
+          const SizedBox(height: AppTokens.spaceLG),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Container(
+              width: 250,
+              height: 64,
+              decoration: BoxDecoration(
+                color: AppColors.surface,
+                borderRadius: BorderRadius.circular(AppTokens.radiusCard),
+              ),
+            ),
+          ),
         ],
       ),
     );

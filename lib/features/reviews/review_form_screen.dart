@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_tokens.dart';
 import '../../data/repositories/review_repository.dart';
 import '../../shared_widgets/common/app_header.dart';
 import '../../shared_widgets/common/custom_button.dart';
@@ -37,16 +38,16 @@ class _ReviewFormScreenState extends ConsumerState<ReviewFormScreen> {
     {'key': 'taste', 'label': 'Chất lượng bánh & Vị'},
     {'key': 'packaging', 'label': 'Quy cách hộp & Logo'},
     {'key': 'delivery', 'label': 'Đúng hẹn & Xe lạnh'},
-    {'key': 'contract', 'label': 'Hóa đơn VAT & HĐ'},
+    {'key': 'contract', 'label': 'Hóa đơn VAT & Hợp đồng'},
   ];
 
   static const List<String> _scoreLabels = [
     '',
-    'Cần cải thiện',
-    'Đạt yêu cầu',
-    'Khá tốt',
-    'Rất hài lòng',
-    'Xuất sắc tuyệt đối',
+    'Cần cải thiện (1/5)',
+    'Đạt yêu cầu (2/5)',
+    'Khá tốt (3/5)',
+    'Rất hài lòng (4/5)',
+    'Xuất sắc tuyệt đối (5/5)',
   ];
 
   @override
@@ -166,31 +167,32 @@ class _ReviewFormScreenState extends ConsumerState<ReviewFormScreen> {
         onBack: () => context.pop(),
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(AppTokens.spaceLG),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             // Shop Info Card
             Container(
-              padding: const EdgeInsets.all(14),
+              padding: const EdgeInsets.all(AppTokens.spaceMD),
               decoration: BoxDecoration(
                 color: AppColors.surface,
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(AppTokens.radiusCard),
                 border: Border.all(color: AppColors.border),
+                boxShadow: AppTokens.shadowSubtle,
               ),
               child: Row(
                 children: [
                   Container(
-                    width: 44,
-                    height: 44,
+                    width: 48,
+                    height: 48,
                     decoration: BoxDecoration(
                       color: AppColors.accentGoldBg,
-                      borderRadius: BorderRadius.circular(22),
+                      shape: BoxShape.circle,
                       border: Border.all(color: AppColors.accent),
                     ),
-                    child: const Icon(Icons.storefront, color: AppColors.accent, size: 22),
+                    child: const Icon(Icons.storefront, color: AppColors.accent, size: 24),
                   ),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: AppTokens.spaceMD),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -202,10 +204,12 @@ class _ReviewFormScreenState extends ConsumerState<ReviewFormScreen> {
                             fontWeight: FontWeight.bold,
                             color: AppColors.primaryDark,
                           ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                         const SizedBox(height: 2),
                         const Text(
-                          'Đơn hàng đã giao và ký nhận thành công',
+                          'Đơn hàng đã giao và ký nhận PoD thành công',
                           style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
                         ),
                       ],
@@ -214,15 +218,16 @@ class _ReviewFormScreenState extends ConsumerState<ReviewFormScreen> {
                 ],
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppTokens.spaceMD),
 
-            // 4 B2B Criteria Card
+            // 4 B2B Criteria Card (Lazada Review Benchmark layout: tiêu chí trên, 5 sao to ≥30px căn giữa)
             Container(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(AppTokens.spaceLG),
               decoration: BoxDecoration(
                 color: AppColors.surface,
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(AppTokens.radiusCard),
                 border: Border.all(color: AppColors.border),
+                boxShadow: AppTokens.shadowSubtle,
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -230,34 +235,38 @@ class _ReviewFormScreenState extends ConsumerState<ReviewFormScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Đánh giá 4 tiêu chí chất lượng',
-                            style: TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.bold,
-                              color: AppColors.primaryDark,
+                      const Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Đánh giá 4 tiêu chí chất lượng',
+                              style: TextStyle(
+                                fontSize: 13.5,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.primaryDark,
+                              ),
                             ),
-                          ),
-                          SizedBox(height: 2),
-                          Text(
-                            'Theo chuẩn nghiệm thu thu mua doanh nghiệp',
-                            style: TextStyle(fontSize: 11, color: AppColors.textSecondary),
-                          ),
-                        ],
+                            SizedBox(height: 2),
+                            Text(
+                              'Theo chuẩn nghiệm thu thu mua B2B',
+                              style: TextStyle(fontSize: 11, color: AppColors.textSecondary),
+                            ),
+                          ],
+                        ),
                       ),
+                      const SizedBox(width: AppTokens.spaceSM),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                         decoration: BoxDecoration(
                           color: AppColors.accentGoldBg,
-                          borderRadius: BorderRadius.circular(6),
+                          borderRadius: BorderRadius.circular(AppTokens.radiusDefault),
                           border: Border.all(color: AppColors.accent),
                         ),
                         child: Row(
+                          mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Icon(Icons.star, size: 14, color: AppColors.accent),
+                            const Icon(Icons.star, size: 16, color: AppColors.accent),
                             const SizedBox(width: 4),
                             Text(
                               '${_overallScore.toStringAsFixed(1)} / 5.0',
@@ -281,14 +290,14 @@ class _ReviewFormScreenState extends ConsumerState<ReviewFormScreen> {
 
                     return Padding(
                       padding: const EdgeInsets.symmetric(vertical: 8),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Expanded(
+                                child: Text(
                                   label,
                                   style: const TextStyle(
                                     fontSize: 13,
@@ -296,39 +305,54 @@ class _ReviewFormScreenState extends ConsumerState<ReviewFormScreen> {
                                     color: AppColors.textPrimary,
                                   ),
                                 ),
-                                const SizedBox(height: 2),
-                                Text(
+                              ),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: AppColors.surfaceHover,
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                child: Text(
                                   _scoreLabels[score],
                                   style: const TextStyle(
                                     fontSize: 11,
                                     color: AppColors.accent,
-                                    fontWeight: FontWeight.w500,
+                                    fontWeight: FontWeight.w600,
                                   ),
                                 ),
-                              ],
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 6),
+                          Center(
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: List.generate(5, (starIdx) {
+                                final starVal = starIdx + 1;
+                                final isFilled = starVal <= score;
+                                return InkWell(
+                                  onTap: () {
+                                    setState(() {
+                                      _scores[key] = starVal;
+                                    });
+                                  },
+                                  borderRadius: BorderRadius.circular(22),
+                                  child: SizedBox(
+                                    width: 48,
+                                    height: AppTokens.minTapTarget,
+                                    child: Center(
+                                      child: Icon(
+                                        isFilled ? Icons.star : Icons.star_border,
+                                        color: isFilled ? AppColors.accent : AppColors.border,
+                                        size: 30,
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              }),
                             ),
                           ),
-                          Row(
-                            children: List.generate(5, (starIdx) {
-                              final starVal = starIdx + 1;
-                              final isFilled = starVal <= score;
-                              return GestureDetector(
-                                onTap: () {
-                                  setState(() {
-                                    _scores[key] = starVal;
-                                  });
-                                },
-                                child: Padding(
-                                  padding: const EdgeInsets.symmetric(horizontal: 2),
-                                  child: Icon(
-                                    isFilled ? Icons.star : Icons.star_border,
-                                    color: isFilled ? AppColors.accent : AppColors.border,
-                                    size: 24,
-                                  ),
-                                ),
-                              );
-                            }),
-                          ),
+                          const Divider(height: 16, color: AppColors.border),
                         ],
                       ),
                     );
@@ -336,15 +360,16 @@ class _ReviewFormScreenState extends ConsumerState<ReviewFormScreen> {
                 ],
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppTokens.spaceMD),
 
             // Detailed Comment Card
             Container(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(AppTokens.spaceLG),
               decoration: BoxDecoration(
                 color: AppColors.surface,
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(AppTokens.radiusCard),
                 border: Border.all(color: AppColors.border),
+                boxShadow: AppTokens.shadowSubtle,
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -352,29 +377,29 @@ class _ReviewFormScreenState extends ConsumerState<ReviewFormScreen> {
                   const Text(
                     'Nhận xét chi tiết đợt giao nhận',
                     style: TextStyle(
-                      fontSize: 13,
+                      fontSize: 13.5,
                       fontWeight: FontWeight.bold,
                       color: AppColors.primaryDark,
                     ),
                   ),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: AppTokens.spaceSM),
                   TextField(
                     controller: _commentController,
                     maxLines: 4,
                     decoration: InputDecoration(
                       hintText:
-                          'Chia sẻ trải nghiệm về chất lượng bánh, quy cách hộp quà, tiến độ giao vận...',
+                          'Chia sẻ trải nghiệm về chất lượng bánh, quy cách hộp quà, tiến độ giao nhận PoD...',
                       hintStyle: const TextStyle(fontSize: 12.5, color: AppColors.textMuted),
                       border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
+                        borderRadius: BorderRadius.circular(AppTokens.radiusInput),
                         borderSide: const BorderSide(color: AppColors.border),
                       ),
                       enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
+                        borderRadius: BorderRadius.circular(AppTokens.radiusInput),
                         borderSide: const BorderSide(color: AppColors.border),
                       ),
                       focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
+                        borderRadius: BorderRadius.circular(AppTokens.radiusInput),
                         borderSide: const BorderSide(color: AppColors.primary),
                       ),
                       contentPadding: const EdgeInsets.all(12),
@@ -383,17 +408,18 @@ class _ReviewFormScreenState extends ConsumerState<ReviewFormScreen> {
                 ],
               ),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: AppTokens.spaceXL),
 
             // Submit Button
             CustomButton(
               title: _isLoading ? 'Đang gửi đánh giá...' : 'Gửi Đánh Giá Nghiệm Thu',
               loading: _isLoading,
               disabled: _isLoading,
+              size: ButtonSize.large,
               icon: const Icon(Icons.star, color: Colors.white, size: 18),
               onPress: _handleSubmit,
             ),
-            const SizedBox(height: 40),
+            const SizedBox(height: AppTokens.space3XL),
           ],
         ),
       ),

@@ -18,12 +18,20 @@ class AppTheme {
         surface: AppColors.surface,
         onSurface: AppColors.textPrimary,
       ),
+      textTheme: const TextTheme(
+        displayLarge: AppTokens.displayLg,
+        titleMedium: AppTokens.titleMd,
+        bodyMedium: AppTokens.bodyMd,
+        bodySmall: AppTokens.bodySm,
+        labelSmall: AppTokens.caption,
+      ),
       appBarTheme: const AppBarTheme(
         backgroundColor: AppColors.primary,
         foregroundColor: AppColors.textWhite,
         elevation: 0,
         centerTitle: true,
         titleTextStyle: TextStyle(
+          fontFamily: 'Roboto',
           fontSize: 18,
           fontWeight: FontWeight.w600,
           color: AppColors.textWhite,
@@ -33,28 +41,31 @@ class AppTheme {
         color: AppColors.surface,
         elevation: 0,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppTokens.lucianRadiusLg),
+          borderRadius: BorderRadius.circular(AppTokens.radiusCard),
           side: const BorderSide(color: AppColors.border, width: 1),
         ),
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: AppColors.surface,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: AppTokens.spaceLG,
+          vertical: AppTokens.spaceMD,
+        ),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppTokens.radiusDefault),
+          borderRadius: BorderRadius.circular(AppTokens.radiusInput),
           borderSide: const BorderSide(color: AppColors.border),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppTokens.radiusDefault),
+          borderRadius: BorderRadius.circular(AppTokens.radiusInput),
           borderSide: const BorderSide(color: AppColors.border),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppTokens.radiusDefault),
+          borderRadius: BorderRadius.circular(AppTokens.radiusInput),
           borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
         ),
         errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppTokens.radiusDefault),
+          borderRadius: BorderRadius.circular(AppTokens.radiusInput),
           borderSide: const BorderSide(color: AppColors.error),
         ),
         hintStyle: const TextStyle(color: AppColors.textMuted, fontSize: 14),
@@ -64,12 +75,36 @@ class AppTheme {
           backgroundColor: AppColors.primary,
           foregroundColor: AppColors.textWhite,
           elevation: 0,
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+          minimumSize: const Size(AppTokens.minTapTarget, AppTokens.minTapTarget),
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppTokens.spaceXL,
+            vertical: AppTokens.spaceMD,
+          ),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppTokens.radiusDefault),
+            borderRadius: BorderRadius.circular(AppTokens.radiusInput),
           ),
           textStyle: const TextStyle(
+            fontFamily: 'Roboto',
             fontSize: 15,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ),
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          foregroundColor: AppColors.primary,
+          minimumSize: const Size(AppTokens.minTapTarget, AppTokens.minTapTarget),
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppTokens.spaceLG,
+            vertical: AppTokens.spaceMD,
+          ),
+          side: const BorderSide(color: AppColors.primary, width: 1.2),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppTokens.radiusInput),
+          ),
+          textStyle: const TextStyle(
+            fontFamily: 'Roboto',
+            fontSize: 14,
             fontWeight: FontWeight.w600,
           ),
         ),

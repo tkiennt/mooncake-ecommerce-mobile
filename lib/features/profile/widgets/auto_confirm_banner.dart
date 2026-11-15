@@ -22,7 +22,7 @@ class AutoConfirmBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final formattedDate = DateFormat('HH:mm dd/MM/yyyy').format(deadline);
+    final formattedDate = DateFormat('HH:mm dd/MM/yyyy').format(deadline.toLocal());
     final hours = _hoursRemaining;
 
     return Container(

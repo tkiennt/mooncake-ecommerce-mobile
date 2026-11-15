@@ -175,46 +175,35 @@ class DeliveryDriverInfoCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          const Row(
             children: [
-              const Expanded(
-                child: Row(
-                  children: [
-                    Icon(Icons.local_shipping_outlined, color: AppColors.primary, size: 20),
-                    SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        'Thông Tin Vận Chuyển & Tài Xế',
-                        style: TextStyle(
-                          fontFamily: 'Roboto',
-                          fontWeight: FontWeight.bold,
-                          fontSize: 14,
-                          color: AppColors.textPrimary,
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              if (deliveryNumber != null && deliveryNumber!.isNotEmpty) ...[
-                const SizedBox(width: 8),
-                Flexible(
-                  child: Text(
-                    deliveryNumber!,
-                    style: const TextStyle(
-                      fontFamily: 'Roboto',
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.primary,
-                    ),
-                    overflow: TextOverflow.ellipsis,
+              Icon(Icons.local_shipping_outlined, color: AppColors.primary, size: 20),
+              SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Vận chuyển & tài xế',
+                  style: TextStyle(
+                    fontFamily: 'Roboto',
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                    color: AppColors.textPrimary,
                   ),
                 ),
-              ],
+              ),
             ],
           ),
+          if (deliveryNumber != null && deliveryNumber!.isNotEmpty) ...[
+            const SizedBox(height: 2),
+            Text(
+              'Mã chuyến giao: $deliveryNumber',
+              style: const TextStyle(
+                fontFamily: 'Roboto',
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: AppColors.primary,
+              ),
+            ),
+          ],
           const SizedBox(height: AppTokens.spaceMD),
           if (hasDriver) ...[
             Container(
@@ -262,7 +251,7 @@ class DeliveryDriverInfoCard extends StatelessWidget {
                   ],
                   if (driverClaimedAt != null)
                     Text(
-                      '• Thời điểm nhận: ${DateFormat('HH:mm dd/MM/yyyy').format(driverClaimedAt!)}',
+                      '• Thời điểm nhận: ${DateFormat('HH:mm dd/MM/yyyy').format(driverClaimedAt!.toLocal())}',
                       style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
                     ),
                 ],

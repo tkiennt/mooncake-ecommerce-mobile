@@ -10,7 +10,7 @@ class OrderDisputeRebuttalCard extends StatelessWidget {
   const OrderDisputeRebuttalCard({super.key, required this.dispute});
 
   String _formatDateTime(DateTime dt) =>
-      DateFormat('HH:mm dd/MM/yyyy').format(dt);
+      DateFormat('HH:mm dd/MM/yyyy').format(dt.toLocal());
 
   @override
   Widget build(BuildContext context) {

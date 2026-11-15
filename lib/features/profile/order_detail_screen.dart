@@ -306,11 +306,16 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
       currentStep = 2;
     } else if (['delivered', 'completed'].contains(status)) {
       currentStep = 3;
+    } else if (status == 'disputed') {
+      currentStep = 2;
     }
+    final isDisputed = status == 'disputed';
 
     MilestoneStepStatus getStatus(int stepIndex) {
       if (stepIndex < currentStep) return MilestoneStepStatus.completed;
-      if (stepIndex == currentStep) return MilestoneStepStatus.current;
+      if (stepIndex == currentStep) {
+        return isDisputed ? MilestoneStepStatus.failed : MilestoneStepStatus.current;
+      }
       return MilestoneStepStatus.upcoming;
     }
 
@@ -329,7 +334,7 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
       ),
       MilestoneItem(
         title: 'Giao hàng',
-        subtitle: 'Xe lạnh 18-22°C',
+        subtitle: isDisputed ? 'Đang khiếu nại' : 'Xe lạnh 18-22°C',
         status: getStatus(2),
         icon: Icons.local_shipping,
       ),
@@ -552,7 +557,7 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            'Ngày tạo: ${DateFormat('dd/MM/yyyy HH:mm').format(_order.createdAt)}',
+                            'Ngày tạo: ${DateFormat('dd/MM/yyyy HH:mm').format(_order.createdAt.toLocal())}',
                             style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
                           ),
                         ],

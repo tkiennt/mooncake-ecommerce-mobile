@@ -41,6 +41,15 @@ import 'features/wishlist/wishlist_screen.dart';
 import 'features/shop/public_shop_screen.dart';
 import 'features/chat/chat_screen.dart';
 
+import 'features/driver/storage/driver_storage.dart';
+import 'features/driver/screens/driver_code_entry_screen.dart';
+import 'features/driver/screens/driver_trips_list_screen.dart';
+import 'features/driver/screens/driver_claim_screen.dart';
+import 'features/driver/screens/driver_trip_detail_screen.dart';
+import 'features/driver/screens/driver_proof_capture_screen.dart';
+import 'features/driver/screens/driver_qr_scanner_screen.dart';
+
+import 'data/models/driver_trip.dart';
 import 'data/models/product.dart';
 import 'data/models/order.dart';
 import 'data/models/rfq.dart';
@@ -56,6 +65,18 @@ final routerProvider = Provider<GoRouter>((ref) {
   return GoRouter(
     navigatorKey: _rootNavigatorKey,
     initialLocation: '/',
+    redirect: (context, state) async {
+      if (state.matchedLocation == '/') {
+        final isDriver = await DriverStorage.isDriverModeActive();
+        if (isDriver) {
+          final saved = await DriverStorage.getSavedTrips();
+          if (saved.isNotEmpty) {
+            return '/driver/trips';
+          }
+        }
+      }
+      return null;
+    },
     routes: [
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) {
@@ -156,6 +177,71 @@ final routerProvider = Provider<GoRouter>((ref) {
               state.uri.queryParameters['phone'] ??
               state.uri.queryParameters['phoneNumber'];
           return ResetPasswordScreen(phoneNumber: phone);
+        },
+      ),
+
+      // Driver Flow Routes (No auth token required)
+      GoRoute(
+        path: '/driver/entry',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) {
+          final code = state.uri.queryParameters['code'] ??
+              state.uri.queryParameters['shareCode'];
+          final token = state.uri.queryParameters['token'];
+          return DriverCodeEntryScreen(
+            initialCode: code,
+            initialToken: token,
+          );
+        },
+      ),
+      GoRoute(
+        path: '/driver/trips',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) => const DriverTripsListScreen(),
+      ),
+      GoRoute(
+        path: '/driver/claim',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) {
+          final trip =
+              state.extra is DriverTrip ? state.extra as DriverTrip : null;
+          return DriverClaimScreen(trip: trip);
+        },
+      ),
+      GoRoute(
+        path: '/driver/detail',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) {
+          final trip =
+              state.extra is DriverTrip ? state.extra as DriverTrip : null;
+          return DriverTripDetailScreen(trip: trip);
+        },
+      ),
+      GoRoute(
+        path: '/driver/proof',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) {
+          final trip =
+              state.extra is DriverTrip ? state.extra as DriverTrip : null;
+          return DriverProofCaptureScreen(trip: trip);
+        },
+      ),
+      GoRoute(
+        path: '/driver/qr-scanner',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) => const DriverQrScannerScreen(),
+      ),
+      GoRoute(
+        path: '/giao-hang-tai-xe',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) {
+          final token = state.uri.queryParameters['token'];
+          final code = state.uri.queryParameters['code'] ??
+              state.uri.queryParameters['shareCode'];
+          return DriverCodeEntryScreen(
+            initialCode: code,
+            initialToken: token,
+          );
         },
       ),
 

@@ -38,6 +38,19 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>Ứng dụng cần quyền sử dụng máy ảnh để chụp ảnh biên bản giao hàng PoD và quét mã QR chuyến giao.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Ứng dụng cần quyền truy cập thư viện ảnh để đính kèm hình ảnh biên bản giao nhận hàng.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Ứng dụng cần định vị để ghi nhận tọa độ GPS tại điểm bàn giao hàng hóa.</string>
+	<key>LSApplicationQueriesSchemes</key>
+	<array>
+		<string>tel</string>
+		<string>https</string>
+		<string>http</string>
+		<string>geo</string>
+	</array>
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>

@@ -9,7 +9,7 @@ class ApiClient {
   ApiClient() {
     dio = Dio(
       BaseOptions(
-        baseURL: ApiEndpoints.baseUrl,
+        baseUrl: ApiEndpoints.baseUrl,
         connectTimeout: const Duration(seconds: 15),
         receiveTimeout: const Duration(seconds: 15),
         headers: {
@@ -34,7 +34,7 @@ class ApiClient {
             final refreshToken = await _storage.getRefreshToken();
             if (refreshToken != null && refreshToken.isNotEmpty) {
               try {
-                final refreshDio = Dio(BaseOptions(baseURL: ApiEndpoints.baseUrl));
+                final refreshDio = Dio(BaseOptions(baseUrl: ApiEndpoints.baseUrl));
                 final response = await refreshDio.post(
                   ApiEndpoints.refreshToken,
                   data: {'refreshToken': refreshToken},

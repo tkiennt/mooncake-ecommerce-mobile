@@ -122,7 +122,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
   Future<void> logout() async {
     await _storage.clearAll();
-    state = const AuthState(clearUser: true, isLoading: false);
+    state = const AuthState(isLoading: false);
   }
 }
 

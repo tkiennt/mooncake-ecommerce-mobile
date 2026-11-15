@@ -38,7 +38,7 @@ class SignalRService {
               },
             ),
           )
-          .withAutomaticReconnect(reconnectIntervals: [0, 2000, 5000, 10000])
+          .withAutomaticReconnect(retryDelays: [0, 2000, 5000, 10000])
           .build();
 
       _connection?.on('ReceiveNotification', (arguments) {

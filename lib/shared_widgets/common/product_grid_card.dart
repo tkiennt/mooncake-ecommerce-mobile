@@ -160,7 +160,7 @@ class ProductGridCard extends StatelessWidget {
                   children: [
                     if (product.rating >= 4.8)
                       Padding(
-                        padding: const EdgeInsets.bottom: 4.0,
+                        padding: const EdgeInsets.only(bottom: 4.0),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [

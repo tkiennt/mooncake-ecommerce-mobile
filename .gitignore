@@ -29,6 +29,31 @@ migrate_working_dir/
 .pub-cache/
 .pub/
 /build/
+.metadata
+
+# Android related
+**/android/**/gradle-wrapper.jar
+**/android/.gradle
+**/android/captures/
+**/android/gradlew
+**/android/gradlew.bat
+**/android/local.properties
+**/android/**/GeneratedPluginRegistrant.java
+
+# iOS/macOS related
+**/ios/**/*.mode1v3
+**/ios/**/*.mode2v3
+**/ios/**/*.moved-aside
+**/ios/**/*.pbxuser
+**/ios/**/*.perspectivev3
+**/ios/**/DerivedData/
+**/ios/**/openradar/
+**/ios/**/Pods/
+**/ios/**/Profile/
+**/ios/**/project.xcworkspace/xcuserdata/
+**/ios/**/xcuserdata/
+**/ios/Flutter/
+**/ios/Runner/GeneratedPluginRegistrant.*
 
 # Node & Expo legacy
 node_modules/

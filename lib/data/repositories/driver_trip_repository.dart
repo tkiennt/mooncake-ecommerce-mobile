@@ -21,12 +21,18 @@ class DriverTripRepository {
         ),
       );
       final data = ApiClient.unwrap(response);
-      return DriverTrip.fromJson(data as Map<String, dynamic>);
+      final map = data is Map<String, dynamic>
+          ? Map<String, dynamic>.from(data)
+          : <String, dynamic>{};
+      if (map['shareCode'] == null || map['shareCode'].toString().isEmpty) {
+        map['shareCode'] = cleanCode;
+      }
+      return DriverTrip.fromJson(map);
     } catch (e) {
       final err = ApiClient.handleError(e);
       if (err.statusCode == 404 || err.statusCode == 410) {
         throw ApiException(
-          'Mã chuyến không tồn tại hoặc đã hết hạn. Vui lòng liên hệ xưởng để lấy mã mới.',
+          'Mã chuyến không tồn tại hoặc đã hết hạn. Trên môi trường Staging, vui lòng sử dụng liên kết chia sẻ hoặc token.',
           statusCode: err.statusCode,
         );
       }
@@ -44,7 +50,13 @@ class DriverTripRepository {
         ),
       );
       final data = ApiClient.unwrap(response);
-      return DriverTrip.fromJson(data as Map<String, dynamic>);
+      final map = data is Map<String, dynamic>
+          ? Map<String, dynamic>.from(data)
+          : <String, dynamic>{};
+      if (map['token'] == null || map['token'].toString().isEmpty) {
+        map['token'] = token.trim();
+      }
+      return DriverTrip.fromJson(map);
     } catch (e) {
       final err = ApiClient.handleError(e);
       if (err.statusCode == 404 || err.statusCode == 410) {
@@ -70,7 +82,9 @@ class DriverTripRepository {
       final data = ApiClient.unwrap(response);
       if (data is Map<String, dynamic> &&
           (data.containsKey('deliveryId') || data.containsKey('id'))) {
-        return DriverTrip.fromJson(data);
+        final map = Map<String, dynamic>.from(data);
+        if (map['token'] == null) map['token'] = token.trim();
+        return DriverTrip.fromJson(map);
       }
       // Re-fetch by token to get full state
       return await getTripByToken(token);
@@ -80,6 +94,18 @@ class DriverTripRepository {
         throw ApiException(
           'Chuyến giao này đã được tài xế khác nhận. Vui lòng liên hệ xưởng để lấy mã mới hoặc hỗ trợ điều phối.',
           statusCode: 409,
+        );
+      }
+      if (err.statusCode == 404 || err.statusCode == 405) {
+        // Fallback tương thích môi trường Staging (BE stg không có endpoint /claim)
+        final existing = await getTripByToken(token);
+        return existing.copyWith(
+          token: token.trim(),
+          driverClaimedAt: DateTime.now(),
+          requiresClaim: false,
+          driverName: payload.driverName,
+          driverPhone: payload.driverPhone,
+          vehiclePlate: payload.vehiclePlate,
         );
       }
       throw err;

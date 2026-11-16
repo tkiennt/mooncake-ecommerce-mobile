@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mooncake_mobile/core/constants/api_endpoints.dart';
+import 'package:mooncake_mobile/core/constants/app_config.dart';
 import 'package:mooncake_mobile/data/models/driver_trip.dart';
 
 void main() {
@@ -11,6 +12,11 @@ void main() {
     test('SignalR hubs evaluate correctly with api/v1 base URL', () {
       expect(ApiEndpoints.hubUrl, contains('/api/v1/hubs/notifications'));
       expect(ApiEndpoints.chatHubUrl, contains('/api/v1/hubs/chat'));
+    });
+
+    test('Staging feature flags default to false to protect un-implemented BE APIs', () {
+      expect(AppConfig.enableDriverMode, isFalse);
+      expect(AppConfig.enablePublicShopProfile, isFalse);
     });
 
     test('Staging PoD public endpoints format accurately', () {

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import '../../core/constants/app_config.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_tokens.dart';
 import '../../data/models/product.dart';
@@ -355,34 +356,36 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
                     ),
                   ),
                   const SizedBox(width: 8),
-                  ConstrainedBox(
-                    constraints: const BoxConstraints(minHeight: AppTokens.minTapTarget),
-                    child: OutlinedButton.icon(
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                        minimumSize: const Size(0, AppTokens.minTapTarget),
-                        side: const BorderSide(color: AppColors.primary),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(AppTokens.radiusDefault),
+                  if (AppConfig.enablePublicShopProfile) ...[
+                    ConstrainedBox(
+                      constraints: const BoxConstraints(minHeight: AppTokens.minTapTarget),
+                      child: OutlinedButton.icon(
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                          minimumSize: const Size(0, AppTokens.minTapTarget),
+                          side: const BorderSide(color: AppColors.primary),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(AppTokens.radiusDefault),
+                          ),
                         ),
-                      ),
-                      icon: const Icon(Icons.store, size: 15, color: AppColors.primary),
-                      label: const Text(
-                        'Xem xưởng',
-                        style: TextStyle(
-                          fontFamily: 'Roboto',
-                          fontSize: 12,
-                          color: AppColors.primary,
-                          fontWeight: FontWeight.bold,
+                        icon: const Icon(Icons.store, size: 15, color: AppColors.primary),
+                        label: const Text(
+                          'Xem xưởng',
+                          style: TextStyle(
+                            fontFamily: 'Roboto',
+                            fontSize: 12,
+                            color: AppColors.primary,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
+                        onPressed: () {
+                          final slug = p.shopSlug ?? (p.shopId != null && p.shopId!.isNotEmpty ? p.shopId! : 'nguyet-pho');
+                          context.push('/shop/$slug');
+                        },
                       ),
-                      onPressed: () {
-                        final slug = p.shopSlug ?? (p.shopId != null && p.shopId!.isNotEmpty ? p.shopId! : 'nguyet-pho');
-                        context.push('/shop/$slug');
-                      },
                     ),
-                  ),
-                  const SizedBox(width: 6),
+                    const SizedBox(width: 6),
+                  ],
                   ConstrainedBox(
                     constraints: const BoxConstraints(
                       minWidth: AppTokens.minTapTarget,

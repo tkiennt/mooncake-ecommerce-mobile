@@ -438,8 +438,8 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
                   ),
                 ),
 
-              // Auto Confirm 72h SLA Banner (D23)
-              if (_order.isAutoConfirmActive || _order.autoConfirmAt != null) ...[
+              // Auto Confirm 72h SLA Banner (D23 - Chỉ hiển thị khi BE trả thời hạn tự động xác nhận)
+              if (_order.autoConfirmAt != null && _order.isAutoConfirmActive) ...[
                 AutoConfirmBanner(
                   deadline: _order.autoConfirmAt!,
                   orderCode: _order.orderCode,
@@ -672,8 +672,8 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
                 const SizedBox(height: AppTokens.spaceLG),
               ],
 
-              // Driver Info Card (D33)
-              if (_delivery != null) ...[
+              // Driver Info Card (D33 - Chỉ hiển thị khi có dữ liệu tài xế từ BE)
+              if (_delivery != null && _delivery!.hasDriverClaimed) ...[
                 DeliveryDriverInfoCard(
                   driverName: _delivery!.driverName,
                   driverPhone: _delivery!.driverPhone,

@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import 'shared_widgets/common/bottom_tab_bar.dart';
 import 'shared_widgets/common/app_header.dart';
+import 'core/constants/app_config.dart';
 import 'core/theme/app_colors.dart';
 import 'providers/cart_provider.dart';
 
@@ -67,11 +68,13 @@ final routerProvider = Provider<GoRouter>((ref) {
     initialLocation: '/',
     redirect: (context, state) async {
       if (state.matchedLocation == '/') {
-        final isDriver = await DriverStorage.isDriverModeActive();
-        if (isDriver) {
-          final saved = await DriverStorage.getSavedTrips();
-          if (saved.isNotEmpty) {
-            return '/driver/trips';
+        if (AppConfig.enableDriverMode) {
+          final isDriver = await DriverStorage.isDriverModeActive();
+          if (isDriver) {
+            final saved = await DriverStorage.getSavedTrips();
+            if (saved.isNotEmpty) {
+              return '/driver/trips';
+            }
           }
         }
       }

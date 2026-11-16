@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../core/constants/app_config.dart';
 import '../../core/network/api_client.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_tokens.dart';
@@ -417,58 +418,60 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               ),
             ),
           ),
-          const SizedBox(height: AppTokens.spaceLG),
+          if (AppConfig.enableDriverMode) ...[
+            const SizedBox(height: AppTokens.spaceLG),
 
-          // Divider
-          Row(
-            children: [
-              const Expanded(child: Divider()),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: AppTokens.spaceMD),
-                child: Text(
-                  'HOẶC',
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.textMuted.withValues(alpha: 0.8),
+            // Divider
+            Row(
+              children: [
+                const Expanded(child: Divider()),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: AppTokens.spaceMD),
+                  child: Text(
+                    'HOẶC',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.textMuted.withValues(alpha: 0.8),
+                    ),
                   ),
                 ),
-              ),
-              const Expanded(child: Divider()),
-            ],
-          ),
-          const SizedBox(height: AppTokens.spaceLG),
+                const Expanded(child: Divider()),
+              ],
+            ),
+            const SizedBox(height: AppTokens.spaceLG),
 
-          // Nút phụ: Tôi là tài xế – nhập mã chuyến
-          OutlinedButton.icon(
-            onPressed: () async {
-              final trips = await DriverStorage.getSavedTrips();
-              if (context.mounted) {
-                if (trips.isNotEmpty) {
-                  context.push('/driver/trips');
-                } else {
-                  context.push('/driver/entry');
+            // Nút phụ: Tôi là tài xế – nhập mã chuyến
+            OutlinedButton.icon(
+              onPressed: () async {
+                final trips = await DriverStorage.getSavedTrips();
+                if (context.mounted) {
+                  if (trips.isNotEmpty) {
+                    context.push('/driver/trips');
+                  } else {
+                    context.push('/driver/entry');
+                  }
                 }
-              }
-            },
-            style: OutlinedButton.styleFrom(
-              minimumSize: const Size.fromHeight(50),
-              side: const BorderSide(color: AppColors.accent, width: 1.2),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(AppTokens.radiusDefault),
+              },
+              style: OutlinedButton.styleFrom(
+                minimumSize: const Size.fromHeight(50),
+                side: const BorderSide(color: AppColors.accent, width: 1.2),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(AppTokens.radiusDefault),
+                ),
+                backgroundColor: AppColors.accentGoldBg,
               ),
-              backgroundColor: AppColors.accentGoldBg,
-            ),
-            icon: const Icon(Icons.local_shipping_outlined, color: AppColors.accent),
-            label: const Text(
-              'Tôi là tài xế – nhập mã chuyến',
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
-                color: AppColors.accent,
+              icon: const Icon(Icons.local_shipping_outlined, color: AppColors.accent),
+              label: const Text(
+                'Tôi là tài xế – nhập mã chuyến',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.accent,
+                ),
               ),
             ),
-          ),
+          ],
         ],
       ),
     );

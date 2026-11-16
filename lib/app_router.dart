@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -36,7 +35,6 @@ import 'features/ai/ai_assistant_screen.dart';
 import 'features/notification/notification_screen.dart';
 import 'features/notification/notification_settings_screen.dart';
 import 'features/dev/ui_catalog_screen.dart';
-import 'features/dev/dev_mode_sheet.dart';
 
 import 'features/reviews/review_form_screen.dart';
 import 'features/wishlist/wishlist_screen.dart';
@@ -83,17 +81,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) {
           return Scaffold(
-            body: Stack(
-              children: [
-                navigationShell,
-                if (kDebugMode)
-                  const Positioned(
-                    right: 16,
-                    bottom: 16,
-                    child: DevModeFloatingTrigger(),
-                  ),
-              ],
-            ),
+            body: navigationShell,
             bottomNavigationBar: BottomTabBar(
               currentIndex: navigationShell.currentIndex,
               cartBadgeCount: cartTotals.totalItems,
@@ -520,16 +508,6 @@ final routerProvider = Provider<GoRouter>((ref) {
         parentNavigatorKey: _rootNavigatorKey,
         builder: (context, state) => const UiCatalogScreen(),
       ),
-
-      // Dev Mode Toolbar Sheet
-      if (kDebugMode)
-        GoRoute(
-          path: '/dev-sheet',
-          parentNavigatorKey: _rootNavigatorKey,
-          builder: (context, state) => const Scaffold(
-            body: SafeArea(child: DevModeSheet()),
-          ),
-        ),
     ],
   );
 });

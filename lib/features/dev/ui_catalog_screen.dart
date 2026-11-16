@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_tokens.dart';
@@ -22,7 +21,6 @@ import '../../shared_widgets/lucian/b2b_price_calculator.dart';
 import '../../shared_widgets/lucian/review_filter_stars.dart';
 import '../../shared_widgets/antd/antd_steps.dart';
 import '../../shared_widgets/antd/antd_otp_input.dart';
-import 'dev_mode_sheet.dart';
 
 class UiCatalogScreen extends StatefulWidget {
   const UiCatalogScreen({super.key});
@@ -65,38 +63,6 @@ class _UiCatalogScreenState extends State<UiCatalogScreen> {
 
   @override
   Widget build(BuildContext context) {
-    if (!kDebugMode) {
-      return Scaffold(
-        appBar: const AppHeader(
-          title: 'UI Showcase',
-          showBack: true,
-        ),
-        body: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Icon(Icons.lock_outline, size: 48, color: AppColors.textMuted),
-                const SizedBox(height: 12),
-                const Text(
-                  'Chế độ xem UI Catalog chỉ khả dụng trong môi trường Debug (kDebugMode).',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 14, color: AppColors.textSecondary),
-                ),
-                const SizedBox(height: 16),
-                CustomButton(
-                  title: 'Quay lại',
-                  size: ButtonSize.small,
-                  onPress: () => Navigator.of(context).pop(),
-                ),
-              ],
-            ),
-          ),
-        ),
-      );
-    }
-
     return Scaffold(
       appBar: const AppHeader(
         title: 'UI Showcase · Shared Widgets',
@@ -117,10 +83,10 @@ class _UiCatalogScreenState extends State<UiCatalogScreen> {
                   color: AppColors.primaryLight.withValues(alpha: 0.3),
                 ),
               ),
-              child: Column(
+              child: const Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
+                  Text(
                     'Hệ Thống Component & Token B2B Hoàng Gia',
                     style: TextStyle(
                       fontFamily: 'Roboto',
@@ -129,8 +95,8 @@ class _UiCatalogScreenState extends State<UiCatalogScreen> {
                       color: AppColors.primary,
                     ),
                   ),
-                  const SizedBox(height: 6),
-                  const Text(
+                  SizedBox(height: 6),
+                  Text(
                     'Bộ 10 widget dùng chung chuẩn hóa theo nhận diện Nguyệt Phố: Đỏ son (#8C1524), Vàng Gold (#D48806) và Nền giấy lụa ngà (#FDFBF7).',
                     style: TextStyle(
                       fontFamily: 'Roboto',
@@ -138,13 +104,6 @@ class _UiCatalogScreenState extends State<UiCatalogScreen> {
                       color: AppColors.textSecondary,
                       height: 1.4,
                     ),
-                  ),
-                  const SizedBox(height: 12),
-                  CustomButton(
-                    title: 'Mở Thanh Công Cụ Dev Mode',
-                    icon: const Icon(Icons.developer_mode, size: 16, color: Colors.white),
-                    size: ButtonSize.small,
-                    onPress: () => showDevModeSheet(context),
                   ),
                 ],
               ),

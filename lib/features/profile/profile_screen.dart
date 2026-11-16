@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -437,15 +436,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       subtitle: 'Nhận thông báo đơn hàng và báo giá',
                       onTap: () => context.push('/notification-settings'),
                     ),
-                    if (kDebugMode) ...[
-                      const Divider(height: 1, indent: 52, color: AppColors.border),
-                      _MenuItem(
-                        icon: Icons.widgets_outlined,
-                        title: 'UI Showcase AntD & Lucian',
-                        subtitle: 'Kho component thiết kế Hoàng Gia (Dev Only)',
-                        onTap: () => context.push('/ui-catalog'),
-                      ),
-                    ],
                   ],
                 ),
               ),

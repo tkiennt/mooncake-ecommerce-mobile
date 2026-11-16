@@ -253,7 +253,7 @@ class HomeScreen extends ConsumerWidget {
   Widget _buildShortcuts(BuildContext context) {
     final shortcuts = [
       {'label': 'Danh mục', 'icon': Icons.grid_view_outlined, 'route': '/search'},
-      {'label': 'Báo giá RFQ', 'icon': Icons.description_outlined, 'route': '/create-rfq'},
+      {'label': 'Nhận báo giá', 'icon': Icons.description_outlined, 'route': '/create-rfq'},
       {'label': 'Tư vấn quà', 'icon': Icons.chat_bubble_outline, 'route': '/ai-assistant'},
       {'label': 'Hợp đồng', 'icon': Icons.assignment_outlined, 'route': '/contracts'},
       {'label': 'Giao hàng', 'icon': Icons.local_shipping_outlined, 'route': '/delivery-pod'},
@@ -320,7 +320,7 @@ class HomeScreen extends ConsumerWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               AppSectionHeader(
-                title: 'Danh Mục Nổi Bật',
+                title: 'Danh mục nổi bật',
                 actionLabel: 'Tất cả',
                 onAction: () => context.push('/search'),
               ),
@@ -378,8 +378,8 @@ class HomeScreen extends ConsumerWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         AppSectionHeader(
-          title: 'Set Quà Doanh Nghiệp VIP',
-          subtitle: 'Khắc logo laser & thiệp tri ân thượng hạng',
+          title: 'Hộp quà doanh nghiệp',
+          subtitle: 'In logo riêng & thiệp tri ân trang trọng',
           actionLabel: 'Xem thêm',
           onAction: () => context.push('/search'),
         ),
@@ -682,7 +682,7 @@ class HomeScreen extends ConsumerWidget {
                 ),
                 const SizedBox(height: 4),
                 const Text(
-                  'Quà Doanh Nghiệp',
+                  'Quà doanh nghiệp',
                   style: TextStyle(
                     fontFamily: 'Roboto',
                     color: AppColors.textWhite,
@@ -759,7 +759,7 @@ class HomeScreen extends ConsumerWidget {
                   borderRadius: BorderRadius.circular(AppTokens.radiusDefault),
                 ),
               ),
-              child: const Text('Tạo RFQ ngay', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+              child: const Text('Nhận báo giá ngay', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
             ),
           ),
         ],

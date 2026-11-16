@@ -67,7 +67,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Hồ sơ doanh nghiệp đã được cập nhật thành công!'),
+          content: Text('Cập nhật thông tin thành công!'),
           backgroundColor: AppColors.success,
         ),
       );
@@ -80,7 +80,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       });
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(_errorMessage ?? 'Không thể lưu hồ sơ. Vui lòng thử lại.'),
+          content: Text(_errorMessage ?? 'Chưa lưu được thông tin, bạn thử lại sau nhé.'),
           backgroundColor: AppColors.error,
         ),
       );
@@ -90,7 +90,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: const AppHeader(title: 'Chỉnh Sửa Hồ Sơ', showBack: true),
+      appBar: const AppHeader(title: 'Chỉnh sửa thông tin', showBack: true),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(AppTokens.spaceLG),
         child: Form(
@@ -134,13 +134,13 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                     TextFormField(
                       controller: _nameController,
                       decoration: const InputDecoration(
-                        labelText: 'Họ và tên người đại diện *',
+                        labelText: 'Họ và tên *',
                         prefixIcon: Icon(Icons.person_outline, size: 20, color: AppColors.primary),
                         contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 14),
                       ),
                       validator: (val) {
                         if (val == null || val.trim().isEmpty) {
-                          return 'Vui lòng nhập họ và tên';
+                          return 'Bạn vui lòng nhập họ và tên';
                         }
                         return null;
                       },
@@ -150,16 +150,16 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                       controller: _phoneController,
                       keyboardType: TextInputType.phone,
                       decoration: const InputDecoration(
-                        labelText: 'Số điện thoại liên hệ *',
+                        labelText: 'Số điện thoại *',
                         prefixIcon: Icon(Icons.phone_outlined, size: 20, color: AppColors.primary),
                         contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 14),
                       ),
                       validator: (val) {
                         if (val == null || val.trim().isEmpty) {
-                          return 'Vui lòng nhập số điện thoại';
+                          return 'Bạn vui lòng nhập số điện thoại';
                         }
                         if (val.trim().length < 9) {
-                          return 'Số điện thoại không hợp lệ';
+                          return 'Số điện thoại chưa đúng định dạng';
                         }
                         return null;
                       },
@@ -168,7 +168,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                     TextFormField(
                       controller: _companyController,
                       decoration: const InputDecoration(
-                        labelText: 'Tên công ty / Doanh nghiệp',
+                        labelText: 'Tên công ty / Đơn vị',
                         prefixIcon: Icon(Icons.business_outlined, size: 20, color: AppColors.textSecondary),
                         contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 14),
                       ),
@@ -178,7 +178,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                       controller: _emailController,
                       readOnly: true,
                       decoration: const InputDecoration(
-                        labelText: 'Email tài khoản (chỉ đọc)',
+                        labelText: 'Email tài khoản',
                         prefixIcon: Icon(Icons.email_outlined, size: 20, color: AppColors.textMuted),
                         filled: true,
                         fillColor: AppColors.surfaceHover,
@@ -187,7 +187,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                     ),
                     const SizedBox(height: AppTokens.space2XL),
                     CustomButton(
-                      title: _isSaving ? 'Đang lưu thông tin...' : 'Lưu thay đổi',
+                      title: _isSaving ? 'Đang lưu...' : 'Lưu thay đổi',
                       size: ButtonSize.large,
                       width: double.infinity,
                       loading: _isSaving,

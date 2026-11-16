@@ -104,14 +104,14 @@ class NotificationScreen extends ConsumerWidget {
       return Scaffold(
         backgroundColor: AppColors.background,
         appBar: const AppHeader(
-          title: 'Thông Báo',
+          title: 'Thông báo',
           showBack: true,
         ),
         body: SafeArea(
           child: AppEmptyState(
             icon: Icons.lock_outline,
             title: 'Đăng nhập để xem thông báo',
-            message: 'Vui lòng đăng nhập để nhận cập nhật tiến độ đơn hàng, báo giá xưởng và hợp đồng mua bán B2B.',
+            message: 'Bạn hãy đăng nhập để nhận cập nhật tiến độ đơn hàng, báo giá từ xưởng và hợp đồng nhé.',
             actionLabel: 'Đăng nhập ngay',
             onAction: () => context.push('/login'),
           ),
@@ -125,7 +125,7 @@ class NotificationScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppHeader(
-        title: 'Thông Báo',
+        title: 'Thông báo',
         showBack: true,
         rightIcon: unreadCount > 0 ? Icons.done_all : null,
         rightLabel: unreadCount > 0 ? 'Đọc tất cả' : null,
@@ -134,7 +134,7 @@ class NotificationScreen extends ConsumerWidget {
                 ref.read(notificationProvider.notifier).markAllAsRead();
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
-                    content: Text('Đã đánh dấu tất cả thông báo là đã đọc.'),
+                    content: Text('Đã đọc tất cả thông báo.'),
                     backgroundColor: AppColors.primary,
                   ),
                 );
@@ -161,7 +161,7 @@ class NotificationScreen extends ConsumerWidget {
           SizedBox(
             height: MediaQuery.of(context).size.height * 0.7,
             child: AppErrorState(
-              title: 'Không thể tải thông báo',
+              title: 'Chưa tải được thông báo',
               message: notifState.errorMessage,
               retryLabel: 'Thử lại',
               onRetry: () => ref.read(notificationProvider.notifier).refresh(),

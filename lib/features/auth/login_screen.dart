@@ -50,7 +50,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     }
     if (pass.isEmpty) {
       setState(() {
-        _errorMessage = 'Vui lòng nhập mật khẩu.';
+        _errorMessage = 'Bạn hãy nhập mật khẩu nhé.';
         _isFatalNetworkError = false;
         _isAccountNotFound = false;
       });
@@ -145,7 +145,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 ),
                 const SizedBox(height: AppTokens.spaceLG),
                 const Text(
-                  'NGUYỆT PHỐ B2B',
+                  'NGUYỆT PHỐ',
                   style: TextStyle(
                     fontFamily: 'Roboto',
                     fontSize: 22,
@@ -157,7 +157,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 ),
                 const SizedBox(height: AppTokens.spaceXS),
                 const Text(
-                  'Sàn Phân Phối Bánh Trung Thu Doanh Nghiệp',
+                  'Bánh trung thu & quà tặng',
                   style: TextStyle(
                     fontFamily: 'Roboto',
                     fontSize: 13,
@@ -170,8 +170,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 // Main Content: Error / Empty / Loading Skeleton / Form
                 if (_isFatalNetworkError)
                   AppErrorState(
-                    title: 'Không thể kết nối máy chủ',
-                    message: _errorMessage ?? 'Đã có lỗi xảy ra khi kết nối tới máy chủ Nguyệt Phố.',
+                    title: 'Không kết nối được',
+                    message: _errorMessage ?? 'Không thể kết nối, bạn kiểm tra lại mạng rồi thử lại nhé.',
                     onRetry: _handleLogin,
                     retryLabel: 'Thử lại ngay',
                     secondaryActionLabel: 'Đăng nhập lại',
@@ -186,7 +186,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   AppEmptyState(
                     icon: Icons.person_off_outlined,
                     title: 'Tài khoản chưa tồn tại',
-                    message: 'Số điện thoại này chưa được đăng ký tài khoản khách hàng trên hệ thống Nguyệt Phố B2B.',
+                    message: 'Số điện thoại này chưa được đăng ký trên Nguyệt Phố.',
                     actionLabel: 'Đăng ký tài khoản mới',
                     onAction: () => context.push('/register'),
                     secondaryActionLabel: 'Đăng nhập số khác',
@@ -212,7 +212,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       onPressed: () => context.go('/'),
                       icon: const Icon(Icons.arrow_back, size: 16, color: AppColors.textSecondary),
                       label: const Text(
-                        'Khám phá sàn không cần đăng nhập',
+                        'Khám phá sản phẩm',
                         style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
                       ),
                     ),

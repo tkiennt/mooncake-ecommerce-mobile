@@ -77,7 +77,7 @@ class AppStatusChip extends StatelessWidget {
           break;
         case 'pendingsignature':
         case 'awaitingsignature':
-          label = 'Chờ ký số';
+          label = 'Chờ ký hợp đồng';
           break;
         case 'open':
         case 'openforbidding':
@@ -122,14 +122,14 @@ class AppStatusChip extends StatelessWidget {
           break;
         case 'underreview':
         case 'under_review':
-          label = 'Đang xét thầu';
+          label = 'Đang chọn xưởng';
           break;
         case 'active':
         case 'signed':
-          label = 'Đang thực hiện';
+          label = 'Đang tiến hành';
           break;
         default:
-          label = 'Đang sản xuất';
+          label = 'Đang làm bánh';
       }
       return AppStatusConfig(
         label: label,
@@ -180,7 +180,7 @@ class AppStatusChip extends StatelessWidget {
           label = 'Đã thanh toán';
           break;
         default:
-          label = 'Hoàn tất';
+          label = 'Hoàn thành';
       }
       return AppStatusConfig(
         label: label,
@@ -214,7 +214,7 @@ class AppStatusChip extends StatelessWidget {
           label = 'Giao thất bại';
           break;
         default:
-          label = 'Đã hủy';
+          label = 'Đã huỷ';
       }
       return AppStatusConfig(
         label: label,

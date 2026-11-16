@@ -86,7 +86,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       if (mounted) {
         setState(() {
           _isLoadingStats = false;
-          _statsError = 'Không thể nạp số liệu thống kê';
+          _statsError = 'Chưa tải được số liệu';
         });
       }
     }
@@ -110,7 +110,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  'Đăng Ký Nhà Cung Cấp',
+                  'Đăng ký xưởng bánh',
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
                 ),
               ),
@@ -121,7 +121,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Text(
-                'Để đảm bảo tiêu chuẩn ATTP (HACCP/ISO) và năng lực sản xuất sỉ của Nguyệt Phố Hoàng Gia, quy trình đăng ký xưởng bánh & thẩm định năng lực được thực hiện trực tiếp trên cổng thông tin đối tác Website B2B.',
+                'Để đảm bảo chất lượng và an toàn thực phẩm, quy trình đăng ký xưởng bánh đối tác được thực hiện trực tiếp trên website Nguyệt Phố.',
                 style: TextStyle(fontSize: 13, color: AppColors.textSecondary, height: 1.45),
               ),
               const SizedBox(height: 14),
@@ -151,7 +151,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         Navigator.of(dialogCtx).pop();
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
-                            content: Text('Đã sao chép liên kết đăng ký nhà cung cấp!'),
+                            content: Text('Đã sao chép liên kết đăng ký xưởng bánh!'),
                             backgroundColor: AppColors.success,
                           ),
                         );
@@ -230,7 +230,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           ),
           _StatItem(
             value: '$_rfqCount',
-            label: 'Yêu cầu RFQ',
+            label: 'Yêu cầu báo giá',
             hasError: _statsError != null,
           ),
           _StatItem(
@@ -265,7 +265,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
     return Scaffold(
       appBar: const AppHeader(
-        title: 'Tài Khoản Doanh Nghiệp',
+        title: 'Tài khoản',
         showBack: false,
       ),
       body: RefreshIndicator(
@@ -303,14 +303,14 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            user?.fullName ?? (authState.isAuthenticated ? 'Khách hàng Hoàng Gia' : 'Khách vãng lai'),
+                            user?.fullName ?? (authState.isAuthenticated ? 'Khách hàng thân thiết' : 'Khách vãng lai'),
                             style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
                           const SizedBox(height: 3),
                           Text(
-                            user?.companyName ?? (authState.isAuthenticated ? 'Doanh nghiệp B2B' : 'Chưa đăng nhập'),
+                            user?.companyName ?? (authState.isAuthenticated ? 'Khách hàng doanh nghiệp' : 'Chưa đăng nhập'),
                             style: const TextStyle(fontSize: 12.5, color: AppColors.textSecondary),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
@@ -357,8 +357,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   ),
                 ),
 
-              // NHÓM 1: Giao Dịch & Đơn Hàng B2B
-              _buildGroupTitle('Giao Dịch & Đơn Hàng B2B'),
+              // NHÓM 1: Đơn hàng & Giao dịch
+              _buildGroupTitle('Đơn hàng & Giao dịch'),
               Container(
                 decoration: BoxDecoration(
                   color: AppColors.surface,
@@ -377,23 +377,23 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     const Divider(height: 1, indent: 52, color: AppColors.border),
                     _MenuItem(
                       icon: Icons.assignment_outlined,
-                      title: 'Quản lý Hợp đồng B2B',
-                      subtitle: 'Hợp đồng điện tử & Ký quỹ',
+                      title: 'Hợp đồng mua bán',
+                      subtitle: 'Xem hợp đồng và các đợt thanh toán',
                       onTap: () => context.push('/contracts'),
                     ),
                     const Divider(height: 1, indent: 52, color: AppColors.border),
                     _MenuItem(
                       icon: Icons.local_shipping_outlined,
-                      title: 'Giao hàng & ColdChain PoD',
-                      subtitle: 'Theo dõi xe lạnh và ký nhận hàng',
+                      title: 'Theo dõi giao hàng',
+                      subtitle: 'Theo dõi vận chuyển và nhận hàng',
                       onTap: () => context.push('/delivery-pod'),
                     ),
                   ],
                 ),
               ),
 
-              // NHÓM 2: Doanh Nghiệp & Đối Tác
-              _buildGroupTitle('Doanh Nghiệp & Đối Tác'),
+              // NHÓM 2: Thông tin & Đối tác
+              _buildGroupTitle('Thông tin & Đối tác'),
               Container(
                 decoration: BoxDecoration(
                   color: AppColors.surface,
@@ -405,23 +405,23 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   children: [
                     _MenuItem(
                       icon: Icons.business_outlined,
-                      title: 'Thông Tin Doanh Nghiệp',
-                      subtitle: 'Cập nhật tên công ty, đại diện, điện thoại',
+                      title: 'Thông tin tài khoản',
+                      subtitle: 'Cập nhật họ tên, công ty, số điện thoại',
                       onTap: () => context.push('/edit-profile').then((_) => _loadStats()),
                     ),
                     const Divider(height: 1, indent: 52, color: AppColors.border),
                     _MenuItem(
                       icon: Icons.storefront_outlined,
-                      title: 'Đăng Ký Nhà Cung Cấp B2B',
-                      subtitle: 'Mở xưởng bán sỉ trên cổng đối tác Web',
+                      title: 'Đăng ký xưởng bánh đối tác',
+                      subtitle: 'Đăng ký bán bánh trên hệ thống Nguyệt Phố',
                       onTap: () => _showSupplierRegistrationDialog(context),
                     ),
                   ],
                 ),
               ),
 
-              // NHÓM 3: Cài Đặt & Hệ Thống
-              _buildGroupTitle('Cài Đặt & Hệ Thống'),
+              // NHÓM 3: Cài đặt
+              _buildGroupTitle('Cài đặt'),
               Container(
                 decoration: BoxDecoration(
                   color: AppColors.surface,
@@ -433,8 +433,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   children: [
                     _MenuItem(
                       icon: Icons.campaign_outlined,
-                      title: 'Cài đặt Thông báo',
-                      subtitle: 'Thông báo báo giá và đơn hàng',
+                      title: 'Cài đặt thông báo',
+                      subtitle: 'Nhận thông báo đơn hàng và báo giá',
                       onTap: () => context.push('/notification-settings'),
                     ),
                     if (kDebugMode) ...[
@@ -453,7 +453,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
               // Logout / Login Button
               CustomButton(
-                title: authState.isAuthenticated ? 'Đăng xuất tài khoản' : 'Đăng nhập tài khoản',
+                title: authState.isAuthenticated ? 'Đăng xuất' : 'Đăng nhập',
                 variant: ButtonVariant.outline,
                 width: double.infinity,
                 size: ButtonSize.large,
@@ -461,7 +461,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   if (authState.isAuthenticated) {
                     ref.read(authProvider.notifier).logout();
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Đã đăng xuất tài khoản.')),
+                      const SnackBar(content: Text('Đã đăng xuất.')),
                     );
                     _loadStats();
                   } else {

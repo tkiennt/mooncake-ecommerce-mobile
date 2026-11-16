@@ -30,7 +30,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
   final _addressController =
       TextEditingController(text: 'Tòa nhà FPT, Cầu Giấy, Hà Nội');
   final _noteController =
-      TextEditingController(text: 'Giao hàng xe lạnh 20°C giờ hành chính');
+      TextEditingController(text: 'Giao trong giờ hành chính');
 
   String _paymentMethod = 'vnpay'; // vnpay | b2b_contract | cod
   bool _isSubmitting = false;
@@ -78,7 +78,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
       if (mounted) {
         setState(() {
           _isVerifyingData = false;
-          _checkoutError = 'Không thể đồng bộ dữ liệu thanh toán: $e';
+          _checkoutError = 'Chưa tải được thông tin thanh toán, bạn thử lại sau nhé.';
         });
       }
     }
@@ -103,7 +103,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text(
-              'Giỏ hàng trống. Vui lòng thêm sản phẩm trước khi thanh toán.'),
+              'Giỏ hàng đang trống. Bạn chọn thêm sản phẩm trước nhé.'),
           backgroundColor: AppColors.error,
         ),
       );
@@ -118,7 +118,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text(
-              'Vui lòng điền đầy đủ tên người nhận, số điện thoại và địa chỉ giao hàng.'),
+              'Bạn vui lòng nhập đầy đủ họ tên, số điện thoại và địa chỉ nhận hàng nhé.'),
           backgroundColor: AppColors.error,
         ),
       );
@@ -185,10 +185,10 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Lỗi xử lý đơn hàng: ${e.toString()}'),
+          const SnackBar(
+            content: Text('Chưa tạo được đơn hàng, bạn thử lại sau nhé.'),
             backgroundColor: AppColors.error,
-            duration: const Duration(seconds: 4),
+            duration: Duration(seconds: 4),
           ),
         );
       }
@@ -207,7 +207,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
 
     return Scaffold(
       appBar: const AppHeader(
-        title: 'Thanh Toán Đơn Hàng',
+        title: 'Thanh toán',
         showBack: true,
       ),
       body: _buildBody(cartState),
@@ -294,7 +294,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
     // 2. Error State with AppErrorState
     if (_checkoutError != null && cartState.items.isNotEmpty) {
       return AppErrorState(
-        title: 'Không thể khởi tạo thanh toán',
+        title: 'Chưa tải được thông tin thanh toán',
         message: _checkoutError,
         onRetry: _initCheckoutData,
         retryLabel: 'Thử lại',
@@ -307,7 +307,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
         icon: Icons.shopping_bag_outlined,
         title: 'Giỏ hàng đang trống',
         message:
-            'Vui lòng chọn sản phẩm vào giỏ hàng trước khi tiến hành thanh toán đơn hàng.',
+            'Bạn hãy chọn sản phẩm vào giỏ hàng trước khi thanh toán nhé.',
         actionLabel: 'Quay lại giỏ hàng',
         onAction: () => context.go('/cart'),
       );
@@ -338,7 +338,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                         color: AppColors.primary, size: 20),
                     SizedBox(width: AppTokens.spaceSM),
                     Text(
-                      'Địa chỉ giao nhận doanh nghiệp',
+                      'Địa chỉ nhận hàng',
                       style: TextStyle(
                         fontFamily: 'Roboto',
                         fontWeight: FontWeight.w700,
@@ -352,7 +352,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                 TextField(
                   controller: _nameController,
                   decoration: const InputDecoration(
-                    labelText: 'Tên người nhận đại diện *',
+                    labelText: 'Họ và tên người nhận *',
                     contentPadding: EdgeInsets.symmetric(
                       horizontal: AppTokens.spaceMD,
                       vertical: AppTokens.spaceMD,
@@ -364,7 +364,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                   controller: _phoneController,
                   keyboardType: TextInputType.phone,
                   decoration: const InputDecoration(
-                    labelText: 'Số điện thoại liên hệ *',
+                    labelText: 'Số điện thoại *',
                     contentPadding: EdgeInsets.symmetric(
                       horizontal: AppTokens.spaceMD,
                       vertical: AppTokens.spaceMD,
@@ -375,7 +375,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                 TextField(
                   controller: _addressController,
                   decoration: const InputDecoration(
-                    labelText: 'Địa chỉ kho / công ty nhận hàng *',
+                    labelText: 'Địa chỉ nhận hàng *',
                     contentPadding: EdgeInsets.symmetric(
                       horizontal: AppTokens.spaceMD,
                       vertical: AppTokens.spaceMD,
@@ -386,7 +386,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                 TextField(
                   controller: _noteController,
                   decoration: const InputDecoration(
-                    labelText: 'Ghi chú vận chuyển (Xe lạnh 20°C, giờ giao)',
+                    labelText: 'Ghi chú giao hàng (thời gian, chỉ dẫn nhận bánh,...)',
                     contentPadding: EdgeInsets.symmetric(
                       horizontal: AppTokens.spaceMD,
                       vertical: AppTokens.spaceMD,
@@ -412,7 +412,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text(
-                  'Hình thức thanh toán / Ký quỹ',
+                  'Hình thức thanh toán',
                   style: TextStyle(
                     fontFamily: 'Roboto',
                     fontWeight: FontWeight.w700,
@@ -423,23 +423,23 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                 const SizedBox(height: AppTokens.spaceMD),
                 _buildPaymentOption(
                   value: 'vnpay',
-                  title: 'Cổng VNPay (Thẻ ATM / QR / Visa)',
+                  title: 'Ví điện tử & Thẻ (VNPay)',
                   subtitle:
-                      'Thanh toán trực tuyến bảo mật qua cổng VNPay với thẻ nội địa & quốc tế',
+                      'Quét mã QR, thẻ ATM nội địa hoặc thẻ quốc tế (Visa/Mastercard)',
                   icon: Icons.account_balance_wallet_outlined,
                 ),
                 _buildPaymentOption(
                   value: 'b2b_contract',
-                  title: 'Đặt cọc 30% Hợp đồng & Ký quỹ',
+                  title: 'Đặt cọc 30% theo hợp đồng',
                   subtitle:
-                      'Ký quỹ theo tiến độ sản xuất B2B, phần còn lại thanh toán khi giao nhận',
+                      'Thanh toán 30% trước, phần còn lại thanh toán khi nhận bánh',
                   icon: Icons.assignment_outlined,
                 ),
                 _buildPaymentOption(
                   value: 'cod',
-                  title: 'Thanh toán khi nhận hàng & kiểm tra',
+                  title: 'Thanh toán khi nhận hàng (COD)',
                   subtitle:
-                      'Kiểm tra chất lượng và niêm phong thùng bánh trước khi thanh toán',
+                      'Kiểm tra bánh trước khi thanh toán cho nhân viên giao hàng',
                   icon: Icons.local_shipping_outlined,
                 ),
               ],
@@ -580,7 +580,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                 if (totals.discountAmount > 0) ...[
                   const SizedBox(height: AppTokens.spaceSM),
                   _buildSummaryLine(
-                    'Chiết khấu bậc thang & mã:',
+                    'Chiết khấu số lượng & mã:',
                     '-${_formatCurrency(totals.discountAmount)}',
                     color: AppColors.success,
                   ),
@@ -594,7 +594,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                 ],
                 const SizedBox(height: AppTokens.spaceSM),
                 _buildSummaryLine(
-                  'Phí vận chuyển xe lạnh:',
+                  'Phí vận chuyển:',
                   totals.shippingFee > 0
                       ? '+${_formatCurrency(totals.shippingFee)}'
                       : 'Miễn phí',

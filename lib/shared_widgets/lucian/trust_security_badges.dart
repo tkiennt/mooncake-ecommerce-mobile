@@ -24,17 +24,17 @@ class TrustSecurityBadges extends StatelessWidget {
         children: [
           _BadgeItem(
             icon: Icons.verified_user_outlined,
-            title: 'Ký quỹ an toàn',
-            subtitle: 'Bảo vệ nguồn tiền',
+            title: 'Đặt cọc an toàn',
+            subtitle: 'Bảo đảm đơn hàng',
           ),
           _BadgeItem(
             icon: Icons.ac_unit,
-            title: 'Giao xe lạnh',
-            subtitle: 'Chuẩn 20-25°C',
+            title: 'Bảo quản chuẩn',
+            subtitle: 'Nhiệt độ 20-25°C',
           ),
           _BadgeItem(
             icon: Icons.receipt_long_outlined,
-            title: 'Hóa đơn VAT',
+            title: 'Hoá đơn VAT',
             subtitle: 'Đầy đủ chứng từ',
           ),
         ],

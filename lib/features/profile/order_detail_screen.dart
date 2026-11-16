@@ -131,7 +131,7 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Text(
-                      'Chính sách hoàn tiền (D24):',
+                      'Chính sách hoàn tiền:',
                       style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.warning),
                     ),
                     const SizedBox(height: 4),
@@ -170,7 +170,7 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppTokens.radiusSM)),
             ),
-            child: const Text('Xác nhận hủy'),
+            child: const Text('Hủy đơn'),
           ),
         ],
       ),
@@ -191,7 +191,7 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Đã gửi yêu cầu hủy đơn hàng thành công.'),
+            content: Text('Đã huỷ đơn hàng thành công.'),
             backgroundColor: AppColors.success,
           ),
         );
@@ -200,8 +200,8 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Không thể hủy đơn hàng: $e'),
+          const SnackBar(
+            content: Text('Chưa huỷ được đơn hàng, bạn thử lại sau nhé.'),
             backgroundColor: AppColors.error,
           ),
         );
@@ -222,7 +222,7 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Đã xác nhận nhận hàng và nghiệm thu thành công!'),
+            content: Text('Đã xác nhận nhận hàng thành công!'),
             backgroundColor: AppColors.success,
           ),
         );
@@ -231,8 +231,8 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Không thể xác nhận nhận hàng: $e'),
+          const SnackBar(
+            content: Text('Chưa xác nhận được, bạn thử lại sau nhé.'),
             backgroundColor: AppColors.error,
           ),
         );
@@ -339,8 +339,8 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
         icon: Icons.local_shipping,
       ),
       MilestoneItem(
-        title: 'Nghiệm thu',
-        subtitle: 'Ký nhận PoD',
+        title: 'Nhận hàng',
+        subtitle: 'Xác nhận nhận bánh',
         status: getStatus(3),
         icon: Icons.task_alt,
       ),
@@ -351,8 +351,8 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
   Widget build(BuildContext context) {
     if (_isLoading && _order.items.isEmpty) {
       return Scaffold(
-        appBar: AppHeader(
-          title: 'Chi Tiết ${_order.orderCode}',
+        appBar: const AppHeader(
+          title: 'Chi tiết đơn hàng',
           showBack: true,
         ),
         body: ListView(
@@ -368,12 +368,12 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
 
     if (_errorMessage != null && _order.items.isEmpty) {
       return Scaffold(
-        appBar: AppHeader(
-          title: 'Chi Tiết ${_order.orderCode}',
+        appBar: const AppHeader(
+          title: 'Chi tiết đơn hàng',
           showBack: true,
         ),
         body: AppErrorState(
-          title: 'Không thể tải chi tiết đơn hàng',
+          title: 'Chưa tải được chi tiết đơn hàng',
           message: _errorMessage,
           retryLabel: 'Thử lại',
           onRetry: _fetchOrderDetails,
@@ -396,8 +396,8 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
     ].contains(statusLower);
 
     return Scaffold(
-      appBar: AppHeader(
-        title: 'Chi Tiết ${_order.orderCode}',
+      appBar: const AppHeader(
+        title: 'Chi tiết đơn hàng',
         showBack: true,
       ),
       body: RefreshIndicator(
@@ -422,10 +422,10 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
                     children: [
                       const Icon(Icons.info_outline, color: AppColors.error, size: 20),
                       const SizedBox(width: AppTokens.spaceSM),
-                      Expanded(
+                      const Expanded(
                         child: Text(
-                          'Không thể đồng bộ dữ liệu mới nhất: $_errorMessage',
-                          style: const TextStyle(fontSize: 12, color: AppColors.error),
+                          'Chưa cập nhật được thông tin mới nhất, bạn thử lại sau nhé.',
+                          style: TextStyle(fontSize: 12, color: AppColors.error),
                         ),
                       ),
                       IconButton(
@@ -588,7 +588,7 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         const Text(
-                          'Tiến Trình Đơn Hàng',
+                          'Tiến trình đơn hàng',
                           style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
                         ),
                         if (_isLoading)
@@ -697,7 +697,7 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Text(
-                      'Danh Sách Sản Phẩm',
+                      'Danh sách sản phẩm',
                       style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
                     ),
                     const SizedBox(height: AppTokens.spaceMD),
@@ -754,7 +754,7 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
                                         item.variantName!.isNotEmpty) ...[
                                       const SizedBox(height: 2),
                                       Text(
-                                        'Biến thể: ${item.variantName}',
+                                        'Phân loại: ${item.variantName}',
                                         style: const TextStyle(
                                           fontSize: 11.5,
                                           color: AppColors.textSecondary,
@@ -801,7 +801,7 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Text(
-                      'Thông Tin Nhận Hàng',
+                      'Thông tin nhận hàng',
                       style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
                     ),
                     const SizedBox(height: AppTokens.spaceSM),
@@ -840,7 +840,7 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
                     _row('Tổng tiền hàng:', _formatCurrency(_order.totalAmount)),
                     const SizedBox(height: 6),
                     _row(
-                      'Chiết khấu doanh nghiệp:',
+                      'Chiết khấu ưu đãi:',
                       '-${_formatCurrency(_order.discountAmount)}',
                       color: AppColors.success,
                     ),
@@ -886,7 +886,7 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
                     icon: const Icon(Icons.check_circle_outline, size: 18),
                     label: Text(_isActionInProgress
                         ? 'Đang xác nhận...'
-                        : 'Xác nhận đã nhận hàng (PoD)'),
+                        : 'Xác nhận nhận hàng'),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primary,
                       foregroundColor: Colors.white,

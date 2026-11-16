@@ -854,11 +854,11 @@ class _RfqDetailBiddingRouteLoaderState extends ConsumerState<_RfqDetailBiddingR
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return const _RouteLoadingView(title: 'Chi tiết báo giá RFQ');
+      return const _RouteLoadingView(title: 'Chi tiết yêu cầu báo giá');
     }
     if (_errorMessage != null || _rfq == null) {
       return _RouteErrorView(
-        title: 'Chi tiết báo giá RFQ',
+        title: 'Chi tiết yêu cầu báo giá',
         message: _errorMessage ?? 'Không tìm thấy thông tin yêu cầu báo giá',
         onRetry: _loadRfq,
       );

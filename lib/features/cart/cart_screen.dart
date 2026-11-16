@@ -63,7 +63,7 @@ class _CartScreenState extends ConsumerState<CartScreen> {
       if (mounted) {
         setState(() {
           _isInitialSyncing = false;
-          _syncError = 'Không thể đồng bộ bảng giá chiết khấu: $e';
+          _syncError = 'Chưa cập nhật được bảng giá ưu đãi, bạn thử lại sau nhé.';
         });
       }
     }
@@ -82,7 +82,7 @@ class _CartScreenState extends ConsumerState<CartScreen> {
 
     return Scaffold(
       appBar: const AppHeader(
-        title: 'Giỏ Hàng Doanh Nghiệp',
+        title: 'Giỏ hàng',
         showBack: false,
       ),
       body: _buildBody(cartState),
@@ -159,7 +159,7 @@ class _CartScreenState extends ConsumerState<CartScreen> {
     // 2. Error state with AppErrorState
     if (_syncError != null && cartState.items.isEmpty) {
       return AppErrorState(
-        title: 'Lỗi tải giỏ hàng',
+        title: 'Chưa tải được giỏ hàng',
         message: _syncError,
         onRetry: _syncQuote,
         retryLabel: 'Thử lại',
@@ -170,9 +170,9 @@ class _CartScreenState extends ConsumerState<CartScreen> {
     if (cartState.items.isEmpty) {
       return AppEmptyState(
         icon: Icons.remove_shopping_cart_outlined,
-        title: 'Giỏ hàng của bạn đang trống',
+        title: 'Giỏ hàng đang trống',
         message:
-            'Khám phá ngay các bộ sưu tập bánh trung thu cao cấp để chọn món quà doanh nghiệp ý nghĩa.',
+            'Khám phá các mẫu bánh trung thu mới nhất để chọn món quà phù hợp nhé.',
         actionLabel: 'Khám phá sản phẩm',
         onAction: () => context.go('/search'),
       );
@@ -292,7 +292,7 @@ class _CartScreenState extends ConsumerState<CartScreen> {
                               Padding(
                                 padding: const EdgeInsets.only(top: 2),
                                 child: Text(
-                                  'Quy cách: ${item.variant!.name}',
+                                  'Phân loại: ${item.variant!.name}',
                                   style: const TextStyle(
                                     fontFamily: 'Roboto',
                                     fontSize: 12,
@@ -343,7 +343,7 @@ class _CartScreenState extends ConsumerState<CartScreen> {
                   Row(
                     children: [
                       const Text(
-                        'Số lượng đặt:',
+                        'Số lượng:',
                         style: TextStyle(
                           fontFamily: 'Roboto',
                           fontSize: 13,
@@ -439,7 +439,7 @@ class _CartScreenState extends ConsumerState<CartScreen> {
                         child: TextField(
                           controller: _couponController,
                           decoration: const InputDecoration(
-                            hintText: 'Nhập mã giảm giá (ví dụ: B2BMOON2026)',
+                            hintText: 'Nhập mã giảm giá (ví dụ: BANHTRUNGTHU)',
                             isDense: true,
                             contentPadding: EdgeInsets.symmetric(
                               horizontal: AppTokens.spaceMD,
@@ -459,7 +459,7 @@ class _CartScreenState extends ConsumerState<CartScreen> {
                             _syncQuote();
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
-                                content: Text('Mã giảm giá đã được áp dụng!'),
+                                content: Text('Đã áp dụng mã giảm giá!'),
                                 backgroundColor: AppColors.success,
                               ),
                             );
@@ -493,7 +493,7 @@ class _CartScreenState extends ConsumerState<CartScreen> {
                         size: 20, color: AppColors.primary),
                     SizedBox(width: AppTokens.spaceSM),
                     Text(
-                      'Tóm tắt chi phí đơn hàng',
+                      'Tóm tắt đơn hàng',
                       style: TextStyle(
                         fontFamily: 'Roboto',
                         fontSize: 14,
@@ -511,7 +511,7 @@ class _CartScreenState extends ConsumerState<CartScreen> {
                 if (totals.discountAmount > 0) ...[
                   const SizedBox(height: AppTokens.spaceSM),
                   _buildSummaryRow(
-                    'Chiết khấu bậc thang & mã:',
+                    'Chiết khấu số lượng & mã:',
                     '-${_formatCurrency(totals.discountAmount)}',
                     isHighlight: true,
                   ),
@@ -526,7 +526,7 @@ class _CartScreenState extends ConsumerState<CartScreen> {
                 if (totals.shippingFee > 0) ...[
                   const SizedBox(height: AppTokens.spaceSM),
                   _buildSummaryRow(
-                    'Phí vận chuyển xe lạnh:',
+                    'Phí vận chuyển:',
                     '+${_formatCurrency(totals.shippingFee)}',
                   ),
                 ] else ...[

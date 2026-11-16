@@ -210,7 +210,7 @@ class _RfqDetailBiddingScreenState extends ConsumerState<RfqDetailBiddingScreen>
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Quý khách có chắc chắn muốn chấp thuận báo giá từ xưởng:',
+              'Bạn có chắc chắn muốn chọn báo giá từ xưởng:',
               style: const TextStyle(fontFamily: 'Roboto', fontSize: 13, color: AppColors.textSecondary),
             ),
             const SizedBox(height: 6),
@@ -248,7 +248,7 @@ class _RfqDetailBiddingScreenState extends ConsumerState<RfqDetailBiddingScreen>
             ),
             const SizedBox(height: 10),
             const Text(
-              'Hệ thống sẽ tiến hành khởi tạo hợp đồng kinh tế và chuyển sang bước ký số bằng chữ ký tay & OTP Email.',
+              'Hệ thống sẽ tạo hợp đồng và chuyển sang bước ký hợp đồng điện tử.',
               style: TextStyle(fontFamily: 'Roboto', fontSize: 12, color: AppColors.textMuted, height: 1.4),
             ),
           ],
@@ -256,7 +256,7 @@ class _RfqDetailBiddingScreenState extends ConsumerState<RfqDetailBiddingScreen>
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('Hủy', style: TextStyle(color: AppColors.textSecondary)),
+            child: const Text('Huỷ', style: TextStyle(color: AppColors.textSecondary)),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
@@ -266,7 +266,7 @@ class _RfqDetailBiddingScreenState extends ConsumerState<RfqDetailBiddingScreen>
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppTokens.radiusSM)),
             ),
             onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text('Đồng ý & Ký HĐ', style: TextStyle(fontWeight: FontWeight.w700)),
+            child: const Text('Đồng ý & Ký hợp đồng', style: TextStyle(fontWeight: FontWeight.w700)),
           ),
         ],
       ),
@@ -290,7 +290,7 @@ class _RfqDetailBiddingScreenState extends ConsumerState<RfqDetailBiddingScreen>
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             backgroundColor: AppColors.success,
-            content: Text('Chấp thuận báo giá thành công! Đang chuyển sang màn hình ký số hợp đồng...'),
+            content: Text('Chọn xưởng thành công! Đang chuyển sang màn hình ký hợp đồng...'),
           ),
         );
 
@@ -315,7 +315,7 @@ class _RfqDetailBiddingScreenState extends ConsumerState<RfqDetailBiddingScreen>
             title: const Text('Đã gửi xác nhận tới xưởng'),
             content: Text(
               result['message']?.toString() ??
-                  'Hệ thống đã ghi nhận lựa chọn xưởng của bạn. Xưởng sản xuất sẽ xác nhận và khởi tạo hợp đồng điện tử trong thời gian sớm nhất.',
+                  'Hệ thống đã ghi nhận lựa chọn xưởng của bạn. Xưởng bánh sẽ sớm xác nhận và gửi hợp đồng.',
             ),
             actions: [
               TextButton(
@@ -341,9 +341,9 @@ class _RfqDetailBiddingScreenState extends ConsumerState<RfqDetailBiddingScreen>
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
+          const SnackBar(
             backgroundColor: AppColors.error,
-            content: Text('Lỗi chấp thuận báo giá: ${e.toString().replaceFirst('Exception: ', '')}'),
+            content: Text('Chưa chọn được xưởng, bạn thử lại sau nhé.'),
           ),
         );
       }
@@ -390,7 +390,7 @@ class _RfqDetailBiddingScreenState extends ConsumerState<RfqDetailBiddingScreen>
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Bảng So Sánh Báo Giá Các Xưởng',
+                          'Bảng so sánh báo giá',
                           style: TextStyle(
                             fontFamily: 'Roboto',
                             fontSize: 16,
@@ -400,7 +400,7 @@ class _RfqDetailBiddingScreenState extends ConsumerState<RfqDetailBiddingScreen>
                         ),
                         SizedBox(height: 2),
                         Text(
-                          'Đối chiếu giá, thời gian và năng lực sản xuất',
+                          'So sánh giá, thời gian và dịch vụ',
                           style: TextStyle(fontFamily: 'Roboto', fontSize: 11.5, color: AppColors.textSecondary),
                         ),
                       ],
@@ -604,7 +604,7 @@ class _RfqDetailBiddingScreenState extends ConsumerState<RfqDetailBiddingScreen>
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppHeader(
-        title: 'Đấu Thầu ${rfq.rfqNumber.isNotEmpty ? rfq.rfqNumber : "RFQ"}',
+        title: 'So sánh báo giá',
         showBack: true,
       ),
       body: RefreshIndicator(
@@ -780,7 +780,7 @@ class _RfqDetailBiddingScreenState extends ConsumerState<RfqDetailBiddingScreen>
                       Icon(Icons.compare_arrows_rounded, size: 20, color: AppColors.primary),
                       SizedBox(width: 6),
                       Text(
-                        'So Sánh Báo Giá Xưởng',
+                        'Báo giá từ các xưởng',
                         style: TextStyle(
                           fontFamily: 'Roboto',
                           fontWeight: FontWeight.w700,
@@ -847,7 +847,7 @@ class _RfqDetailBiddingScreenState extends ConsumerState<RfqDetailBiddingScreen>
                 _buildLoadingSkeleton()
               else if (_errorMessage != null)
                 AppErrorState(
-                  title: 'Không thể tải báo giá',
+                  title: 'Chưa tải được báo giá',
                   message: _errorMessage!,
                   onRetry: _loadBids,
                   retryLabel: 'Tải lại báo giá',
@@ -855,8 +855,8 @@ class _RfqDetailBiddingScreenState extends ConsumerState<RfqDetailBiddingScreen>
               else if (_bids.isEmpty)
                 const AppEmptyState(
                   icon: Icons.hourglass_empty_rounded,
-                  title: 'Chưa có xưởng nào nộp báo giá',
-                  message: 'Các xưởng sản xuất đã nhận được yêu cầu và đang lập bảng dự toán chi phí. Báo giá cạnh tranh sẽ xuất hiện tại đây khi xưởng gửi nộp.',
+                  title: 'Chưa có báo giá nào',
+                  message: 'Các xưởng bánh đang chuẩn bị báo giá cho bạn. Báo giá sẽ xuất hiện tại đây ngay khi xưởng gửi.',
                 )
               else
                 ...bids.map((bid) {
@@ -899,7 +899,7 @@ class _RfqDetailBiddingScreenState extends ConsumerState<RfqDetailBiddingScreen>
                                 ),
                                 const SizedBox(width: 4),
                                 Text(
-                                  isLowestPrice ? 'BÁO GIÁ TIẾT KIỆM NHẤT' : 'TIẾN ĐỘ GIAO NHANH NHẤT',
+                                  isLowestPrice ? 'GIÁ TỐT NHẤT' : 'GIAO NHANH NHẤT',
                                   style: TextStyle(
                                     fontFamily: 'Roboto',
                                     fontSize: 10.5,
@@ -940,7 +940,7 @@ class _RfqDetailBiddingScreenState extends ConsumerState<RfqDetailBiddingScreen>
                                             Icon(Icons.verified, size: 13, color: AppColors.success),
                                             SizedBox(width: 3),
                                             Text(
-                                              'Xưởng đạt chuẩn ISO / HACCP',
+                                              'Xưởng đạt chuẩn an toàn thực phẩm',
                                               style: TextStyle(fontFamily: 'Roboto', fontSize: 11, color: AppColors.success, fontWeight: FontWeight.w500),
                                             ),
                                           ],
@@ -1044,7 +1044,7 @@ class _RfqDetailBiddingScreenState extends ConsumerState<RfqDetailBiddingScreen>
 
                               // CTA: Accept Bid & Proceed to Contract
                               CustomButton(
-                                title: 'Chấp thuận báo giá & Lập hợp đồng',
+                                title: 'Chọn xưởng này',
                                 size: ButtonSize.medium,
                                 width: double.infinity,
                                 loading: isAcceptingThis,

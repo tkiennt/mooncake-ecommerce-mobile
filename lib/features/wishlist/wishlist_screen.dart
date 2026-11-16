@@ -174,7 +174,7 @@ class _WishlistScreenState extends ConsumerState<WishlistScreen> {
 
     if (_errorMessage != null) {
       return AppErrorState(
-        title: 'Không thể tải danh sách yêu thích',
+        title: 'Chưa tải được danh sách yêu thích',
         message: _errorMessage,
         onRetry: _loadWishlist,
       );
@@ -279,7 +279,7 @@ class _WishlistScreenState extends ConsumerState<WishlistScreen> {
                           ),
                           icon: const Icon(Icons.add_shopping_cart, size: 15, color: AppColors.primary),
                           label: const Text(
-                            'Thêm giỏ',
+                            'Thêm vào giỏ',
                             style: TextStyle(
                               fontFamily: 'Roboto',
                               fontSize: 12,
@@ -292,7 +292,7 @@ class _WishlistScreenState extends ConsumerState<WishlistScreen> {
                               id: item.productId,
                               name: item.productName,
                               basePrice: item.price,
-                              shopName: item.shopName ?? 'Xưởng sản xuất B2B',
+                              shopName: item.shopName ?? 'Xưởng bánh đối tác',
                               coverImage: item.imageUrl,
                               minOrderQty: 1,
                             );
@@ -301,7 +301,7 @@ class _WishlistScreenState extends ConsumerState<WishlistScreen> {
                               SnackBar(
                                 content: Text('Đã thêm "${item.productName}" vào giỏ hàng!'),
                                 action: SnackBarAction(
-                                  label: 'Xem giỏ',
+                                  label: 'Xem giỏ hàng',
                                   onPressed: () => context.push('/cart'),
                                 ),
                               ),
@@ -403,7 +403,7 @@ class _WishlistScreenState extends ConsumerState<WishlistScreen> {
       id: item.productId,
       name: item.productName,
       basePrice: item.price,
-      shopName: item.shopName ?? 'Xưởng sản xuất B2B',
+      shopName: item.shopName ?? 'Xưởng bánh đối tác',
       coverImage: item.imageUrl,
       minOrderQty: 1,
     );

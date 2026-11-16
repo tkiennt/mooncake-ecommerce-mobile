@@ -117,8 +117,8 @@ class _ContractsScreenState extends ConsumerState<ContractsScreen> {
     // Standard 4 contract milestones
     return [
       MilestoneItem(
-        title: 'Ký kết HĐ',
-        subtitle: isSigned ? 'Đã ký số' : 'Chờ khách ký',
+        title: 'Ký hợp đồng',
+        subtitle: isSigned ? 'Đã ký' : 'Chờ bạn ký',
         status: isSigned ? MilestoneStepStatus.completed : MilestoneStepStatus.current,
         timestamp: contract.signedByCustomerAt != null
             ? DateFormat('dd/MM').format(contract.signedByCustomerAt!)
@@ -126,21 +126,21 @@ class _ContractsScreenState extends ConsumerState<ContractsScreen> {
       ),
       MilestoneItem(
         title: 'Đặt cọc 30%',
-        subtitle: isPaidDeposit ? 'Đã ký quỹ' : 'Chờ nộp cọc',
+        subtitle: isPaidDeposit ? 'Đã thanh toán' : 'Chờ đặt cọc',
         status: isPaidDeposit
             ? MilestoneStepStatus.completed
             : (isSigned ? MilestoneStepStatus.current : MilestoneStepStatus.upcoming),
       ),
       MilestoneItem(
         title: 'Sản xuất',
-        subtitle: isInProduction ? 'Đang ra lò' : 'Chuẩn bị vật tư',
+        subtitle: isInProduction ? 'Đang làm bánh' : 'Chuẩn bị làm bánh',
         status: isInProduction
             ? (isCompleted ? MilestoneStepStatus.completed : MilestoneStepStatus.current)
             : MilestoneStepStatus.upcoming,
       ),
       MilestoneItem(
-        title: 'Giao PoD',
-        subtitle: isCompleted ? 'Đã nhận đủ' : 'Xe lạnh vận chuyển',
+        title: 'Giao hàng',
+        subtitle: isCompleted ? 'Đã nhận đủ' : 'Đang vận chuyển',
         status: isCompleted ? MilestoneStepStatus.completed : MilestoneStepStatus.upcoming,
       ),
     ];
@@ -180,7 +180,7 @@ class _ContractsScreenState extends ConsumerState<ContractsScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            c.contractNumber.isNotEmpty ? c.contractNumber : 'Hợp Đồng Kinh Tế Điện Tử',
+                            c.contractNumber.isNotEmpty ? c.contractNumber : 'Hợp đồng mua bán',
                             style: const TextStyle(
                               fontFamily: 'Roboto',
                               fontSize: 16,
@@ -190,7 +190,7 @@ class _ContractsScreenState extends ConsumerState<ContractsScreen> {
                           ),
                           const SizedBox(height: 2),
                           const Text(
-                            'Văn bản hợp đồng kinh tế theo Luật Giao dịch điện tử',
+                            'Văn bản hợp đồng điện tử',
                             style: TextStyle(fontFamily: 'Roboto', fontSize: 11.5, color: AppColors.textSecondary),
                           ),
                         ],
@@ -222,16 +222,16 @@ class _ContractsScreenState extends ConsumerState<ContractsScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             const Text(
-                              'BÊN A (BÊN ĐẶT HÀNG / KHÁCH HÀNG DOANH NGHIỆP):',
+                              'BÊN A (BÊN MUA):',
                               style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12, color: AppColors.textPrimary),
                             ),
                             Text(
-                              c.customerName ?? 'Quý Doanh Nghiệp đặt hàng qua Nguyệt Phố B2B',
+                              c.customerName ?? 'Khách hàng qua Nguyệt Phố',
                               style: const TextStyle(fontSize: 12.5, color: AppColors.textSecondary),
                             ),
                             const SizedBox(height: 8),
                             const Text(
-                              'BÊN B (BÊN SẢN XUẤT / NHÀ CUNG CẤP):',
+                              'BÊN B (XƯỞNG BÁNH):',
                               style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12, color: AppColors.textPrimary),
                             ),
                             Text(
@@ -250,7 +250,7 @@ class _ContractsScreenState extends ConsumerState<ContractsScreen> {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        'Bên B cam kết cung ứng các sản phẩm bánh trung thu thủ công cao cấp theo đúng tiêu chuẩn chất lượng, bao bì in laser logo thương hiệu bên A đã phê duyệt trong hồ sơ đấu giá.',
+                        'Bên B cam kết cung ứng các sản phẩm bánh trung thu theo đúng chất lượng, quy cách đóng gói và in logo theo thoả thuận.',
                         style: const TextStyle(fontSize: 12.5, height: 1.45, color: AppColors.textPrimary),
                       ),
                       const SizedBox(height: AppTokens.spaceMD),
@@ -261,31 +261,31 @@ class _ContractsScreenState extends ConsumerState<ContractsScreen> {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        '• Tổng giá trị hợp đồng trọn gói: ${_formatCurrency(c.totalValue)} (Đã bao gồm thuế GTGT và phí vận chuyển xe lạnh).\n'
-                        '• Đợt 1 (Ký quỹ đặt cọc): 30% giá trị hợp đồng (${_formatCurrency(c.totalValue * 0.3)}) sau khi ký số hợp đồng.\n'
-                        '• Đợt 2 (Thanh toán hoàn tất): 70% giá trị còn lại sau khi Bên A kiểm tra biên bản giao nhận PoD và xác nhận đủ số lượng, nguyên vẹn.',
+                        '• Tổng giá trị hợp đồng: ${_formatCurrency(c.totalValue)} (Đã bao gồm VAT và phí giao hàng).\n'
+                        '• Đợt 1 (Đặt cọc): 30% giá trị hợp đồng (${_formatCurrency(c.totalValue * 0.3)}) sau khi ký hợp đồng.\n'
+                        '• Đợt 2 (Thanh toán còn lại): 70% giá trị còn lại sau khi nhận hàng và kiểm tra đủ số lượng, nguyên vẹn.',
                         style: const TextStyle(fontSize: 12.5, height: 1.45, color: AppColors.textPrimary),
                       ),
                       const SizedBox(height: AppTokens.spaceMD),
 
                       const Text(
-                        'ĐIỀU 3. TIÊU CHUẨN BẢO QUẢN & VẬN CHUYỂN XE LẠNH',
+                        'ĐIỀU 3. BẢO QUẢN & VẬN CHUYỂN',
                         style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: AppColors.primary),
                       ),
                       const SizedBox(height: 4),
                       const Text(
-                        'Toàn bộ kiện hàng được vận chuyển bằng xe lạnh chuyên dụng kiểm soát nhiệt độ từ 18-25°C. Bên B có trách nhiệm cung cấp dữ liệu cảm biến xe lạnh và chứng từ PoD kèm ảnh chụp tem seal.',
+                        'Hàng hoá được bảo quản và vận chuyển đúng nhiệt độ tiêu chuẩn để đảm bảo chất lượng bánh.',
                         style: TextStyle(fontSize: 12.5, height: 1.45, color: AppColors.textPrimary),
                       ),
                       const SizedBox(height: AppTokens.spaceMD),
 
                       const Text(
-                        'ĐIỀU 4. CHỮ KÝ SỐ VÀ HIỆU LỰC HỢP ĐỒNG',
+                        'ĐIỀU 4. HIỆU LỰC HỢP ĐỒNG',
                         style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: AppColors.primary),
                       ),
                       const SizedBox(height: 4),
                       const Text(
-                        'Hợp đồng được ký số qua mã OTP xác thực email và chữ ký điện tử. Các bên cam kết thực hiện đúng mọi điều khoản theo quy định pháp luật Việt Nam.',
+                        'Hợp đồng được xác thực qua mã gửi về email và chữ ký điện tử. Các bên cam kết thực hiện đúng các điều khoản.',
                         style: TextStyle(fontSize: 12.5, height: 1.45, color: AppColors.textPrimary),
                       ),
                       const SizedBox(height: AppTokens.space2XL),
@@ -296,7 +296,7 @@ class _ContractsScreenState extends ConsumerState<ContractsScreen> {
               Padding(
                 padding: const EdgeInsets.all(AppTokens.spaceLG),
                 child: CustomButton(
-                  title: _isAwaitingSignature(c) ? 'Tiến hành ký số hợp đồng ngay' : 'Đóng văn bản',
+                  title: _isAwaitingSignature(c) ? 'Ký hợp đồng ngay' : 'Đóng văn bản',
                   size: ButtonSize.large,
                   width: double.infinity,
                   onPress: () {
@@ -455,7 +455,7 @@ class _ContractsScreenState extends ConsumerState<ContractsScreen> {
 
     if (_errorMessage != null) {
       return AppErrorState(
-        title: 'Không thể tải danh sách hợp đồng',
+        title: 'Chưa tải được danh sách hợp đồng',
         message: _errorMessage!,
         onRetry: _loadContracts,
         retryLabel: 'Thử lại ngay',
@@ -465,9 +465,9 @@ class _ContractsScreenState extends ConsumerState<ContractsScreen> {
     if (_contracts.isEmpty) {
       return AppEmptyState(
         icon: Icons.description_outlined,
-        title: 'Chưa có hợp đồng B2B nào',
-        message: 'Khi bạn chấp thuận một báo giá từ xưởng sản xuất, hợp đồng kinh tế điện tử sẽ được lập và hiển thị tại đây.',
-        actionLabel: 'Xem danh sách RFQ',
+        title: 'Chưa có hợp đồng nào',
+        message: 'Khi bạn chọn một báo giá từ xưởng bánh, hợp đồng điện tử sẽ xuất hiện tại đây.',
+        actionLabel: 'Xem các yêu cầu báo giá',
         onAction: () => context.push('/rfq-list'),
       );
     }
@@ -482,8 +482,8 @@ class _ContractsScreenState extends ConsumerState<ContractsScreen> {
           final c = _contracts[index];
           final isPending = _isAwaitingSignature(c);
           final depositText = c.depositAmount > 0
-              ? '${_formatCurrency(c.depositAmount)} (${c.depositPercent > 0 ? "${c.depositPercent.toInt()}%" : "Ký quỹ"})'
-              : (isPending ? 'Ký quỹ 30% khi ký số' : 'Đã xác nhận ký quỹ');
+              ? '${_formatCurrency(c.depositAmount)} (${c.depositPercent > 0 ? "${c.depositPercent.toInt()}%" : "Đặt cọc"})'
+              : (isPending ? 'Đặt cọc 30% khi ký' : 'Đã thanh toán cọc');
 
           final milestones = _buildContractMilestones(c);
 
@@ -546,7 +546,7 @@ class _ContractsScreenState extends ConsumerState<ContractsScreen> {
                       const SizedBox(width: 4),
                       Expanded(
                         child: Text(
-                          'Đối tác: ${c.supplierName}',
+                          'Xưởng bánh: ${c.supplierName}',
                           style: const TextStyle(
                             fontFamily: 'Roboto',
                             fontSize: 12.5,
@@ -781,7 +781,7 @@ class _ContractsScreenState extends ConsumerState<ContractsScreen> {
                                   ).then((_) => _loadContracts());
                                 },
                                 child: const Text(
-                                  'Ký số hợp đồng',
+                                  'Ký hợp đồng',
                                   style: TextStyle(
                                     fontFamily: 'Roboto',
                                     fontSize: 12.5,
@@ -825,7 +825,7 @@ class _ContractsScreenState extends ConsumerState<ContractsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: const AppHeader(title: 'Hợp Đồng B2B', showBack: true),
+      appBar: const AppHeader(title: 'Hợp đồng', showBack: true),
       body: _buildContent(),
     );
   }

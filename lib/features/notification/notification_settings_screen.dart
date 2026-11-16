@@ -140,7 +140,7 @@ class _NotificationSettingsScreenState extends ConsumerState<NotificationSetting
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: const AppHeader(title: 'Cài Đặt Thông Báo', showBack: true),
+      appBar: const AppHeader(title: 'Cài đặt thông báo', showBack: true),
       body: _buildBody(),
     );
   }
@@ -153,7 +153,7 @@ class _NotificationSettingsScreenState extends ConsumerState<NotificationSetting
     if (_errorMessage != null) {
       return Center(
         child: AppErrorState(
-          title: 'Không thể tải cài đặt thông báo',
+          title: 'Chưa tải được cài đặt thông báo',
           message: _errorMessage,
           retryLabel: 'Thử lại',
           onRetry: _loadSettings,
@@ -168,7 +168,7 @@ class _NotificationSettingsScreenState extends ConsumerState<NotificationSetting
         Padding(
           padding: const EdgeInsets.only(bottom: AppTokens.spaceMD),
           child: Text(
-            'Kênh thông báo & Cảnh báo thời gian thực',
+            'Tuỳ chọn nhận thông báo',
             style: AppTokens.titleMd.copyWith(
               color: AppColors.primaryDark,
               fontSize: 14,
@@ -196,7 +196,7 @@ class _NotificationSettingsScreenState extends ConsumerState<NotificationSetting
                   vertical: AppTokens.spaceXS,
                 ),
                 title: const Text(
-                  'Báo giá mới từ xưởng sản xuất',
+                  'Báo giá mới từ xưởng',
                   style: TextStyle(
                     fontFamily: 'Roboto',
                     fontSize: 13.5,
@@ -205,7 +205,7 @@ class _NotificationSettingsScreenState extends ConsumerState<NotificationSetting
                   ),
                 ),
                 subtitle: const Text(
-                  'Nhận thông báo khi có xưởng nộp hồ sơ chào giá RFQ',
+                  'Nhận thông báo khi có xưởng gửi báo giá',
                   style: TextStyle(
                     fontFamily: 'Roboto',
                     fontSize: 12,
@@ -224,7 +224,7 @@ class _NotificationSettingsScreenState extends ConsumerState<NotificationSetting
                   vertical: AppTokens.spaceXS,
                 ),
                 title: const Text(
-                  'Hợp đồng & Đặt cọc ký quỹ',
+                  'Hợp đồng & đặt cọc',
                   style: TextStyle(
                     fontFamily: 'Roboto',
                     fontSize: 13.5,
@@ -233,7 +233,7 @@ class _NotificationSettingsScreenState extends ConsumerState<NotificationSetting
                   ),
                 ),
                 subtitle: const Text(
-                  'Thông báo ký hợp đồng số và tiến độ giải ngân ký quỹ',
+                  'Thông báo ký hợp đồng và các đợt thanh toán',
                   style: TextStyle(
                     fontFamily: 'Roboto',
                     fontSize: 12,
@@ -252,7 +252,7 @@ class _NotificationSettingsScreenState extends ConsumerState<NotificationSetting
                   vertical: AppTokens.spaceXS,
                 ),
                 title: const Text(
-                  'Hành trình xe lạnh & PoD giao nhận',
+                  'Tiến độ giao hàng',
                   style: TextStyle(
                     fontFamily: 'Roboto',
                     fontSize: 13.5,
@@ -261,7 +261,7 @@ class _NotificationSettingsScreenState extends ConsumerState<NotificationSetting
                   ),
                 ),
                 subtitle: const Text(
-                  'Cảnh báo nhiệt độ bảo quản và thông báo nhận hàng',
+                  'Cập nhật tình trạng giao nhận đơn hàng',
                   style: TextStyle(
                     fontFamily: 'Roboto',
                     fontSize: 12,

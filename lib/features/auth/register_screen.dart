@@ -61,35 +61,35 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     final confirmPassword = _confirmPasswordController.text;
 
     if (name.isEmpty) {
-      setState(() => _errorMessage = 'Vui lòng nhập họ và tên người đại diện.');
+      setState(() => _errorMessage = 'Bạn hãy nhập họ và tên nhé.');
       return;
     }
     if (phone.isEmpty) {
-      setState(() => _errorMessage = 'Vui lòng nhập số điện thoại.');
+      setState(() => _errorMessage = 'Bạn hãy nhập số điện thoại nhé.');
       return;
     }
     if (!_isValidPhone(phone)) {
-      setState(() => _errorMessage = 'Số điện thoại không hợp lệ (gồm 10 số, bắt đầu bằng 03, 05, 07, 08, 09).');
+      setState(() => _errorMessage = 'Số điện thoại chưa đúng (10 số, bắt đầu bằng 03, 05, 07, 08, 09).');
       return;
     }
     if (email.isEmpty) {
-      setState(() => _errorMessage = 'Vui lòng nhập địa chỉ email nhận mã xác thực.');
+      setState(() => _errorMessage = 'Bạn hãy nhập địa chỉ email nhé.');
       return;
     }
     if (!_isValidEmail(email)) {
-      setState(() => _errorMessage = 'Địa chỉ email không đúng định dạng.');
+      setState(() => _errorMessage = 'Email chưa đúng định dạng.');
       return;
     }
     if (password.isEmpty) {
-      setState(() => _errorMessage = 'Vui lòng nhập mật khẩu.');
+      setState(() => _errorMessage = 'Bạn hãy nhập mật khẩu nhé.');
       return;
     }
     if (password.length < 6) {
-      setState(() => _errorMessage = 'Mật khẩu phải chứa ít nhất 6 ký tự.');
+      setState(() => _errorMessage = 'Mật khẩu cần ít nhất 6 ký tự.');
       return;
     }
     if (password != confirmPassword) {
-      setState(() => _errorMessage = 'Mật khẩu xác nhận không trùng khớp.');
+      setState(() => _errorMessage = 'Mật khẩu xác nhận chưa khớp.');
       return;
     }
 
@@ -113,7 +113,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Đăng ký thành công! Vui lòng kiểm tra mã OTP gửi tới email.'),
+            content: Text('Đăng ký thành công! Bạn kiểm tra mã xác nhận gửi về email nhé.'),
             backgroundColor: AppColors.success,
           ),
         );
@@ -151,7 +151,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       resizeToAvoidBottomInset: true,
-      appBar: const AppHeader(title: 'Đăng Ký Tài Khoản', showBack: true),
+      appBar: const AppHeader(title: 'Đăng ký tài khoản', showBack: true),
       body: SafeArea(
         top: false,
         child: SingleChildScrollView(
@@ -165,8 +165,8 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
             children: [
               if (_isFatalNetworkError)
                 AppErrorState(
-                  title: 'Không thể kết nối máy chủ',
-                  message: _errorMessage ?? 'Đã có lỗi xảy ra khi gửi thông tin đăng ký.',
+                  title: 'Không kết nối được',
+                  message: _errorMessage ?? 'Không gửi được thông tin đăng ký, bạn kiểm tra lại mạng rồi thử lại nhé.',
                   onRetry: _handleRegister,
                   retryLabel: 'Thử lại ngay',
                   secondaryActionLabel: 'Quay lại đăng nhập',
@@ -176,7 +176,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 AppEmptyState(
                   icon: Icons.account_circle_outlined,
                   title: 'Tài khoản đã tồn tại',
-                  message: 'Số điện thoại hoặc email này đã được sử dụng trên hệ thống Nguyệt Phố B2B.',
+                  message: 'Số điện thoại hoặc email này đã được sử dụng trên Nguyệt Phố.',
                   actionLabel: 'Đăng nhập ngay',
                   onAction: () => context.push('/login'),
                   secondaryActionLabel: 'Đổi thông tin đăng ký',
@@ -246,7 +246,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           const Text(
-            'Đăng ký đối tác doanh nghiệp',
+            'Đăng ký tài khoản',
             style: TextStyle(
               fontFamily: 'Roboto',
               fontSize: 17,
@@ -256,7 +256,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
           ),
           const SizedBox(height: AppTokens.spaceXS),
           const Text(
-            'Nhận ngay bảng giá chiết khấu đặc quyền cho mùa trăng 2026',
+            'Nhận ưu đãi và chiết khấu hấp dẫn cho mùa trăng 2026',
             style: TextStyle(
               fontFamily: 'Roboto',
               fontSize: 12.5,
@@ -318,7 +318,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
             controller: _nameController,
             textInputAction: TextInputAction.next,
             decoration: const InputDecoration(
-              labelText: 'Họ và tên người đại diện *',
+              labelText: 'Họ và tên *',
               hintText: 'Ví dụ: Nguyễn Văn A',
               prefixIcon: Icon(Icons.person_outline, color: AppColors.textMuted),
             ),
@@ -331,7 +331,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
             keyboardType: TextInputType.phone,
             textInputAction: TextInputAction.next,
             decoration: const InputDecoration(
-              labelText: 'Số điện thoại liên hệ *',
+              labelText: 'Số điện thoại *',
               hintText: 'Ví dụ: 0901234567',
               prefixIcon: Icon(Icons.phone_outlined, color: AppColors.textMuted),
             ),
@@ -344,10 +344,10 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
             keyboardType: TextInputType.emailAddress,
             textInputAction: TextInputAction.next,
             decoration: const InputDecoration(
-              labelText: 'Địa chỉ Email *',
+              labelText: 'Địa chỉ email *',
               hintText: 'Ví dụ: contact@doanhnghiep.vn',
               prefixIcon: Icon(Icons.email_outlined, color: AppColors.textMuted),
-              helperText: 'Mã OTP kích hoạt tài khoản sẽ gửi về email này',
+              helperText: 'Mã xác nhận kích hoạt tài khoản sẽ gửi về email này',
             ),
           ),
           const SizedBox(height: AppTokens.spaceMD),

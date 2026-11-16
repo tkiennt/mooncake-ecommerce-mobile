@@ -63,35 +63,35 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
 
     if (email.isEmpty) {
       setState(() {
-        _errorMessage = 'Vui lòng nhập địa chỉ email đã nhận mã OTP.';
+        _errorMessage = 'Bạn hãy nhập email đã nhận mã xác nhận nhé.';
         _isFatalNetworkError = false;
       });
       return;
     }
     if (otp.length < 6) {
       setState(() {
-        _errorMessage = 'Vui lòng nhập đầy đủ 6 chữ số mã xác thực OTP.';
+        _errorMessage = 'Bạn hãy nhập đủ 6 chữ số của mã xác nhận nhé.';
         _isFatalNetworkError = false;
       });
       return;
     }
     if (newPass.isEmpty) {
       setState(() {
-        _errorMessage = 'Vui lòng nhập mật khẩu mới.';
+        _errorMessage = 'Bạn hãy nhập mật khẩu mới nhé.';
         _isFatalNetworkError = false;
       });
       return;
     }
     if (newPass.length < 6) {
       setState(() {
-        _errorMessage = 'Mật khẩu mới phải có ít nhất 6 ký tự.';
+        _errorMessage = 'Mật khẩu mới cần ít nhất 6 ký tự.';
         _isFatalNetworkError = false;
       });
       return;
     }
     if (newPass != confirmPass) {
       setState(() {
-        _errorMessage = 'Mật khẩu xác nhận không trùng khớp với mật khẩu mới.';
+        _errorMessage = 'Mật khẩu xác nhận chưa khớp với mật khẩu mới.';
         _isFatalNetworkError = false;
       });
       return;
@@ -114,7 +114,7 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Đặt lại mật khẩu thành công! Vui lòng đăng nhập với mật khẩu mới.'),
+            content: Text('Đặt lại mật khẩu thành công! Bạn đăng nhập với mật khẩu mới nhé.'),
             backgroundColor: AppColors.success,
           ),
         );
@@ -146,7 +146,7 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
     final email = _currentEmail;
     if (email.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Vui lòng nhập email trước khi yêu cầu gửi lại mã.')),
+        const SnackBar(content: Text('Bạn hãy nhập email trước khi gửi lại mã nhé.')),
       );
       return;
     }
@@ -163,7 +163,7 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Đã gửi lại mã OTP tới email $email.'),
+            content: Text('Đã gửi lại mã xác nhận tới $email.'),
             backgroundColor: AppColors.success,
           ),
         );
@@ -193,7 +193,7 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       resizeToAvoidBottomInset: true,
-      appBar: const AppHeader(title: 'Đặt Lại Mật Khẩu', showBack: true),
+      appBar: const AppHeader(title: 'Đặt lại mật khẩu', showBack: true),
       body: SafeArea(
         top: false,
         child: SingleChildScrollView(
@@ -207,8 +207,8 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
             children: [
               if (_isFatalNetworkError)
                 AppErrorState(
-                  title: 'Không thể kết nối máy chủ',
-                  message: _errorMessage ?? 'Đã có lỗi xảy ra khi đặt lại mật khẩu.',
+                  title: 'Không kết nối được',
+                  message: _errorMessage ?? 'Chưa đặt lại được mật khẩu, bạn thử lại sau nhé.',
                   onRetry: _handleResetPassword,
                   retryLabel: 'Thử lại ngay',
                   secondaryActionLabel: 'Đăng nhập lại',
@@ -218,7 +218,7 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
                 AppEmptyState(
                   icon: Icons.lock_reset_outlined,
                   title: 'Chưa có thông tin khôi phục',
-                  message: 'Vui lòng yêu cầu mã xác thực qua email trước khi thiết lập mật khẩu mới.',
+                  message: 'Bạn hãy yêu cầu mã xác nhận qua email trước khi tạo mật khẩu mới nhé.',
                   actionLabel: 'Nhập email thủ công',
                   onAction: () {
                     setState(() {
@@ -243,7 +243,7 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
                     onPressed: () => context.go('/login'),
                     icon: const Icon(Icons.arrow_back, size: 16, color: AppColors.textSecondary),
                     label: const Text(
-                      'Quay lại màn hình đăng nhập',
+                      'Quay lại đăng nhập',
                       style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
                     ),
                   ),
@@ -331,8 +331,8 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
         const SizedBox(height: AppTokens.spaceSM),
         Text(
           _currentEmail.isNotEmpty
-              ? 'Nhập mã OTP 6 số đã được gửi tới email:\n$_currentEmail'
-              : 'Nhập mã OTP và mật khẩu mới để hoàn tất khôi phục tài khoản.',
+              ? 'Nhập mã xác nhận 6 số đã gửi tới email:\n$_currentEmail'
+              : 'Nhập mã xác nhận và mật khẩu mới để hoàn tất đặt lại mật khẩu.',
           style: const TextStyle(
             fontFamily: 'Roboto',
             fontSize: 13,
@@ -412,7 +412,7 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
                 textInputAction: TextInputAction.next,
                 onChanged: (_) => setState(() {}),
                 decoration: const InputDecoration(
-                  labelText: 'Địa chỉ Email *',
+                  labelText: 'Địa chỉ email *',
                   prefixIcon: Icon(Icons.email_outlined, color: AppColors.textMuted),
                 ),
               ),
@@ -420,7 +420,7 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
 
               // 6-digit OTP (responsive no overflow at 375px)
               const Text(
-                'Mã xác thực OTP (6 chữ số):',
+                'Mã xác nhận (6 chữ số):',
                 style: TextStyle(
                   fontFamily: 'Roboto',
                   fontSize: 13.5,

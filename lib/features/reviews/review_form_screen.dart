@@ -37,8 +37,8 @@ class _ReviewFormScreenState extends ConsumerState<ReviewFormScreen> {
   static const List<Map<String, String>> _criteria = [
     {'key': 'taste', 'label': 'Chất lượng bánh & Vị'},
     {'key': 'packaging', 'label': 'Quy cách hộp & Logo'},
-    {'key': 'delivery', 'label': 'Đúng hẹn & Xe lạnh'},
-    {'key': 'contract', 'label': 'Hóa đơn VAT & Hợp đồng'},
+    {'key': 'delivery', 'label': 'Giao hàng đúng hẹn'},
+    {'key': 'contract', 'label': 'Hoá đơn & Hợp đồng'},
   ];
 
   static const List<String> _scoreLabels = [
@@ -47,7 +47,7 @@ class _ReviewFormScreenState extends ConsumerState<ReviewFormScreen> {
     'Đạt yêu cầu (2/5)',
     'Khá tốt (3/5)',
     'Rất hài lòng (4/5)',
-    'Xuất sắc tuyệt đối (5/5)',
+    'Rất tốt (5/5)',
   ];
 
   @override
@@ -67,7 +67,7 @@ class _ReviewFormScreenState extends ConsumerState<ReviewFormScreen> {
     if (comment.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Vui lòng chia sẻ cảm nhận thực tế của bạn về đợt nhận bánh này.'),
+          content: Text('Bạn vui lòng chia sẻ cảm nhận về đợt nhận bánh này nhé.'),
           backgroundColor: AppColors.warning,
         ),
       );
@@ -129,7 +129,7 @@ class _ReviewFormScreenState extends ConsumerState<ReviewFormScreen> {
             ],
           ),
           content: const Text(
-            'Cảm ơn bạn đã phản hồi. Đánh giá nghiệm thu này sẽ được tính vào điểm uy tín công khai của xưởng sản xuất.',
+            'Cảm ơn bạn đã phản hồi. Đánh giá của bạn sẽ giúp xưởng bánh hoàn thiện dịch vụ tốt hơn.',
           ),
           actions: [
             ElevatedButton(
@@ -145,8 +145,8 @@ class _ReviewFormScreenState extends ConsumerState<ReviewFormScreen> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Không gửi được đánh giá: $e'),
+        const SnackBar(
+          content: Text('Chưa gửi được đánh giá, bạn thử lại sau nhé.'),
           backgroundColor: AppColors.error,
         ),
       );
@@ -209,7 +209,7 @@ class _ReviewFormScreenState extends ConsumerState<ReviewFormScreen> {
                         ),
                         const SizedBox(height: 2),
                         const Text(
-                          'Đơn hàng đã giao và ký nhận PoD thành công',
+                          'Đơn hàng đã giao thành công',
                           style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
                         ),
                       ],
@@ -240,7 +240,7 @@ class _ReviewFormScreenState extends ConsumerState<ReviewFormScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Đánh giá 4 tiêu chí chất lượng',
+                              'Đánh giá chất lượng đơn hàng',
                               style: TextStyle(
                                 fontSize: 13.5,
                                 fontWeight: FontWeight.bold,
@@ -249,7 +249,7 @@ class _ReviewFormScreenState extends ConsumerState<ReviewFormScreen> {
                             ),
                             SizedBox(height: 2),
                             Text(
-                              'Theo chuẩn nghiệm thu thu mua B2B',
+                              'Giúp xưởng nâng cao chất lượng phục vụ',
                               style: TextStyle(fontSize: 11, color: AppColors.textSecondary),
                             ),
                           ],
@@ -375,7 +375,7 @@ class _ReviewFormScreenState extends ConsumerState<ReviewFormScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text(
-                    'Nhận xét chi tiết đợt giao nhận',
+                    'Nhận xét chi tiết',
                     style: TextStyle(
                       fontSize: 13.5,
                       fontWeight: FontWeight.bold,
@@ -388,7 +388,7 @@ class _ReviewFormScreenState extends ConsumerState<ReviewFormScreen> {
                     maxLines: 4,
                     decoration: InputDecoration(
                       hintText:
-                          'Chia sẻ trải nghiệm về chất lượng bánh, quy cách hộp quà, tiến độ giao nhận PoD...',
+                          'Chia sẻ cảm nhận về hương vị bánh, đóng gói hộp quà, thời gian giao nhận...',
                       hintStyle: const TextStyle(fontSize: 12.5, color: AppColors.textMuted),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(AppTokens.radiusInput),
@@ -412,7 +412,7 @@ class _ReviewFormScreenState extends ConsumerState<ReviewFormScreen> {
 
             // Submit Button
             CustomButton(
-              title: _isLoading ? 'Đang gửi đánh giá...' : 'Gửi Đánh Giá Nghiệm Thu',
+              title: _isLoading ? 'Đang gửi...' : 'Gửi đánh giá',
               loading: _isLoading,
               disabled: _isLoading,
               size: ButtonSize.large,

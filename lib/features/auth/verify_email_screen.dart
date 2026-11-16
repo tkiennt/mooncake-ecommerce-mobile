@@ -54,14 +54,14 @@ class _VerifyEmailScreenState extends ConsumerState<VerifyEmailScreen> {
 
     if (email.isEmpty) {
       setState(() {
-        _errorMessage = 'Vui lòng nhập địa chỉ email đã đăng ký.';
+        _errorMessage = 'Bạn hãy nhập email đã đăng ký nhé.';
         _isFatalNetworkError = false;
       });
       return;
     }
     if (otp.length < 6) {
       setState(() {
-        _errorMessage = 'Vui lòng nhập đầy đủ 6 chữ số mã xác thực OTP.';
+        _errorMessage = 'Bạn hãy nhập đủ 6 chữ số của mã xác nhận nhé.';
         _isFatalNetworkError = false;
       });
       return;
@@ -83,7 +83,7 @@ class _VerifyEmailScreenState extends ConsumerState<VerifyEmailScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Xác thực tài khoản thành công! Vui lòng đăng nhập để tiếp tục.'),
+            content: Text('Xác thực thành công! Bạn đăng nhập để tiếp tục nhé.'),
             backgroundColor: AppColors.success,
           ),
         );
@@ -115,7 +115,7 @@ class _VerifyEmailScreenState extends ConsumerState<VerifyEmailScreen> {
     final email = _currentEmail;
     if (email.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Vui lòng nhập email trước khi yêu cầu gửi lại mã.')),
+        const SnackBar(content: Text('Bạn hãy nhập email trước khi gửi lại mã nhé.')),
       );
       return;
     }
@@ -132,7 +132,7 @@ class _VerifyEmailScreenState extends ConsumerState<VerifyEmailScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Đã gửi lại mã OTP tới email $email.'),
+            content: Text('Đã gửi lại mã xác nhận tới $email.'),
             backgroundColor: AppColors.success,
           ),
         );
@@ -162,7 +162,7 @@ class _VerifyEmailScreenState extends ConsumerState<VerifyEmailScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       resizeToAvoidBottomInset: true,
-      appBar: const AppHeader(title: 'Xác Thực Email', showBack: true),
+      appBar: const AppHeader(title: 'Xác thực email', showBack: true),
       body: SafeArea(
         top: false,
         child: SingleChildScrollView(
@@ -176,8 +176,8 @@ class _VerifyEmailScreenState extends ConsumerState<VerifyEmailScreen> {
             children: [
               if (_isFatalNetworkError)
                 AppErrorState(
-                  title: 'Không thể kết nối máy chủ',
-                  message: _errorMessage ?? 'Đã có lỗi xảy ra khi xác thực mã OTP.',
+                  title: 'Không kết nối được',
+                  message: _errorMessage ?? 'Chưa xác thực được mã, bạn thử lại sau nhé.',
                   onRetry: () => _handleVerify(),
                   retryLabel: 'Thử lại ngay',
                   secondaryActionLabel: 'Đăng nhập lại',
@@ -187,7 +187,7 @@ class _VerifyEmailScreenState extends ConsumerState<VerifyEmailScreen> {
                 AppEmptyState(
                   icon: Icons.mark_email_unread_outlined,
                   title: 'Chưa có thông tin xác thực',
-                  message: 'Không tìm thấy địa chỉ email cần kích hoạt. Vui lòng nhập email hoặc đăng ký tài khoản mới.',
+                  message: 'Chưa có email để kích hoạt. Bạn hãy nhập email hoặc đăng ký tài khoản mới nhé.',
                   actionLabel: 'Nhập email xác thực',
                   onAction: () {
                     setState(() {
@@ -212,7 +212,7 @@ class _VerifyEmailScreenState extends ConsumerState<VerifyEmailScreen> {
                     onPressed: () => context.go('/login'),
                     icon: const Icon(Icons.arrow_back, size: 16, color: AppColors.textSecondary),
                     label: const Text(
-                      'Quay lại màn hình đăng nhập',
+                      'Quay lại đăng nhập',
                       style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
                     ),
                   ),
@@ -286,7 +286,7 @@ class _VerifyEmailScreenState extends ConsumerState<VerifyEmailScreen> {
         ),
         const SizedBox(height: AppTokens.spaceLG),
         const Text(
-          'Nhập mã xác thực Email',
+          'Nhập mã xác nhận',
           style: TextStyle(
             fontFamily: 'Roboto',
             fontSize: 20,
@@ -298,8 +298,8 @@ class _VerifyEmailScreenState extends ConsumerState<VerifyEmailScreen> {
         const SizedBox(height: AppTokens.spaceSM),
         Text(
           _currentEmail.isNotEmpty
-              ? 'Mã OTP 6 chữ số đã được gửi qua email:\n$_currentEmail'
-              : 'Vui lòng kiểm tra hộp thư đến hoặc thư rác trong email của bạn để lấy mã OTP kích hoạt.',
+              ? 'Mã xác nhận 6 chữ số đã gửi tới email:\n$_currentEmail'
+              : 'Bạn kiểm tra hộp thư đến hoặc thư rác để lấy mã xác nhận nhé.',
           style: const TextStyle(
             fontFamily: 'Roboto',
             fontSize: 13,
@@ -380,7 +380,7 @@ class _VerifyEmailScreenState extends ConsumerState<VerifyEmailScreen> {
                 textInputAction: TextInputAction.next,
                 onChanged: (_) => setState(() {}),
                 decoration: const InputDecoration(
-                  labelText: 'Địa chỉ Email nhận OTP',
+                  labelText: 'Địa chỉ email',
                   prefixIcon: Icon(Icons.email_outlined, color: AppColors.textMuted),
                 ),
               ),
